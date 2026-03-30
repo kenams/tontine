@@ -1,0 +1,2 @@
+export { RootNavigator } from "./AppNavigator";
+

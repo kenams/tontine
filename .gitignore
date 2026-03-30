@@ -1,0 +1,14 @@
+mobile/node_modules
+mobile/.expo
+mobile/dist
+mobile/test-results
+mobile/%TEMP%
+mobile/.env
+mobile/web*.log
+mobile/web*.err
+backend/node_modules
+backend/dist
+backend/.env
+.env
+.DS_Store
+*.log
