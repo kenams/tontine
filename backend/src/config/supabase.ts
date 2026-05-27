@@ -26,26 +26,40 @@ export const supabaseAdmin = createClient(
 );
 
 /**
- * Vérifie si Supabase répond correctement avec la configuration courante.
+ * Vérifie si Supabase répond correctement (anon key suffit pour le ping).
  */
 export async function checkSupabaseConnection(): Promise<boolean> {
-  if (!isSupabaseAdminConfigured) {
+  if (!isSupabaseAnonConfigured) {
     console.log("⚠️ Supabase indisponible, mode démo actif");
     return false;
   }
 
   try {
-    const { error } = await supabaseAdmin.from("users").select("id").limit(1);
-
+    const { error } = await supabaseAnon.from("users").select("id").limit(1);
+    // RLS peut bloquer (PGRST116/42501) mais signifie que Supabase répond
     if (error) {
-      console.log("⚠️ Supabase indisponible, mode démo actif");
+      const isRlsBlock = error.code === "PGRST116" || error.code === "42501" || error.message.includes("row-level");
+      const isNetworkErr = error.message.includes("fetch failed") || error.message.includes("ENOTFOUND");
+      if (isRlsBlock) {
+        console.log("✅ Supabase connecté (RLS actif — anon key)");
+        return true;
+      }
+      if (isNetworkErr) {
+        console.log("⚠️ Supabase configuré mais réseau local bloqué — mode démo actif (OK en production)");
+        return false;
+      }
+      console.log("⚠️ Supabase erreur:", error.message);
       return false;
     }
-
-    console.log("✅ Supabase connecté");
+    console.log("✅ Supabase connecté (anon key)");
     return true;
-  } catch {
-    console.log("⚠️ Supabase indisponible, mode démo actif");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("fetch failed") || msg.includes("ENOTFOUND")) {
+      console.log("⚠️ Supabase configuré mais réseau local bloqué — mode démo actif (OK en production)");
+    } else {
+      console.log("⚠️ Supabase indisponible:", msg.slice(0, 80));
+    }
     return false;
   }
 }

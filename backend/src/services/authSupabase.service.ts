@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabase";
+import { supabaseAnon } from "../config/supabase";
 import { userRepository, type RepositoryUser } from "../repositories/user.repository";
 
 type RegisterUserResult = {
@@ -7,7 +7,7 @@ type RegisterUserResult = {
 };
 
 /**
- * Cree un utilisateur dans Supabase Auth puis retourne son profil public.
+ * Cree un utilisateur via Supabase Auth (anon key — pas besoin de service_role).
  */
 export async function registerUser(
   email: string,
@@ -15,13 +15,11 @@ export async function registerUser(
   fullName: string,
   phone?: string
 ): Promise<RegisterUserResult> {
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  const { data, error } = await supabaseAnon.auth.signUp({
     email,
     password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: fullName,
-      phone
+    options: {
+      data: { full_name: fullName, phone }
     }
   });
 
@@ -38,17 +36,14 @@ export async function registerUser(
       phone
     }));
 
-  return {
-    user: profile,
-    session: null
-  };
+  return { user: profile, session: null };
 }
 
 /**
- * Verifie un access token Supabase.
+ * Verifie un access token Supabase (anon key suffit).
  */
 export async function verifySupabaseToken(token: string) {
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  const { data, error } = await supabaseAnon.auth.getUser(token);
 
   if (error || !data.user) {
     return null;
