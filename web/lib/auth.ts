@@ -64,25 +64,29 @@ export function verifySessionToken(token?: string | null): Session | null {
 }
 
 export async function getSession(): Promise<Session | null> {
-  const store = await cookies();
-  const token = store.get(sessionCookieName)?.value;
-  const session = verifySessionToken(token);
-  if (!session) return null;
+  try {
+    const store = await cookies();
+    const token = store.get(sessionCookieName)?.value;
+    const session = verifySessionToken(token);
+    if (!session) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { id: true, email: true, fullName: true, role: true, status: true }
-  });
-  if (!user || user.status === "BANNED" || user.status === "SUSPENDED") return null;
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, email: true, fullName: true, role: true, status: true }
+    });
+    if (!user || user.status === "BANNED" || user.status === "SUSPENDED") return null;
 
-  return {
-    userId: user.id,
-    email: user.email,
-    fullName: user.fullName,
-    role: user.role === "ADMIN" ? "ADMIN" : "USER",
-    status: user.status,
-    exp: session.exp
-  };
+    return {
+      userId: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role === "ADMIN" ? "ADMIN" : "USER",
+      status: user.status,
+      exp: session.exp
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireUser() {
