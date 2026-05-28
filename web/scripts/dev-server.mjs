@@ -34,7 +34,7 @@ const httpServer = createServer(async (request, response) => {
 });
 
 const io = new Server(httpServer, {
-  path: "/api/realtime",
+  path: "/ws",
   cors: { origin: true, credentials: true }
 });
 
@@ -109,6 +109,6 @@ setInterval(() => {
 
 httpServer.listen(port, "0.0.0.0", () => {
   console.log(`\x1b[32m✓\x1b[0m Kotizy ready      → http://localhost:${port}`);
-  console.log(`\x1b[32m✓\x1b[0m Socket.io ready    → ws://localhost:${port}/api/realtime`);
+  console.log(`\x1b[32m✓\x1b[0m Socket.io ready    → ws://localhost:${port}/ws`);
   console.log(`\x1b[32m✓\x1b[0m Emit endpoint      → POST http://localhost:${port}/__emit`);
 });

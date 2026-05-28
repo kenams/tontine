@@ -56,7 +56,7 @@ export function LivePulse({
 
   useEffect(() => {
     const socket = io({
-      path: "/api/realtime",
+      path: "/ws",
       transports: ["websocket", "polling"],
       reconnection: true
     });
@@ -77,7 +77,7 @@ export function LivePulse({
 
     const fallback = window.setInterval(async () => {
       if (socket.connected) return;
-      const response = await fetch("/api/realtime/pulse").catch(() => null);
+      const response = await fetch("/api/pulse").catch(() => null);
       if (!response?.ok) return;
       const payload = (await response.json()) as { event?: LiveEvent; metrics?: Presence };
       if (payload.metrics) setPresence(payload.metrics);

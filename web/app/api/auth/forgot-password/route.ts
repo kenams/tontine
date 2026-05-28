@@ -10,7 +10,7 @@ import { z } from "zod";
 const schema = z.object({ email: z.string().email().transform((v) => v.toLowerCase()) });
 
 export async function POST(request: NextRequest) {
-  const limit = await rateLimit(request, "forgot-password", 3, 300_000);
+  const limit = await rateLimit(request, "forgot-password", 10, 300_000);
   if (!limit.ok) {
     return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 5 minutes." }, { status: 429 });
   }
