@@ -48,15 +48,15 @@ export default async function ProfilePage() {
         <ProgressBar value={trust} />
         <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-smoke">
           <div className="rounded-2xl bg-white/[0.08] p-3">
-            <p className="font-black text-ivory">{user.trustScore?.paymentReliability ?? 80}</p>
+            <p className="font-black text-[var(--text)]">{user.trustScore?.paymentReliability ?? 80}</p>
             Paiement
           </div>
           <div className="rounded-2xl bg-white/[0.08] p-3">
-            <p className="font-black text-ivory">{user.trustScore?.communityRating ?? 80}</p>
+            <p className="font-black text-[var(--text)]">{user.trustScore?.communityRating ?? 80}</p>
             Communaute
           </div>
           <div className="rounded-2xl bg-white/[0.08] p-3">
-            <p className="font-black text-ivory">{user.trustScore?.fraudRisk ?? 10}</p>
+            <p className="font-black text-[var(--text)]">{user.trustScore?.fraudRisk ?? 10}</p>
             Risque
           </div>
         </div>
@@ -69,7 +69,7 @@ export default async function ProfilePage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {user.badges.map(({ badge }) => (
-            <span key={badge.id} className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold text-ivory ring-1 ring-white/10">
+            <span key={badge.id} className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold text-[var(--text)] ring-1 ring-white/10">
               {badge.name}
             </span>
           ))}

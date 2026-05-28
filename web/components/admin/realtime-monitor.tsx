@@ -150,7 +150,7 @@ export function RealtimeMonitor({
         </div>
         <div className="space-y-2">
           {events.map((event) => (
-            <div key={event.id} className="flex items-center justify-between gap-3 rounded-2xl bg-black/20 px-3 py-2 light:bg-white/60">
+            <div key={event.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface)] px-3 py-2 light:bg-white/60">
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{event.title}</p>
                 <p className="text-xs text-smoke">

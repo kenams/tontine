@@ -54,7 +54,7 @@ export default async function DashboardPage() {
           <Link href={nextMembership ? `/tontines/${nextMembership.id}` : "/tontines/create"} className="rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-ink shadow-glow">
             {nextMembership ? "Payer" : "Creer"}
           </Link>
-          <Link href="/tontines" className="rounded-2xl bg-white/10 px-4 py-3 text-center text-sm font-black text-ivory ring-1 ring-white/10">
+          <Link href="/tontines" className="rounded-2xl bg-white/10 px-4 py-3 text-center text-sm font-black text-[var(--text)] ring-1 ring-white/10">
             Voir groupes
           </Link>
         </div>

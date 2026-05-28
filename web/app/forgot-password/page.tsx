@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   return (
     <MotionPage>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
-        <Link href="/login" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ivory">
+        <Link href="/login" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-[var(--text)]">
           <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 text-ink font-black">K</span>
           Kotizy
         </Link>
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
               <div className="rounded-2xl bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
                 Si un compte existe avec cet email, un lien de réinitialisation vous a été envoyé. Vérifiez vos spams.
               </div>
-              <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-black text-ivory ring-1 ring-white/10">
+              <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-black text-[var(--text)] ring-1 ring-white/10">
                 <ArrowLeft size={16} /> Retour connexion
               </Link>
             </div>

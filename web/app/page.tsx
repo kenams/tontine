@@ -21,7 +21,7 @@ export default async function LandingPage() {
             <ThemeToggle />
             <Link
               href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
-              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-ivory ring-1 ring-white/10"
+              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-[var(--text)] ring-1 ring-white/10"
             >
               {session ? "Ouvrir" : "Connexion"}
             </Link>
@@ -48,7 +48,7 @@ export default async function LandingPage() {
               >
                 {session ? "Mon dashboard" : "Commencer gratuitement"} <ArrowRight size={18} />
               </Link>
-              <Link href="/login" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 text-sm font-black text-ivory ring-1 ring-white/10">
+              <Link href="/login" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 text-sm font-black text-[var(--text)] ring-1 ring-white/10">
                 Se connecter
               </Link>
             </div>
@@ -71,7 +71,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="glass mx-auto w-full max-w-sm rounded-[2rem] p-4 shadow-premium">
-            <div className="rounded-[1.5rem] bg-ink p-4 ring-1 ring-white/10">
+            <div className="rounded-[1.5rem] bg-[var(--bg)] p-4 ring-1 ring-white/10">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-smoke">Solde wallet</p>
@@ -135,7 +135,7 @@ export default async function LandingPage() {
         <footer className="border-t border-white/10 py-8 text-center text-xs text-smoke">
           © {new Date().getFullYear()} Kotizy — L'épargne collective, réinventée.
           {" · "}
-          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="hover:text-ivory transition-colors">
+          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text)] transition-colors">
             Un produit KAH Digital
           </a>
         </footer>

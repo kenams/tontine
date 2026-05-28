@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
   return (
     <MotionPage>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
-        <Link href="/login" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ivory">
+        <Link href="/login" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-[var(--text)]">
           <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 text-ink font-black">K</span>
           Kotizy
         </Link>

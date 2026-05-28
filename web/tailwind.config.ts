@@ -27,7 +27,11 @@ const config: Config = {
       }
     }
   },
-  plugins: []
+  plugins: [
+    function({ addVariant }: { addVariant: (name: string, val: string) => void }) {
+      addVariant("light", ".light &");
+    }
+  ]
 };
 
 export default config;

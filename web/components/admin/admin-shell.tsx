@@ -28,7 +28,7 @@ const nav = [
   { href: "/admin/alerts", label: "Alertes", icon: AlertTriangle },
   { href: "/admin/monitoring", label: "Monitoring", icon: RadioTower },
   { href: "/admin/logs", label: "Logs", icon: Activity },
-  { href: "/admin/settings", label: "Parametres", icon: Settings }
+  { href: "/admin/settings", label: "Paramètres", icon: Settings }
 ];
 
 export function AdminShell({
@@ -42,15 +42,15 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[280px_1fr]">
-      <aside className="sticky top-0 z-40 border-b border-white/10 bg-ink/80 px-4 py-3 backdrop-blur-2xl lg:h-dvh lg:border-b-0 lg:border-r lg:px-5 lg:py-6 light:bg-ivory/85">
+      <aside className="sticky top-0 z-40 border-b border-[var(--surface-strong)] bg-ink/80 px-4 py-3 backdrop-blur-2xl light:bg-ivory/90 lg:h-dvh lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
         <div className="flex items-center justify-between gap-3 lg:block">
           <Link href="/admin" className="flex items-center gap-3">
             <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500 text-ink shadow-glow">
               <Shield size={20} />
             </div>
             <div>
-              <p className="text-sm font-black">TontineApp Admin</p>
-              <p className="text-xs text-smoke">{adminName}</p>
+              <p className="text-sm font-black text-[var(--text)]">Kotizy Admin</p>
+              <p className="text-xs text-[var(--muted)]">{adminName}</p>
             </div>
           </Link>
           <div className="lg:hidden">
@@ -67,9 +67,9 @@ export function AdminShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-w-fit items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-smoke transition lg:min-w-0",
+                  "flex min-w-fit items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-[var(--muted)] transition lg:min-w-0",
                   active && "bg-emerald-500 text-ink shadow-glow",
-                  !active && "hover:bg-white/10 hover:text-ivory"
+                  !active && "hover:bg-[var(--surface)] hover:text-[var(--text)]"
                 )}
               >
                 <Icon size={18} />
@@ -83,11 +83,11 @@ export function AdminShell({
           <ThemeToggle />
           <LogoutButton />
           <div className="glass rounded-3xl p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-black">
+            <div className="mb-2 flex items-center gap-2 text-sm font-black text-[var(--text)]">
               <BarChart3 size={18} className="text-gold" />
-              Mode test
+              Mode test actif
             </div>
-            <p className="text-xs leading-5 text-smoke">Stripe, Wave, Orange Money, MTN MoMo et Flutterwave sont prets en architecture stub.</p>
+            <p className="text-xs leading-5 text-[var(--muted)]">Stripe, Wave, Orange Money, MTN MoMo et Flutterwave disponibles.</p>
           </div>
         </div>
       </aside>

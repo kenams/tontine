@@ -77,7 +77,7 @@ export function AuthForm({ mode, admin = false }: Props) {
   return (
     <MotionPage>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
-        <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ivory">
+        <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-[var(--text)]">
           <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 font-black text-ink">K</span>
           Kotizy
         </Link>
@@ -112,12 +112,11 @@ export function AuthForm({ mode, admin = false }: Props) {
             {mode === "register" ? (
               <select
                 name="currency"
-                className="min-h-12 w-full rounded-2xl border border-white/10 bg-[#050706] px-4 text-sm text-ivory outline-none"
-                style={{ colorScheme: "dark" }}
+                className="min-h-12 w-full rounded-2xl border border-white/10 bg-[var(--bg)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-emerald-400/60 light:border-ink/15"
                 defaultValue="XOF"
               >
                 {SUPPORTED_CURRENCIES.map((currency) => (
-                  <option key={currency.code} value={currency.code} className="bg-[#050706] text-ivory">
+                  <option key={currency.code} value={currency.code} className="bg-[var(--bg)] text-[var(--text)]">
                     {currency.code} - {currency.label}
                   </option>
                 ))}
@@ -148,7 +147,7 @@ export function AuthForm({ mode, admin = false }: Props) {
                   type="button"
                   onClick={() => quickLogin("user")}
                   disabled={quickLoading !== null}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white/[0.08] text-xs font-bold text-ivory ring-1 ring-white/10 transition hover:bg-white/[0.14] disabled:opacity-50"
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] text-xs font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)] disabled:opacity-50"
                 >
                   {quickLoading === "user" ? "..." : "👤 Utilisateur"}
                 </button>
