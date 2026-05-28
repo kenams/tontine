@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 
+// Build: 2026-05-29 — force cache invalidation
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: fileURLToPath(new URL(".", import.meta.url)),

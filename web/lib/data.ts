@@ -102,6 +102,7 @@ export async function getUserTontines(userId: string) {
 }
 
 export async function getAdminStats() {
+  try {
   const [
     totalUsers,
     activeUsers,
@@ -183,4 +184,15 @@ export async function getAdminStats() {
     groups,
     chart
   };
+  } catch (e) {
+    console.error("[getAdminStats] Erreur Prisma:", e);
+    const empty = { currency: defaultCurrency, amount: 0 };
+    return {
+      totalUsers: 0, activeUsers: 0, totalTontines: 0, activeTontines: 0,
+      totalVolume: 0, totalVolumeCurrency: defaultCurrency, volumeByCurrency: [],
+      platformRevenue: 0, pendingTransactions: 0, failedTransactions: 0,
+      lateMemberships: 0, alerts: [], recentTransactions: [], users: [], groups: [],
+      chart: ["Jan","Feb","Mar","Apr","May","Jun"].map((month) => ({ month, volume: 0, risk: 0 }))
+    };
+  }
 }
