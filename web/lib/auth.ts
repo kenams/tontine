@@ -1,6 +1,7 @@
 import "server-only";
 
 import crypto from "crypto";
+import { cache } from "react";
 
 const DEFAULT_SECRET = "local-dev-secret-change-before-production";
 
@@ -63,7 +64,7 @@ export function verifySessionToken(token?: string | null): Session | null {
   }
 }
 
-export async function getSession(): Promise<Session | null> {
+export const getSession = cache(async (): Promise<Session | null> => {
   try {
     const store = await cookies();
     const token = store.get(sessionCookieName)?.value;
@@ -87,7 +88,7 @@ export async function getSession(): Promise<Session | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function requireUser() {
   const session = await getSession();

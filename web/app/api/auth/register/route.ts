@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
       fullName: parsed.data.fullName,
       phone: parsed.data.phone || null,
       passwordHash: await hashPassword(parsed.data.password),
-      wallet: { create: { balanceCents: 125000, currency: parsed.data.currency } },
-      trustScore: { create: { score: 70, paymentReliability: 72, communityRating: 68, fraudRisk: 14 } },
+      wallet: { create: { balanceCents: 0, currency: parsed.data.currency } },
+      trustScore: { create: { score: 50, paymentReliability: 50, communityRating: 50, fraudRisk: 20 } },
       notifications: {
         create: {
           title: "Bienvenue sur Kotizy 🎉",
-          body: "Votre wallet est prêt. Rejoignez une tontine ou créez votre groupe.",
+          body: "Votre compte est prêt. Créez ou rejoignez une tontine pour commencer à cotiser.",
           type: "WELCOME"
         }
       }

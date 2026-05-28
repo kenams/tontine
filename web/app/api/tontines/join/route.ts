@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
@@ -10,17 +11,32 @@ import { joinSchema } from "@/lib/validators";
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  const limit = await rateLimit(request, "join-tontine", 12, 60_000);
-  if (!limit.ok) return NextResponse.json({ error: "Trop de tentatives de code." }, { status: 429 });
+
+  // Rate limit strict : 5 tentatives / 10 min (brute force sur codes)
+  const limit = await rateLimit(request, "join-tontine", 5, 600_000);
+  if (!limit.ok) return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 10 minutes." }, { status: 429 });
 
   const parsed = joinSchema.safeParse(await safeJson(request));
   if (!parsed.success) return NextResponse.json({ error: "Code invalide." }, { status: 400 });
 
+  // Vérifier que le compte utilisateur est actif (pas suspendu/banni)
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { status: true, trustScore: true }
+  });
+  if (!user || user.status !== "ACTIVE") {
+    return NextResponse.json({ error: "Votre compte n'est pas autorisé à rejoindre des groupes." }, { status: 403 });
+  }
+
   const group = await prisma.tontineGroup.findUnique({
     where: { joinCode: parsed.data.joinCode },
-    select: { id: true, maxMembers: true, name: true }
+    select: { id: true, maxMembers: true, name: true, status: true }
   });
-  if (!group) return NextResponse.json({ error: "Aucune tontine ne correspond à ce code." }, { status: 404 });
+
+  // Code invalide → même message que "pas trouvé" (pas d'info sur l'existence)
+  if (!group || !["ACTIVE", "OPEN"].includes(group.status)) {
+    return NextResponse.json({ error: "Code invalide ou groupe non disponible." }, { status: 404 });
+  }
 
   const existingMembership = await prisma.membership.findFirst({
     where: { userId: session.userId, tontineGroupId: group.id }
@@ -30,9 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     await prisma.$transaction(async (tx) => {
       const memberCount = await tx.membership.count({ where: { tontineGroupId: group.id } });
-      if (memberCount >= group.maxMembers) {
-        throw new Error("FULL");
-      }
+      if (memberCount >= group.maxMembers) throw new Error("FULL");
       await tx.membership.create({
         data: {
           userId: session.userId,
@@ -49,12 +63,15 @@ export async function POST(request: NextRequest) {
     throw err;
   }
 
+  revalidateTag("admin");
+
   await auditLog({
     actorId: session.userId,
     action: "TONTINE_JOINED",
     targetType: "TontineGroup",
     targetId: group.id,
-    ipAddress: clientIp(request)
+    ipAddress: clientIp(request),
+    metadata: { groupName: group.name, userTrustScore: user.trustScore?.score ?? 50 }
   });
 
   void emitEvent({

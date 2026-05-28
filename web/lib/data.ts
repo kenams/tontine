@@ -1,8 +1,9 @@
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { defaultCurrency } from "@/lib/currency";
 
-export async function getUserDashboard(userId: string) {
+export const getUserDashboard = cache(async (userId: string) => {
   const [user, memberships, transactions, notifications] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -48,7 +49,7 @@ export async function getUserDashboard(userId: string) {
     .sort((a, b) => a.nextDueAt.getTime() - b.nextDueAt.getTime())[0];
 
   return { user, memberships, transactions, notifications, totalSaved, nextMembership };
-}
+});
 
 export async function getTontineDetail(groupId: string, userId?: string) {
   const group = await prisma.tontineGroup.findUniqueOrThrow({

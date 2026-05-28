@@ -19,10 +19,11 @@ export async function rateLimit(request: NextRequest, key: string, limit = 20, w
     where: { key: bucketKey, createdAt: { gte: windowStart } }
   });
   if (count >= limit) return { ok: false, remaining: 0 };
-  await prisma.$transaction([
-    prisma.rateLimitBucket.create({ data: { key: bucketKey } }),
-    prisma.rateLimitBucket.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - windowMs * 10) } } })
-  ]);
+  await prisma.rateLimitBucket.create({ data: { key: bucketKey } });
+  // Cleanup seulement 5% du temps — évite une 2e query sur chaque request
+  if (Math.random() < 0.05) {
+    void prisma.rateLimitBucket.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - windowMs * 10) } } });
+  }
   return { ok: true, remaining: limit - count - 1 };
 }
 
