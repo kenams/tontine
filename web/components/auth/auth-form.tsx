@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -19,6 +19,25 @@ export function AuthForm({ mode, admin = false }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [quickLoading, setQuickLoading] = useState<"user" | "admin" | null>(null);
+
+  async function quickLogin(role: "user" | "admin") {
+    setQuickLoading(role);
+    setError(null);
+    const creds = role === "admin"
+      ? { email: "admin@kotizy.app", password: "Admin123!" }
+      : { email: "user@kotizy.app", password: "User123!" };
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(creds)
+    });
+    const data = (await res.json()) as { error?: string; redirectTo?: string };
+    setQuickLoading(null);
+    if (!res.ok) { setError(data.error ?? "Erreur connexion rapide."); return; }
+    router.push(data.redirectTo ?? "/dashboard");
+    router.refresh();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -118,11 +137,31 @@ export function AuthForm({ mode, admin = false }: Props) {
             </Button>
           </form>
 
-          <div className="mt-5 grid gap-2 rounded-2xl bg-black/20 p-3 text-xs text-smoke">
-            <p className="font-bold text-ivory">Comptes démo Kotizy</p>
-            <p>Admin: admin@kotizy.app / Admin123!</p>
-            <p>User: user@kotizy.app / User123!</p>
-          </div>
+          {mode === "login" ? (
+            <div className="mt-5 space-y-2">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-smoke">
+                <Zap size={12} className="text-gold" /> Connexion rapide démo
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => quickLogin("user")}
+                  disabled={quickLoading !== null}
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white/[0.08] text-xs font-bold text-ivory ring-1 ring-white/10 transition hover:bg-white/[0.14] disabled:opacity-50"
+                >
+                  {quickLoading === "user" ? "..." : "👤 Utilisateur"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => quickLogin("admin")}
+                  disabled={quickLoading !== null}
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-gold/10 text-xs font-bold text-gold ring-1 ring-gold/20 transition hover:bg-gold/20 disabled:opacity-50"
+                >
+                  {quickLoading === "admin" ? "..." : "🛡️ Admin"}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-5 text-center text-sm text-smoke">

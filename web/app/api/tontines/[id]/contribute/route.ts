@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendContributionConfirmEmail } from "@/lib/email";
 import { money } from "@/lib/format";
+import { emitEvent } from "@/lib/realtime-server";
 import { safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { createContributionCheckoutSession, isStripeCheckoutProvider, isStripeConfigured } from "@/lib/stripe";
@@ -178,12 +179,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (status === "PAID") {
-    void sendContributionConfirmEmail(
-      session.email,
-      session.fullName,
-      group.name,
-      money(group.contributionCents, group.currency)
-    );
+    void sendContributionConfirmEmail(session.email, session.fullName, group.name, money(group.contributionCents, group.currency));
+    void emitEvent({
+      type: "activity:new",
+      title: `Cotisation confirmée — ${group.name}`,
+      region: session.fullName,
+      currency: group.currency,
+      amount: group.contributionCents,
+      room: `tontine:${id}`
+    });
+    void emitEvent({
+      type: "activity:new",
+      title: `${session.fullName} a cotisé dans ${group.name}`,
+      region: "Live",
+      currency: group.currency,
+      amount: group.contributionCents
+    });
   }
 
   return NextResponse.json({ ok: true, status });

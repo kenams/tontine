@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { emitEvent } from "@/lib/realtime-server";
 import { safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { joinSchema } from "@/lib/validators";
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
     targetType: "TontineGroup",
     targetId: group.id,
     ipAddress: clientIp(request)
+  });
+
+  void emitEvent({
+    type: "activity:new",
+    title: `${session.fullName} a rejoint ${group.name}`,
+    region: "Nouveau membre",
+    currency: "XOF",
+    amount: 0,
+    room: `tontine:${group.id}`
   });
 
   return NextResponse.json({ groupId: group.id });

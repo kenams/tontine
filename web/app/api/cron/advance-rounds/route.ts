@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
+import { emitEvent } from "@/lib/realtime-server";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -54,6 +55,15 @@ export async function GET(request: NextRequest) {
           ]
         : [])
     ]);
+
+    void emitEvent({
+      type: "activity:new",
+      title: `Nouveau round — ${group.name}`,
+      region: `Round ${nextRound}`,
+      currency: group.currency,
+      amount: group.contributionCents,
+      room: `tontine:${group.id}`
+    });
 
     advanced++;
     results.push(`${group.name}: round ${group.currentRound} → ${nextRound}, due ${nextDue.toISOString().slice(0, 10)}`);
