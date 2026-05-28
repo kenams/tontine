@@ -112,11 +112,12 @@ export function AuthForm({ mode, admin = false }: Props) {
             {mode === "register" ? (
               <select
                 name="currency"
-                className="min-h-12 w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 text-sm outline-none"
+                className="min-h-12 w-full rounded-2xl border border-white/10 bg-[#050706] px-4 text-sm text-ivory outline-none"
+                style={{ colorScheme: "dark" }}
                 defaultValue="XOF"
               >
                 {SUPPORTED_CURRENCIES.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
+                  <option key={currency.code} value={currency.code} className="bg-[#050706] text-ivory">
                     {currency.code} - {currency.label}
                   </option>
                 ))}
