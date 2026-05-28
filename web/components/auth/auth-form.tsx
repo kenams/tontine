@@ -59,8 +59,8 @@ export function AuthForm({ mode, admin = false }: Props) {
     <MotionPage>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
         <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ivory">
-          <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 text-ink">T</span>
-          TontineApp
+          <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 font-black text-ink">K</span>
+          Kotizy
         </Link>
 
         <div className="glass rounded-[1.75rem] p-5">
@@ -104,6 +104,13 @@ export function AuthForm({ mode, admin = false }: Props) {
               </select>
             ) : null}
             <Input name="password" type="password" placeholder="Mot de passe" autoComplete={mode === "login" ? "current-password" : "new-password"} required />
+            {mode === "login" ? (
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-xs text-smoke hover:text-emerald-400">
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+            ) : null}
             {error ? <p className="rounded-2xl bg-rose-500/12 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
             <Button disabled={loading} className="w-full">
               {loading ? "Traitement..." : mode === "login" ? "Entrer" : "Commencer"}
@@ -112,9 +119,9 @@ export function AuthForm({ mode, admin = false }: Props) {
           </form>
 
           <div className="mt-5 grid gap-2 rounded-2xl bg-black/20 p-3 text-xs text-smoke">
-            <p className="font-bold text-ivory">Comptes demo</p>
-            <p>Admin: admin@tontineapp.com / Admin123!</p>
-            <p>User: user@tontineapp.com / User123!</p>
+            <p className="font-bold text-ivory">Comptes démo Kotizy</p>
+            <p>Admin: admin@kotizy.app / Admin123!</p>
+            <p>User: user@kotizy.app / User123!</p>
           </div>
         </div>
 

@@ -2,13 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
 import { hashPassword } from "@/lib/password";
 import { redirectUrl, safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { registerSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(request, "register", 5, 60_000);
+  const limit = await rateLimit(request, "register", 5, 60_000);
   if (!limit.ok) {
     return NextResponse.json({ error: "Trop de comptes crees depuis cette IP." }, { status: 429 });
   }
@@ -40,8 +41,8 @@ export async function POST(request: NextRequest) {
       trustScore: { create: { score: 70, paymentReliability: 72, communityRating: 68, fraudRisk: 14 } },
       notifications: {
         create: {
-          title: "Bienvenue sur TontineApp",
-          body: "Votre wallet test est pret. Rejoignez une tontine ou creez votre groupe.",
+          title: "Bienvenue sur Kotizy 🎉",
+          body: "Votre wallet est prêt. Rejoignez une tontine ou créez votre groupe.",
           type: "WELCOME"
         }
       }
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
     targetId: user.id,
     ipAddress: clientIp(request)
   });
+
+  void sendWelcomeEmail(user.email, user.fullName);
 
   const token = createSessionToken({
     userId: user.id,

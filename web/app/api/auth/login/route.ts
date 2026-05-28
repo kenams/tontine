@@ -8,7 +8,7 @@ import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { loginSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(request, "login", 8, 60_000);
+  const limit = await rateLimit(request, "login", 8, 60_000);
   if (!limit.ok) {
     return NextResponse.json({ error: "Trop de tentatives. Reessayez dans une minute." }, { status: 429 });
   }

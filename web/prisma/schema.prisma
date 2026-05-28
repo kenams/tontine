@@ -34,7 +34,8 @@ model User {
   fraudAlerts     FraudAlert[]
   disputes        Dispute[]
   votes           Vote[]
-  createdTontines TontineGroup[] @relation("CreatedTontines")
+  createdTontines    TontineGroup[]       @relation("CreatedTontines")
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Admin {
@@ -263,6 +264,27 @@ model Vote {
   status          String       @default("OPEN")
   closesAt        DateTime
   createdAt       DateTime     @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model RateLimitBucket {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
 }
 
 model EmergencyFund {

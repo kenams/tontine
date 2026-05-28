@@ -36,7 +36,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      email: "admin@tontineapp.com",
+      email: "admin@kotizy.app",
       passwordHash: adminPassword,
       fullName: "Amina Diop",
       phone: "+221770000001",
@@ -51,7 +51,7 @@ async function main() {
 
   const user = await prisma.user.create({
     data: {
-      email: "user@tontineapp.com",
+      email: "user@kotizy.app",
       passwordHash: userPassword,
       fullName: "Moussa Kone",
       phone: "+22507000001",
@@ -65,11 +65,11 @@ async function main() {
 
   const demoUsers = await Promise.all(
     [
-      ["fatou@tontineapp.com", "Fatou Sarr", "+221770000002", 680000, "USD", 91],
-      ["yann@tontineapp.com", "Yann Kouassi", "+22507000002", 214000, "CAD", 78],
-      ["mariam@tontineapp.com", "Mariam Traore", "+22376000003", 930000, "EUR", 94],
-      ["ibrahim@tontineapp.com", "Ibrahim Ba", "+221770000004", 12500000, "NGN", 63],
-      ["sarah@tontineapp.com", "Sarah Ndao", "+442071830001", 440000, "GBP", 82]
+      ["fatou@kotizy.app", "Fatou Sarr", "+221770000002", 680000, "USD", 91],
+      ["yann@kotizy.app", "Yann Kouassi", "+22507000002", 214000, "CAD", 78],
+      ["mariam@kotizy.app", "Mariam Traore", "+22376000003", 930000, "EUR", 94],
+      ["ibrahim@kotizy.app", "Ibrahim Ba", "+221770000004", 12500000, "NGN", 63],
+      ["sarah@kotizy.app", "Sarah Ndao", "+442071830001", 440000, "GBP", 82]
     ].map(([email, fullName, phone, balance, currency, score]) =>
       prisma.user.create({
         data: {
@@ -78,7 +78,7 @@ async function main() {
           fullName: String(fullName),
           phone: String(phone),
           role: "USER",
-          status: email === "ibrahim@tontineapp.com" ? "REVIEW" : "ACTIVE",
+          status: email === "ibrahim@kotizy.app" ? "REVIEW" : "ACTIVE",
           kycStatus: "VERIFIED",
           trustScore: {
             create: {
@@ -183,7 +183,7 @@ async function main() {
           userId: members[index].id,
           tontineGroupId: group.id,
           role: index === 0 ? "ORGANIZER" : "MEMBER",
-          status: members[index].email === "ibrahim@tontineapp.com" ? "LATE" : "ACTIVE",
+          status: members[index].email === "ibrahim@kotizy.app" ? "LATE" : "ACTIVE",
           payoutOrder: index + 1,
           nextPayoutAt: daysFromNow((index + 1) * 28),
           paidThisRound: index !== 3
@@ -194,7 +194,7 @@ async function main() {
 
   const allUsers = [admin, user, ...demoUsers];
   for (const member of allUsers) {
-    const score = member.email === "user@tontineapp.com" || member.email === "admin@tontineapp.com" ? badges[3] : badges[0];
+    const score = member.email === "user@kotizy.app" || member.email === "admin@kotizy.app" ? badges[3] : badges[0];
     await prisma.userBadge.create({ data: { userId: member.id, badgeId: score.id } });
   }
   await prisma.userBadge.create({ data: { userId: user.id, badgeId: badges[1].id } });
@@ -336,8 +336,8 @@ async function main() {
   }
 
   console.log("Seed complete");
-  console.log("Admin: admin@tontineapp.com / Admin123!");
-  console.log("User: user@tontineapp.com / User123!");
+  console.log("Admin: admin@kotizy.app / Admin123!");
+  console.log("User: user@kotizy.app / User123!");
 }
 
 main()

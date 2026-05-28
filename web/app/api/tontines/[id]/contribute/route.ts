@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendContributionConfirmEmail } from "@/lib/email";
+import { money } from "@/lib/format";
 import { safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { createContributionCheckoutSession, isStripeCheckoutProvider, isStripeConfigured } from "@/lib/stripe";
@@ -10,7 +12,7 @@ import { contributionSchema } from "@/lib/validators";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifie." }, { status: 401 });
-  const limit = rateLimit(request, "contribution", 16, 60_000);
+  const limit = await rateLimit(request, "contribution", 16, 60_000);
   if (!limit.ok) return NextResponse.json({ error: "Paiements temporairement limites." }, { status: 429 });
 
   const { id } = await params;
@@ -174,6 +176,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ipAddress: clientIp(request),
     metadata: { provider: parsed.data.provider, status }
   });
+
+  if (status === "PAID") {
+    void sendContributionConfirmEmail(
+      session.email,
+      session.fullName,
+      group.name,
+      money(group.contributionCents, group.currency)
+    );
+  }
 
   return NextResponse.json({ ok: true, status });
 }

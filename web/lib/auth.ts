@@ -1,6 +1,11 @@
 import "server-only";
 
 import crypto from "crypto";
+
+const DEFAULT_SECRET = "local-dev-secret-change-before-production";
+if (process.env.NODE_ENV === "production" && (!process.env.AUTH_SECRET || process.env.AUTH_SECRET === DEFAULT_SECRET)) {
+  throw new Error("[Kotizy] AUTH_SECRET manquant ou non changé en production. Ajoutez une valeur aléatoire forte dans les variables d'environnement.");
+}
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextRequest, NextResponse } from "next/server";

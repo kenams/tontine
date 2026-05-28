@@ -28,7 +28,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifie." }, { status: 401 });
-  const limit = rateLimit(request, "create-tontine", 8, 60_000);
+  const limit = await rateLimit(request, "create-tontine", 8, 60_000);
   if (!limit.ok) return NextResponse.json({ error: "Creation limitee temporairement." }, { status: 429 });
 
   const parsed = createTontineSchema.safeParse(await safeJson(request));

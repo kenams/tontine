@@ -22,7 +22,7 @@ export default async function WalletPage() {
 
       <div className="glass mb-4 rounded-[1.75rem] bg-emerald-500/15 p-5">
         <div className="mb-8 flex items-center justify-between">
-          <p className="text-sm font-bold text-smoke">TontineApp Black</p>
+          <p className="text-sm font-bold text-smoke">Kotizy Black</p>
           <CreditCard className="text-gold" />
         </div>
         <p className="text-2xl font-black tracking-[0.18em]">•••• 2026</p>

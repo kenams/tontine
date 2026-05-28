@@ -39,7 +39,7 @@ export function MobileShell({ children, user, title }: Props) {
               {initials(user.fullName)}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-black">{title ?? "TontineApp"}</p>
+              <p className="truncate text-sm font-black">{title ?? "Kotizy"}</p>
               <p className="truncate text-xs text-smoke">{user.email}</p>
             </div>
           </Link>

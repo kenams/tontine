@@ -1,7 +1,7 @@
 {
-  "name": "TontineApp",
-  "short_name": "Tontine",
-  "description": "Social finance mobile web app",
+  "name": "Kotizy",
+  "short_name": "Kotizy",
+  "description": "L'épargne collective, réinventée. Tontines digitales, wallet multi-devise et score de confiance.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#050706",

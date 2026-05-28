@@ -6,13 +6,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TontineApp - Social finance premium",
-  description: "Web app mobile de tontine, wallet test, admin fintech, scoring confiance et alertes fraude.",
+  title: "Kotizy — L'épargne collective, réinventée.",
+  description: "Tontines digitales, wallet multi-devise, score de confiance et paiements mobiles. L'épargne collective de votre génération.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "TontineApp"
+    title: "Kotizy"
   }
 };
 
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <PwaRegister />
           {children}
