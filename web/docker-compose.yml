@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tontineapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tontineapp
+      POSTGRES_USER: tontineapp
+      POSTGRES_PASSWORD: tontineapp_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - tontineapp-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tontineapp -d tontineapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tontineapp-postgres-data:

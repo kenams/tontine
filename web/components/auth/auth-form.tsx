@@ -1,0 +1,141 @@
+"use client";
+
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { MotionPage } from "@/components/ui/motion";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
+
+type Props = {
+  mode: "login" | "register";
+  admin?: boolean;
+};
+
+export function AuthForm({ mode, admin = false }: Props) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setLoading(true);
+    setError(null);
+    const payload =
+      mode === "register"
+        ? {
+            fullName: String(formData.get("fullName") ?? ""),
+            email: String(formData.get("email") ?? ""),
+            phone: String(formData.get("phone") ?? ""),
+            currency: String(formData.get("currency") ?? "XOF"),
+            password: String(formData.get("password") ?? "")
+          }
+        : {
+            email: String(formData.get("email") ?? ""),
+            password: String(formData.get("password") ?? "")
+          };
+
+    const response = await fetch(`/api/auth/${mode}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = (await response.json()) as { error?: string; redirectTo?: string; role?: string };
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(data.error ?? "Action impossible.");
+      return;
+    }
+    router.push(admin ? "/admin" : data.redirectTo ?? "/dashboard");
+    router.refresh();
+  }
+
+  return (
+    <MotionPage>
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+        <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-ivory">
+          <span className="grid h-9 w-9 place-items-center rounded-2xl bg-emerald-500 text-ink">T</span>
+          TontineApp
+        </Link>
+
+        <div className="glass rounded-[1.75rem] p-5">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
+                {admin ? <ShieldCheck size={14} /> : <Sparkles size={14} />}
+                {admin ? "Backoffice securise" : "Mobile money ready"}
+              </p>
+              <h1 className="text-3xl font-black tracking-normal">
+                {mode === "login" ? "Connexion" : "Creer un compte"}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-smoke">
+                {admin
+                  ? "Acces admin avec RBAC, audit logs et alertes fraude."
+                  : "Wallet test, tontines premium et scoring confiance."}
+              </p>
+            </div>
+          </div>
+
+          <form
+            onSubmit={submit}
+            method="post"
+            action={mode === "login" ? "/api/auth/login" : "/api/auth/register"}
+            className="space-y-3"
+          >
+            {mode === "register" ? <Input name="fullName" placeholder="Nom complet" autoComplete="name" required /> : null}
+            <Input name="email" type="email" placeholder="Email" autoComplete="email" required />
+            {mode === "register" ? <Input name="phone" placeholder="Telephone" autoComplete="tel" /> : null}
+            {mode === "register" ? (
+              <select
+                name="currency"
+                className="min-h-12 w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 text-sm outline-none"
+                defaultValue="XOF"
+              >
+                {SUPPORTED_CURRENCIES.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.label}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <Input name="password" type="password" placeholder="Mot de passe" autoComplete={mode === "login" ? "current-password" : "new-password"} required />
+            {error ? <p className="rounded-2xl bg-rose-500/12 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
+            <Button disabled={loading} className="w-full">
+              {loading ? "Traitement..." : mode === "login" ? "Entrer" : "Commencer"}
+              <ArrowRight size={18} />
+            </Button>
+          </form>
+
+          <div className="mt-5 grid gap-2 rounded-2xl bg-black/20 p-3 text-xs text-smoke">
+            <p className="font-bold text-ivory">Comptes demo</p>
+            <p>Admin: admin@tontineapp.com / Admin123!</p>
+            <p>User: user@tontineapp.com / User123!</p>
+          </div>
+        </div>
+
+        <div className="mt-5 text-center text-sm text-smoke">
+          {mode === "login" ? (
+            <>
+              Pas de compte ?{" "}
+              <Link className="font-bold text-emerald-400" href="/register">
+                Inscription
+              </Link>
+            </>
+          ) : (
+            <>
+              Deja inscrit ?{" "}
+              <Link className="font-bold text-emerald-400" href="/login">
+                Connexion
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </MotionPage>
+  );
+}

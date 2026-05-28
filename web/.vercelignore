@@ -1,0 +1,11 @@
+.env
+.env.local
+.env.*.local
+.npm-cache
+.next
+node_modules
+*.log
+*.err
+*.cookies
+test-results
+prisma/dev.db-journal

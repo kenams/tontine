@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  passwordHash    String
+  fullName        String
+  phone           String?
+  role            String         @default("USER")
+  status          String         @default("ACTIVE")
+  locale          String         @default("fr-FR")
+  kycStatus       String         @default("VERIFIED")
+  avatarUrl       String?
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  adminProfile    Admin?
+  wallet          Wallet?
+  trustScore      TrustScore?
+  memberships     Membership[]
+  contributions   Contribution[]
+  transactions    Transaction[]
+  notifications   Notification[]
+  messages        Message[]
+  badges          UserBadge[]
+  adminLogs       AdminLog[]
+  fraudAlerts     FraudAlert[]
+  disputes        Dispute[]
+  votes           Vote[]
+}
+
+model Admin {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions String   @default("SUPER_ADMIN")
+  createdAt   DateTime @default(now())
+}
+
+model Wallet {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balanceCents   Int           @default(0)
+  currency       String        @default("XOF")
+  status         String        @default("ACTIVE")
+  transactions   Transaction[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model TontineGroup {
+  id                 String          @id @default(cuid())
+  name               String
+  slug               String          @unique
+  description        String
+  contributionCents  Int
+  currency           String          @default("XOF")
+  frequency          String
+  maxMembers         Int
+  status             String          @default("ACTIVE")
+  joinCode           String          @unique
+  rules              String
+  nextDueAt          DateTime
+  currentRound       Int             @default(1)
+  platformFeeBps     Int             @default(125)
+  latePenaltyCents   Int             @default(1000)
+  createdById        String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  memberships        Membership[]
+  contributions      Contribution[]
+  transactions       Transaction[]
+  messages           Message[]
+  notifications      Notification[]
+  emergencyFund      EmergencyFund?
+  fraudAlerts        FraudAlert[]
+  disputes           Dispute[]
+  votes              Vote[]
+}
+
+model Membership {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String
+  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  role            String       @default("MEMBER")
+  status          String       @default("ACTIVE")
+  payoutOrder     Int
+  joinedAt        DateTime     @default(now())
+  nextPayoutAt    DateTime?
+  paidThisRound   Boolean      @default(false)
+
+  @@unique([userId, tontineGroupId])
+  @@unique([tontineGroupId, payoutOrder])
+}
+
+model Contribution {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String
+  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  amountCents     Int
+  currency        String       @default("XOF")
+  penaltyCents    Int          @default(0)
+  status          String       @default("PAID")
+  dueAt           DateTime
+  paidAt          DateTime?
+  paymentProvider String       @default("WALLET")
+  reference       String       @unique
+  createdAt       DateTime     @default(now())
+}
+
+model Transaction {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId        String?
+  wallet          Wallet?       @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  tontineGroupId  String?
+  tontineGroup    TontineGroup? @relation(fields: [tontineGroupId], references: [id], onDelete: SetNull)
+  type            String
+  status          String
+  amountCents     Int
+  currency        String        @default("XOF")
+  provider        String        @default("WALLET")
+  reference       String        @unique
+  riskScore       Int           @default(8)
+  metadata        String        @default("{}")
+  createdAt       DateTime      @default(now())
+}
+
+model Notification {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String?
+  tontineGroup    TontineGroup? @relation(fields: [tontineGroupId], references: [id], onDelete: SetNull)
+  title           String
+  body            String
+  type            String
+  readAt          DateTime?
+  createdAt       DateTime      @default(now())
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String
+  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  content         String
+  createdAt       DateTime     @default(now())
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String
+  color       String      @default("emerald")
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model TrustScore {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score             Int      @default(72)
+  paymentReliability Int     @default(80)
+  communityRating   Int      @default(78)
+  fraudRisk         Int      @default(9)
+  updatedAt         DateTime @updatedAt
+}
+
+model AdminLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action      String
+  targetType  String
+  targetId    String?
+  ipAddress   String?
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+}
+
+model FraudAlert {
+  id              String        @id @default(cuid())
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tontineGroupId  String?
+  tontineGroup    TontineGroup? @relation(fields: [tontineGroupId], references: [id], onDelete: SetNull)
+  severity        String
+  status          String        @default("OPEN")
+  title           String
+  description     String
+  riskScore       Int
+  createdAt       DateTime      @default(now())
+  resolvedAt      DateTime?
+}
+
+model Dispute {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String?
+  tontineGroup    TontineGroup? @relation(fields: [tontineGroupId], references: [id], onDelete: SetNull)
+  title           String
+  status          String        @default("OPEN")
+  priority        String        @default("MEDIUM")
+  amountCents     Int           @default(0)
+  currency        String        @default("XOF")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Vote {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId  String
+  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  title           String
+  choice          String
+  status          String       @default("OPEN")
+  closesAt        DateTime
+  createdAt       DateTime     @default(now())
+}
+
+model EmergencyFund {
+  id              String       @id @default(cuid())
+  tontineGroupId  String       @unique
+  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  balanceCents    Int          @default(0)
+  targetCents     Int          @default(0)
+  loanPoolCents   Int          @default(0)
+  currency        String       @default("XOF")
+  status          String       @default("ACTIVE")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}

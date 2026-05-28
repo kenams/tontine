@@ -1,0 +1,71 @@
+import { NextResponse, type NextRequest } from "next/server";
+
+import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { hashPassword } from "@/lib/password";
+import { redirectUrl, safeJson } from "@/lib/request";
+import { auditLog, clientIp, rateLimit } from "@/lib/security";
+import { registerSchema } from "@/lib/validators";
+
+export async function POST(request: NextRequest) {
+  const limit = rateLimit(request, "register", 5, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json({ error: "Trop de comptes crees depuis cette IP." }, { status: 429 });
+  }
+
+  const contentType = request.headers.get("content-type") ?? "";
+  const isFormPost = contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data");
+  const body = isFormPost ? Object.fromEntries(await request.formData()) : await safeJson(request);
+  const parsed = registerSchema.safeParse(body);
+  if (!parsed.success) {
+    return isFormPost
+      ? NextResponse.redirect(redirectUrl(request, "/register?error=invalid"), { status: 303 })
+      : NextResponse.json({ error: "Formulaire incomplet ou mot de passe trop faible." }, { status: 400 });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (existing) {
+    return isFormPost
+      ? NextResponse.redirect(redirectUrl(request, "/register?error=exists"), { status: 303 })
+      : NextResponse.json({ error: "Un compte existe deja avec cet email." }, { status: 409 });
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      email: parsed.data.email,
+      fullName: parsed.data.fullName,
+      phone: parsed.data.phone || null,
+      passwordHash: await hashPassword(parsed.data.password),
+      wallet: { create: { balanceCents: 125000, currency: parsed.data.currency } },
+      trustScore: { create: { score: 70, paymentReliability: 72, communityRating: 68, fraudRisk: 14 } },
+      notifications: {
+        create: {
+          title: "Bienvenue sur TontineApp",
+          body: "Votre wallet test est pret. Rejoignez une tontine ou creez votre groupe.",
+          type: "WELCOME"
+        }
+      }
+    }
+  });
+
+  await auditLog({
+    actorId: user.id,
+    action: "USER_REGISTERED",
+    targetType: "User",
+    targetId: user.id,
+    ipAddress: clientIp(request)
+  });
+
+  const token = createSessionToken({
+    userId: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: "USER",
+    status: user.status
+  });
+  const response = isFormPost
+    ? NextResponse.redirect(redirectUrl(request, "/onboarding"), { status: 303 })
+    : NextResponse.json({ ok: true, redirectTo: "/onboarding" });
+  setSessionCookie(response, token);
+  return response;
+}
