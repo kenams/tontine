@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
@@ -179,6 +180,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (status === "PAID") {
+    revalidateTag("admin");
     void sendContributionConfirmEmail(session.email, session.fullName, group.name, money(group.contributionCents, group.currency));
     void emitEvent({
       type: "activity:new",

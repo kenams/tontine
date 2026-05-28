@@ -6,12 +6,12 @@ import { RealtimeMonitor } from "@/components/admin/realtime-monitor";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminStats } from "@/lib/data";
+import { getCachedAdminStats } from "@/lib/data";
 import { compactMoney, dateShort, money } from "@/lib/format";
 
 export default async function AdminDashboardPage() {
   const session = await requireAdmin();
-  const stats = await getAdminStats();
+  const stats = await getCachedAdminStats();
   const fraudRiskAverage = stats.alerts.length
     ? Math.round(stats.alerts.reduce((sum, alert) => sum + alert.riskScore, 0) / stats.alerts.length)
     : 12;

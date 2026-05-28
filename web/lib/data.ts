@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { defaultCurrency } from "@/lib/currency";
 
@@ -196,3 +197,9 @@ export async function getAdminStats() {
     };
   }
 }
+
+export const getCachedAdminStats = unstable_cache(
+  getAdminStats,
+  ["admin-stats"],
+  { revalidate: 20, tags: ["admin"] }
+);
