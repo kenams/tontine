@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 
 import { userRepository } from "../repositories/user.repository";
-import { registerUser } from "../services/authSupabase.service";
+import { loginWithPassword, registerUser } from "../services/authSupabase.service";
 import type { AuthenticatedRequest, DemoUser } from "../types/api.types";
 import { DEMO_USERS, createDemoId } from "../utils/demo-data";
 import { generateToken } from "../utils/jwt";
-import { created, success, validationError } from "../utils/response";
+import { created, success, unauthorized, validationError } from "../utils/response";
 import { isValidEmail, isValidPassword, isValidPhone } from "../utils/validators";
 
 function toDemoUser(user: {
@@ -84,7 +84,7 @@ export async function register(req: Request, res: Response) {
 }
 
 /**
- * Connecte un utilisateur reel si trouve en base, sinon passe en mode demo.
+ * Connecte un utilisateur via Supabase (email + password), ou mode demo si Supabase indisponible.
  */
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body as Record<string, string>;
@@ -94,30 +94,31 @@ export async function login(req: Request, res: Response) {
   }
 
   try {
-    const realUser = await userRepository.findByEmail(email);
+    const result = await loginWithPassword(email, password);
+    const token = generateToken({
+      id: result.user.id,
+      email: result.user.email,
+      fullName: result.user.fullName
+    });
 
-    if (realUser) {
-      const token = generateToken({
-        id: realUser.id,
-        email: realUser.email,
-        fullName: realUser.fullName
-      });
-
-      return success(res, { user: realUser, token }, "Connexion reussie");
-    }
+    return success(res, { user: result.user, token }, "Connexion reussie");
   } catch {
-    // Fallback demo juste en dessous.
+    // Fallback demo uniquement pour les comptes demo connus.
   }
 
-  const fallbackUser = DEMO_USERS[0];
-  const user = DEMO_USERS.find((entry) => entry.email.toLowerCase() === email.toLowerCase()) ?? fallbackUser;
+  const demoUser = DEMO_USERS.find((entry) => entry.email.toLowerCase() === email.toLowerCase());
+
+  if (!demoUser) {
+    return unauthorized(res, "Email ou mot de passe incorrect.");
+  }
+
   const token = generateToken({
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName
+    id: demoUser.id,
+    email: demoUser.email,
+    fullName: demoUser.fullName
   });
 
-  return success(res, { user, token }, "Connexion reussie");
+  return success(res, { user: demoUser, token }, "Connexion reussie (demo)");
 }
 
 /**

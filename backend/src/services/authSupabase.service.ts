@@ -53,6 +53,30 @@ export async function verifySupabaseToken(token: string) {
 }
 
 /**
+ * Authentifie un utilisateur via Supabase avec email + mot de passe.
+ */
+export async function loginWithPassword(
+  email: string,
+  password: string
+): Promise<{ user: RepositoryUser; supabaseSession: unknown }> {
+  const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
+
+  if (error || !data.user) {
+    throw new Error(error?.message || "Email ou mot de passe incorrect.");
+  }
+
+  const profile =
+    (await userRepository.findBySupabaseId(data.user.id)) ??
+    (await userRepository.createOrUpdate({
+      id: data.user.id,
+      email,
+      fullName: String(data.user.user_metadata?.full_name ?? "Utilisateur")
+    }));
+
+  return { user: profile, supabaseSession: data.session };
+}
+
+/**
  * Resolve le profil public a partir d'un token Supabase.
  */
 export async function loginUser(token: string): Promise<RepositoryUser | null> {

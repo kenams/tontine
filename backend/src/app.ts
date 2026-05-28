@@ -11,7 +11,7 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: "*" }));
+  app.use(cors({ origin: config.app.frontendUrl, credentials: true }));
   app.use("/api", paymentWebhookRouter);
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

@@ -120,7 +120,7 @@ export async function getAdminStats() {
     prisma.user.count({ where: { status: "ACTIVE" } }),
     prisma.tontineGroup.count(),
     prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
-    prisma.transaction.findMany(),
+    prisma.transaction.findMany({ take: 5000, orderBy: { createdAt: "desc" } }),
     prisma.transaction.count({ where: { status: "PENDING" } }),
     prisma.transaction.count({ where: { status: "FAILED" } }),
     prisma.membership.count({ where: { status: "LATE" } }),

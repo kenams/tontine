@@ -34,6 +34,7 @@ model User {
   fraudAlerts     FraudAlert[]
   disputes        Dispute[]
   votes           Vote[]
+  createdTontines TontineGroup[] @relation("CreatedTontines")
 }
 
 model Admin {
@@ -73,6 +74,7 @@ model TontineGroup {
   platformFeeBps     Int             @default(125)
   latePenaltyCents   Int             @default(1000)
   createdById        String
+  createdBy          User            @relation("CreatedTontines", fields: [createdById], references: [id])
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   memberships        Membership[]
@@ -101,6 +103,8 @@ model Membership {
 
   @@unique([userId, tontineGroupId])
   @@unique([tontineGroupId, payoutOrder])
+  @@index([status])
+  @@index([tontineGroupId])
 }
 
 model Contribution {
@@ -118,6 +122,11 @@ model Contribution {
   paymentProvider String       @default("WALLET")
   reference       String       @unique
   createdAt       DateTime     @default(now())
+
+  @@index([status])
+  @@index([dueAt])
+  @@index([userId])
+  @@index([tontineGroupId])
 }
 
 model Transaction {
@@ -137,6 +146,11 @@ model Transaction {
   riskScore       Int           @default(8)
   metadata        String        @default("{}")
   createdAt       DateTime      @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([tontineGroupId])
 }
 
 model Notification {
@@ -150,6 +164,9 @@ model Notification {
   type            String
   readAt          DateTime?
   createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([readAt])
 }
 
 model Message {
