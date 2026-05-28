@@ -134,6 +134,10 @@ export default async function LandingPage() {
 
         <footer className="border-t border-white/10 py-8 text-center text-xs text-smoke">
           © {new Date().getFullYear()} Kotizy — L'épargne collective, réinventée.
+          {" · "}
+          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="hover:text-ivory transition-colors">
+            Un produit KAH Digital
+          </a>
         </footer>
       </main>
     </MotionPage>
