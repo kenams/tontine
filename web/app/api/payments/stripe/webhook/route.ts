@@ -75,6 +75,73 @@ async function markPaid(session: Stripe.Checkout.Session, eventType: string) {
   return { updated: true };
 }
 
+async function creditWallet(session: Stripe.Checkout.Session, eventType: string) {
+  const walletId = session.metadata?.walletId;
+  const transactionId = session.metadata?.transactionId;
+  const userId = session.metadata?.userId;
+  if (!walletId || !transactionId || !userId) return { updated: false, reason: "missing_metadata" };
+
+  await prisma.$transaction(async (tx) => {
+    const txRecord = await tx.transaction.findUnique({ where: { id: transactionId }, select: { amountCents: true } });
+    if (!txRecord) throw new Error("transaction_not_found");
+
+    await tx.wallet.update({
+      where: { id: walletId },
+      data: { balanceCents: { increment: txRecord.amountCents } },
+    });
+    await tx.transaction.update({
+      where: { id: transactionId },
+      data: {
+        status: "PAID",
+        riskScore: 5,
+        metadata: JSON.stringify({
+          mode: "stripe_checkout",
+          type: "WALLET_DEPOSIT",
+          eventType,
+          checkoutSessionId: session.id,
+          paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id,
+          paymentStatus: session.payment_status,
+        }),
+      },
+    });
+    await tx.notification.create({
+      data: {
+        userId,
+        title: "Wallet rechargé",
+        body: "Votre recharge Stripe a été créditée sur votre wallet Kotizy.",
+        type: "PAYMENT",
+      },
+    });
+    await tx.adminLog.create({
+      data: {
+        actorId: userId,
+        action: "WALLET_DEPOSIT_CONFIRMED",
+        targetType: "Wallet",
+        targetId: walletId,
+        metadata: JSON.stringify({ eventType, sessionId: session.id }),
+      },
+    });
+  });
+
+  return { updated: true };
+}
+
+async function failWalletDeposit(session: Stripe.Checkout.Session, eventType: string) {
+  const transactionId = session.metadata?.transactionId;
+  if (!transactionId) return { updated: false, reason: "missing_metadata" };
+
+  await prisma.transaction.update({
+    where: { id: transactionId },
+    data: {
+      status: "FAILED",
+      riskScore: 50,
+      metadata: JSON.stringify({ mode: "stripe_checkout", type: "WALLET_DEPOSIT", eventType, checkoutSessionId: session.id }),
+    },
+  });
+
+  return { updated: true };
+}
+
 async function markFailed(session: Stripe.Checkout.Session, eventType: string) {
   const metadata = sessionMetadata(session);
   if (!metadata.transactionId || !metadata.contributionId) return { updated: false, reason: "missing_metadata" };
@@ -139,12 +206,22 @@ export async function POST(request: NextRequest) {
   }
 
   if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-    const result = await markPaid(event.data.object as Stripe.Checkout.Session, event.type);
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.metadata?.type === "WALLET_DEPOSIT") {
+      const result = await creditWallet(session, event.type);
+      return NextResponse.json({ received: true, ...result });
+    }
+    const result = await markPaid(session, event.type);
     return NextResponse.json({ received: true, ...result });
   }
 
   if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
-    const result = await markFailed(event.data.object as Stripe.Checkout.Session, event.type);
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.metadata?.type === "WALLET_DEPOSIT") {
+      const result = await failWalletDeposit(session, event.type);
+      return NextResponse.json({ received: true, ...result });
+    }
+    const result = await markFailed(session, event.type);
     return NextResponse.json({ received: true, ...result });
   }
 

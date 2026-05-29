@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, Building2, CreditCard, Info, RefreshCw, Smartphone, WalletCards } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Building2, CheckCircle2, CreditCard, Info, RefreshCw, Smartphone, WalletCards } from "lucide-react";
 import Link from "next/link";
 
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -15,13 +15,18 @@ const providers = [
   { name: "Virement bancaire", icon: Building2, desc: "IBAN · SWIFT · SEPA", status: "Bientôt" },
 ];
 
-export default async function WalletPage() {
+export default async function WalletPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ deposit?: string }>;
+}) {
   const session = await requireUser();
+  const query = searchParams ? await searchParams : {};
   const { user, transactions } = await getUserDashboard(session.userId);
   const wallet = user.wallet;
-  const walletCurrency = wallet?.currency ?? "XOF";
+  const walletCurrency = wallet?.currency ?? "EUR";
   const balance = wallet?.balanceCents ?? 0;
-  const paid = transactions.filter((t) => t.status === "PAID").reduce((s, t) => s + t.amountCents, 0);
+  const paid = transactions.filter((t) => t.status === "PAID" && t.type !== "WALLET_DEPOSIT").reduce((s, t) => s + t.amountCents, 0);
   const pending = transactions.filter((t) => t.status === "PENDING").reduce((s, t) => s + t.amountCents, 0);
 
   return (
@@ -29,6 +34,13 @@ export default async function WalletPage() {
       <PageHeading eyebrow="Wallet personnel" title={money(balance, walletCurrency)}>
         Solde disponible pour payer vos cotisations en 1 clic.
       </PageHeading>
+
+      {query.deposit === "success" && (
+        <div className="mb-4 flex items-center gap-3 rounded-3xl border border-emerald-300/30 bg-emerald-400/10 p-4">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+          <p className="text-sm font-bold text-emerald-200">Recharge confirmée. Les fonds sont disponibles sur votre wallet.</p>
+        </div>
+      )}
 
       {/* Carte premium */}
       <div className="kotizy-card mb-4 rounded-[1.75rem] p-6">
@@ -50,13 +62,13 @@ export default async function WalletPage() {
 
       {/* Actions */}
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <button className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] opacity-60 cursor-not-allowed">
+        <Link href="/wallet/deposit" className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] active:scale-95">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15">
             <ArrowDownToLine size={18} className="text-emerald-400" />
           </div>
           <span className="text-xs font-bold">Déposer</span>
-          <span className="text-[10px] text-[var(--muted)]">Bientôt</span>
-        </button>
+          <span className="text-[10px] text-emerald-400">Stripe</span>
+        </Link>
         <button className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] opacity-60 cursor-not-allowed">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--surface-strong)]">
             <ArrowUpFromLine size={18} className="text-[var(--muted)]" />

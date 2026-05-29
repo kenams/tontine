@@ -11,6 +11,7 @@ import { StatCard } from "@/components/app/stat-card";
 import { StripeReturnSync } from "@/components/app/stripe-return-sync";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { getTontineDetail } from "@/lib/data";
 import { dateShort, dateTime, initials, money, pct } from "@/lib/format";
 
@@ -24,7 +25,10 @@ export default async function TontineDetailPage({
   const session = await requireUser();
   const { id } = await params;
   const query = searchParams ? await searchParams : {};
-  const detail = await getTontineDetail(id, session.userId).catch(() => null);
+  const [detail, wallet] = await Promise.all([
+    getTontineDetail(id, session.userId).catch(() => null),
+    prisma.wallet.findUnique({ where: { userId: session.userId }, select: { balanceCents: true, currency: true } }),
+  ]);
   if (!detail || (!detail.isMember && session.role !== "ADMIN")) notFound();
   const { group } = detail;
   const paid = group.contributions.filter((item) => item.status === "PAID").length;
@@ -72,7 +76,12 @@ export default async function TontineDetailPage({
       </div>
 
       <div className="mb-4 grid gap-3">
-        <ContributionButton groupId={group.id} />
+        <ContributionButton
+          groupId={group.id}
+          wallet={wallet}
+          contributionCents={group.contributionCents}
+          groupCurrency={group.currency}
+        />
         <ShareGroupButton joinCode={group.joinCode} />
         <InviteMemberForm groupId={group.id} />
       </div>

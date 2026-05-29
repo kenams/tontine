@@ -41,6 +41,63 @@ function requestOrigin(request: NextRequest) {
   return `${protocol}://${host}`;
 }
 
+const STRIPE_SUPPORTED_CURRENCIES = new Set([
+  "usd","eur","gbp","cad","aud","jpy","chf","sek","nok","dkk","nzd","sgd","hkd","mxn",
+  "brl","inr","pln","czk","ron","huf","bgn","hrk","mad","aed","zar","ngn","ghs","kes"
+]);
+
+export function stripeDepositCurrency(walletCurrency: string): string {
+  const c = walletCurrency.toLowerCase();
+  return STRIPE_SUPPORTED_CURRENCIES.has(c) ? c : "eur";
+}
+
+export async function createWalletDepositCheckoutSession(input: {
+  request: NextRequest;
+  user: CheckoutUser;
+  walletId: string;
+  transactionId: string;
+  amountCents: number;
+  currency: string;
+}) {
+  const stripe = getStripe();
+  if (!stripe) throw new Error("Stripe is not configured");
+
+  const origin = requestOrigin(input.request);
+  const successUrl = `${origin}/wallet?deposit=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${origin}/wallet/deposit?cancelled=1`;
+  const metadata = {
+    type: "WALLET_DEPOSIT",
+    transactionId: input.transactionId,
+    walletId: input.walletId,
+    userId: input.user.id,
+    currency: input.currency,
+  };
+
+  return stripe.checkout.sessions.create({
+    mode: "payment",
+    customer_email: input.user.email,
+    client_reference_id: input.transactionId,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: input.currency,
+          unit_amount: input.amountCents,
+          product_data: {
+            name: "Recharge Kotizy Wallet",
+            description: `Crédit de ${(input.amountCents / 100).toFixed(2)} ${input.currency.toUpperCase()} sur votre wallet Kotizy`,
+          },
+        },
+      },
+    ],
+    metadata,
+    payment_intent_data: { metadata },
+  });
+}
+
 export async function createContributionCheckoutSession(input: {
   request: NextRequest;
   group: CheckoutGroup;
