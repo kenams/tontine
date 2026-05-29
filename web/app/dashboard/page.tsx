@@ -8,6 +8,7 @@ import { LivePulse } from "@/components/app/live-pulse";
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
 import { ProgressBar } from "@/components/app/progress-bar";
+import { SavingsChart } from "@/components/app/savings-chart";
 import { StatCard } from "@/components/app/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -20,7 +21,22 @@ export default async function DashboardPage() {
   const { user, memberships, transactions, notifications, totalSaved, nextMembership } = await getUserDashboard(session.userId);
   const wallet = user.wallet;
   const walletCurrency = wallet?.currency ?? "XOF";
-  const trust = user.trustScore?.score ?? 70;
+  const trust = user.trustScore?.score ?? 50;
+
+  // Graphique épargne cumulée sur 6 mois
+  const now = new Date();
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleString("fr-FR", { month: "short" }) };
+  });
+  let cumul = 0;
+  const chartData = months.map(({ key, label }) => {
+    const monthTotal = transactions
+      .filter((t) => t.status === "PAID" && t.currency === walletCurrency && t.createdAt.toISOString().startsWith(key))
+      .reduce((s, t) => s + t.amountCents, 0);
+    cumul += monthTotal;
+    return { month: label, amount: Math.round(cumul / 100), currency: walletCurrency };
+  });
 
   return (
     <MobileShell user={session} title="Accueil">
@@ -84,8 +100,12 @@ export default async function DashboardPage() {
 
       <AiCoachCard />
 
+      <div className="mt-4">
+        <SavingsChart data={chartData} />
+      </div>
+
       <div className="mt-4 glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Transactions recentes</p>
+        <p className="mb-3 text-sm font-black">Transactions récentes</p>
         <div className="space-y-3">
           {transactions.slice(0, 4).map((transaction) => (
             <div key={transaction.id} className="flex items-center justify-between gap-3">

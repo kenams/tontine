@@ -2,10 +2,12 @@ import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
+import { checkBadgesAfterPayment } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 import { sendContributionConfirmEmail } from "@/lib/email";
 import { money } from "@/lib/format";
 import { emitEvent } from "@/lib/realtime-server";
+import { rewardPayment } from "@/lib/trust";
 import { safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { createContributionCheckoutSession, isStripeCheckoutProvider, isStripeConfigured } from "@/lib/stripe";
@@ -181,6 +183,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (status === "PAID") {
     revalidateTag("admin");
+    void rewardPayment(session.userId);
+    void checkBadgesAfterPayment(session.userId);
     void sendContributionConfirmEmail(session.email, session.fullName, group.name, money(group.contributionCents, group.currency));
     void emitEvent({
       type: "activity:new",

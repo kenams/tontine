@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import { emitEvent } from "@/lib/realtime-server";
+import { penalizeLate } from "@/lib/trust";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -69,6 +70,14 @@ export async function GET(request: NextRequest) {
     results.push(`${group.name}: round ${group.currentRound} → ${nextRound}, due ${nextDue.toISOString().slice(0, 10)}`);
   }
 
+  const lateMembers = await prisma.membership.findMany({
+    where: {
+      status: "ACTIVE",
+      paidThisRound: false,
+      tontineGroup: { nextDueAt: { lt: now } }
+    },
+    select: { userId: true }
+  });
   const lateUpdate = await prisma.membership.updateMany({
     where: {
       status: "ACTIVE",
@@ -77,6 +86,9 @@ export async function GET(request: NextRequest) {
     },
     data: { status: "LATE" }
   });
+  for (const { userId } of lateMembers) {
+    void penalizeLate(userId);
+  }
 
   return NextResponse.json({ ok: true, advanced, late: lateUpdate.count, groups: results });
 }

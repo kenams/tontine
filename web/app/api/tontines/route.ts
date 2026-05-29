@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
+import { awardFounder } from "@/lib/badges";
 import { amountToMinorUnits } from "@/lib/currency";
 import { getUserTontines } from "@/lib/data";
 import { prisma } from "@/lib/db";
@@ -74,6 +75,8 @@ export async function POST(request: NextRequest) {
     targetId: group.id,
     ipAddress: clientIp(request)
   });
+
+  void awardFounder(session.userId);
 
   return NextResponse.json({ group }, { status: 201 });
 }

@@ -95,6 +95,11 @@ export function AuthForm({ mode, admin = false }: Props) {
   const [quickLoading, setQuickLoading] = useState<"user" | "admin" | null>(null);
   const [password, setPassword] = useState("");
 
+  // Récupère le paramètre ?next= pour rediriger après connexion (ex: depuis /g/[code])
+  const nextUrl = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("next") ?? ""
+    : "";
+
   async function quickLogin(role: "user" | "admin") {
     setQuickLoading(role);
     setError(null);
@@ -157,7 +162,8 @@ export function AuthForm({ mode, admin = false }: Props) {
         setError(data.error ?? `Erreur ${res.status}. Veuillez réessayer.`);
         return;
       }
-      router.push(admin ? "/admin" : data.redirectTo ?? "/dashboard");
+      const dest = nextUrl || (admin ? "/admin" : data.redirectTo ?? "/dashboard");
+      router.push(dest);
       router.refresh();
     } catch {
       setError("Connexion impossible. Vérifiez votre réseau et réessayez.");

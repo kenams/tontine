@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { MessageComposer } from "@/components/app/message-composer";
 import { MobileShell } from "@/components/app/mobile-shell";
+import { ShareGroupButton } from "@/components/app/share-group";
 import { PageHeading } from "@/components/app/page-heading";
 import { ContributionButton, InviteMemberForm } from "@/components/app/payment-actions";
 import { ProgressBar } from "@/components/app/progress-bar";
@@ -72,6 +73,7 @@ export default async function TontineDetailPage({
 
       <div className="mb-4 grid gap-3">
         <ContributionButton groupId={group.id} />
+        <ShareGroupButton joinCode={group.joinCode} />
         <InviteMemberForm groupId={group.id} />
       </div>
 
