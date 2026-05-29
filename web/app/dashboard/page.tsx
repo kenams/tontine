@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const { user, memberships, transactions, notifications, totalSaved, nextMembership } = await getUserDashboard(session.userId);
   const wallet = user.wallet;
   const walletCurrency = wallet?.currency ?? "XOF";
-  const trust = user.trustScore?.score ?? 50;
+  const trust = user.trustScore?.score ?? 0;
 
   // Graphique épargne cumulée sur 6 mois
   const now = new Date();

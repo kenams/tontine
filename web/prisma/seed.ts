@@ -41,7 +41,7 @@ async function main() {
       status: "ACTIVE",
       kycStatus: "VERIFIED",
       adminProfile: { create: { permissions: "SUPER_ADMIN" } },
-      trustScore: { create: { score: 100, paymentReliability: 100, communityRating: 100, fraudRisk: 0 } },
+      trustScore: { create: { score: 0, paymentReliability: 0, communityRating: 0, fraudRisk: 100 } },
       wallet: { create: { balanceCents: 0, currency: "XOF" } },
       notifications: {
         create: {

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       phone: parsed.data.phone || null,
       passwordHash: await hashPassword(parsed.data.password),
       wallet: { create: { balanceCents: 0, currency: parsed.data.currency } },
-      trustScore: { create: { score: 50, paymentReliability: 50, communityRating: 50, fraudRisk: 20 } },
+      trustScore: { create: { score: 0, paymentReliability: 0, communityRating: 0, fraudRisk: 100 } },
       notifications: {
         create: {
           title: "Bienvenue sur Kotizy 🎉",
