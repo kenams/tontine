@@ -27,7 +27,7 @@ export function isStripeConfigured() {
 
 export function getStripe() {
   if (!stripeSecretKey) return null;
-  stripeClient ??= new Stripe(stripeSecretKey);
+  stripeClient ??= new Stripe(stripeSecretKey, { timeout: 10_000, maxNetworkRetries: 1 });
   return stripeClient;
 }
 

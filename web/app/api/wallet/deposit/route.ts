@@ -86,11 +86,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, checkoutUrl: checkout.url, sessionId: checkout.id });
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : "stripe_error";
+    console.error("[wallet/deposit] Stripe error:", errMsg);
     await prisma.transaction.update({
       where: { id: transaction.id },
-      data: { status: "FAILED", metadata: JSON.stringify({ error: error instanceof Error ? error.message : "stripe_error" }) },
+      data: { status: "FAILED", metadata: JSON.stringify({ error: errMsg }) },
     });
 
-    return NextResponse.json({ error: "Impossible de créer la session Stripe." }, { status: 502 });
+    return NextResponse.json({ error: "Impossible de créer la session Stripe.", detail: errMsg }, { status: 502 });
   }
 }
