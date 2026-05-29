@@ -38,40 +38,68 @@ export default async function DashboardPage() {
     return { month: label, amount: Math.round(cumul / 100), currency: walletCurrency };
   });
 
+  const unread = notifications.filter((n) => !n.readAt).length;
+
   return (
     <MobileShell user={session} title="Accueil">
-      <PageHeading eyebrow="Bonjour" title={user.fullName}>
-        {nextMembership ? `Prochaine echeance ${nextMembership.name} le ${dateShort(nextMembership.nextDueAt)}.` : "Creez votre premiere tontine premium."}
-      </PageHeading>
+      {/* Greeting */}
+      <div className="mb-5">
+        <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Bonjour</p>
+        <h1 className="text-2xl font-black">{user.fullName}</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          {nextMembership
+            ? `Prochaine échéance : ${nextMembership.name} le ${dateShort(nextMembership.nextDueAt)}`
+            : "Créez votre première tontine Kotizy."}
+        </p>
+      </div>
 
+      {/* Stats 2×2 */}
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <StatCard label={`Solde ${walletCurrency}`} value={money(wallet?.balanceCents ?? 0, walletCurrency)} icon={<WalletCards size={19} />} accent />
-        <StatCard label="Confiance" value={`${trust}/100`} icon={<ShieldCheck size={19} />} />
-        <StatCard label={`Epargne ${walletCurrency}`} value={money(totalSaved, walletCurrency)} icon={<TrendingUp size={19} />} />
-        <StatCard label="Alertes" value={String(notifications.filter((item) => !item.readAt).length)} icon={<CalendarClock size={19} />} />
+        <div className="glass col-span-2 flex items-center justify-between rounded-3xl p-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase text-[var(--muted)]">Solde wallet {walletCurrency}</p>
+            <p className="text-2xl font-black">{money(wallet?.balanceCents ?? 0, walletCurrency)}</p>
+          </div>
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15">
+            <WalletCards size={19} className="text-emerald-400" />
+          </div>
+        </div>
+        <StatCard label="Confiance" value={`${trust}/100`} icon={<ShieldCheck size={19} />} accent />
+        <StatCard label={`Épargne ${walletCurrency}`} value={money(totalSaved, walletCurrency)} icon={<TrendingUp size={19} />} />
+        <StatCard label="Groupes" value={String(memberships.length)} icon={<CalendarClock size={19} />} />
+        <Link href="/notifications" className="glass flex items-center justify-between rounded-3xl p-4 transition hover:bg-[var(--surface-strong)]">
+          <div>
+            <p className="text-[10px] font-bold uppercase text-[var(--muted)]">Alertes</p>
+            <p className="text-xl font-black">{unread}</p>
+          </div>
+          {unread > 0 && <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />}
+        </Link>
       </div>
 
       <LivePulse userId={session.userId} name={user.fullName} currency={walletCurrency} />
 
-      <div className="mb-4 glass rounded-[1.75rem] p-4">
-        <div className="mb-3 flex items-center justify-between">
+      {/* Prochaine action */}
+      <div className="mb-4 glass rounded-[1.75rem] p-5">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase text-gold">Action rapide</p>
-            <p className="text-xl font-black">{nextMembership?.name ?? "Nouvelle tontine"}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gold">Action rapide</p>
+            <p className="text-xl font-black">{nextMembership?.name ?? "Démarrer"}</p>
           </div>
-          {nextMembership ? <StatusBadge value={nextMembership.status} /> : null}
+          {nextMembership && <StatusBadge value={nextMembership.status} />}
         </div>
-        <p className="mb-4 text-sm leading-6 text-smoke">
+        <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
           {nextMembership
-            ? `${money(nextMembership.contributionCents, nextMembership.currency)} a payer avant ${dateShort(nextMembership.nextDueAt)}.`
-            : "Creez un groupe ou rejoignez une communaute avec un code."}
+            ? `${money(nextMembership.contributionCents, nextMembership.currency)} · avant le ${dateShort(nextMembership.nextDueAt)}`
+            : "Créez un groupe ou rejoignez avec un code."}
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <Link href={nextMembership ? `/tontines/${nextMembership.id}` : "/tontines/create"} className="rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-ink shadow-glow">
-            {nextMembership ? "Payer" : "Creer"}
+          <Link href={nextMembership ? `/tontines/${nextMembership.id}` : "/tontines/create"}
+            className="rounded-2xl bg-emerald-500 py-3 text-center text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400">
+            {nextMembership ? "Payer maintenant" : "Créer un groupe"}
           </Link>
-          <Link href="/tontines" className="rounded-2xl bg-white/10 px-4 py-3 text-center text-sm font-black text-[var(--text)] ring-1 ring-white/10">
-            Voir groupes
+          <Link href="/tontines"
+            className="rounded-2xl bg-[var(--surface)] py-3 text-center text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]">
+            Mes groupes
           </Link>
         </div>
       </div>
@@ -106,6 +134,7 @@ export default async function DashboardPage() {
 
       <div className="mt-4 glass rounded-3xl p-4">
         <p className="mb-3 text-sm font-black">Transactions récentes</p>
+
         <div className="space-y-3">
           {transactions.slice(0, 4).map((transaction) => (
             <div key={transaction.id} className="flex items-center justify-between gap-3">

@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, CreditCard, ShieldCheck, Smartphone, Sparkles, Users, TrendingUp, Globe } from "lucide-react";
+import { ArrowRight, BadgeCheck, Globe, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
 import React from "react";
 import Link from "next/link";
 
@@ -12,87 +12,95 @@ export default async function LandingPage() {
   return (
     <MotionPage>
       <main className="mx-auto min-h-dvh max-w-6xl px-5 py-5">
-        <nav className="flex items-center justify-between">
+
+        {/* ── NAV ── */}
+        <nav className="flex items-center justify-between py-2">
           <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500 text-lg font-black text-ink shadow-glow">K</span>
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-ink shadow-glow">K</span>
             <span className="text-sm font-black tracking-tight">Kotizy</span>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
               href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
-              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-[var(--text)] ring-1 ring-white/10"
+              className="rounded-2xl bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]"
             >
-              {session ? "Ouvrir" : "Connexion"}
+              {session ? "Mon espace" : "Connexion"}
             </Link>
           </div>
         </nav>
 
-        <section className="grid min-h-[calc(100dvh-7rem)] items-center gap-8 py-8 lg:grid-cols-[1fr_420px]">
+        {/* ── HERO ── */}
+        <section className="grid min-h-[calc(100dvh-6rem)] items-center gap-12 py-12 lg:grid-cols-[1fr_440px]">
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
-              <Sparkles size={14} />
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 text-xs font-bold text-emerald-400">
+              <Sparkles size={13} />
               La tontine de votre génération
-            </p>
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.95] tracking-normal md:text-7xl">
-              L'épargne collective,<br />réinventée.
+            </div>
+            <h1 className="max-w-3xl text-5xl font-black leading-[0.92] tracking-[-0.03em] md:text-[72px]">
+              L'épargne<br />
+              <span className="text-emerald-400">collective,</span><br />
+              réinventée.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-smoke md:text-lg">
-              Kotizy digitalise la tontine — cotisations, rotation automatique, wallet multi-devise,
-              score de confiance et paiements mobiles. Pour la diaspora et au-delà.
+            <p className="mt-6 max-w-xl text-base leading-7 text-[var(--muted)] md:text-lg">
+              Tontines digitales multi-devises, wallet sécurisé, score de confiance et paiements mobiles.
+              Pour la diaspora africaine et au-delà.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={session ? "/dashboard" : "/register"}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 text-sm font-black text-ink shadow-glow"
+                className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400"
               >
-                {session ? "Mon dashboard" : "Commencer gratuitement"} <ArrowRight size={18} />
+                {session ? "Mon dashboard" : "Commencer gratuitement"}
+                <ArrowRight size={16} />
               </Link>
-              <Link href="/login" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 px-5 text-sm font-black text-[var(--text)] ring-1 ring-white/10">
+              <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--surface)] px-6 text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]">
                 Se connecter
               </Link>
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                ["Multi-devise", Globe],
-                ["PWA mobile", Smartphone],
-                ["Anti-fraude", ShieldCheck],
-                ["Groupes", Users]
-              ].map(([label, Icon]) => {
-                const I = Icon as React.ElementType;
-                return (
-                  <div key={String(label)} className="glass rounded-3xl p-4">
-                    <I className="mb-3 text-emerald-400" size={20} />
-                    <p className="text-sm font-bold">{String(label)}</p>
-                  </div>
-                );
-              })}
+
+            {/* Chiffres */}
+            <div className="mt-10 flex flex-wrap gap-8">
+              {[["16", "devises"], ["100%", "chiffré"], ["0€", "frais cachés"]].map(([v, l]) => (
+                <div key={l}>
+                  <p className="text-2xl font-black text-[var(--text)]">{v}</p>
+                  <p className="text-xs text-[var(--muted)]">{l}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="glass mx-auto w-full max-w-sm rounded-[2rem] p-4 shadow-premium">
-            <div className="rounded-[1.5rem] bg-[var(--bg)] p-4 ring-1 ring-white/10">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-smoke">Solde wallet</p>
-                  <p className="text-3xl font-black">XOF · EUR · USD</p>
+          {/* Card preview */}
+          <div className="mx-auto w-full max-w-sm">
+            <div className="glass rounded-[2rem] p-5 shadow-premium">
+              {/* Mini wallet card */}
+              <div className="kotizy-card mb-4 rounded-[1.5rem] p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Kotizy Wallet</p>
+                    <p className="mt-1 text-3xl font-black text-ivory">0 XOF</p>
+                  </div>
+                  <BadgeCheck className="text-gold" size={24} />
                 </div>
-                <BadgeCheck className="text-gold" size={30} />
+                <div className="mt-6 flex items-end justify-between">
+                  <p className="font-bold tracking-[0.15em] text-smoke">•••• 2026</p>
+                  <p className="text-xs text-smoke">XOF · EUR · USD</p>
+                </div>
               </div>
-              <div className="rounded-3xl bg-emerald-500 p-4 text-ink">
-                <p className="text-xs font-bold uppercase">Prochaine échéance</p>
-                <p className="mt-2 text-2xl font-black">Cercle Émeraude</p>
-                <p className="mt-1 text-sm font-bold">16 devises supportées</p>
-              </div>
-              <div className="mt-4 space-y-3">
+
+              {/* Feed live */}
+              <div className="space-y-2">
                 {[
-                  ["Kotisation validée", "text-emerald-400"],
-                  ["Wave en attente", "text-gold"],
-                  ["Rotation programmée", "text-emerald-400"]
-                ].map(([label, cls]) => (
-                  <div key={String(label)} className="flex items-center justify-between rounded-2xl bg-white/[0.08] p-3">
-                    <span className="text-sm font-bold">{String(label)}</span>
-                    <span className={String(cls)}>{cls.includes("gold") ? "Review" : "OK"}</span>
+                  { label: "Cotisation validée", sub: "Cercle Émeraude", val: "+50 000", color: "text-emerald-400" },
+                  { label: "Badge Ponctuel", sub: "Récompense obtenue", val: "★", color: "text-gold" },
+                  { label: "Prochaine échéance", sub: "dans 4 jours", val: "J-4", color: "text-rose-300" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[var(--surface)] px-3 py-2.5">
+                    <div>
+                      <p className="text-xs font-bold">{item.label}</p>
+                      <p className="text-[10px] text-[var(--muted)]">{item.sub}</p>
+                    </div>
+                    <span className={`text-xs font-black ${item.color}`}>{item.val}</span>
                   </div>
                 ))}
               </div>
@@ -100,42 +108,45 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-white/10 py-16">
-          <p className="mb-2 text-center text-xs font-bold uppercase text-smoke">Pourquoi Kotizy ?</p>
-          <h2 className="mb-12 text-center text-3xl font-black md:text-4xl">Tout ce dont votre cercle a besoin.</h2>
+        {/* ── FEATURES ── */}
+        <section className="border-t border-[var(--surface-strong)] py-20">
+          <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Pourquoi Kotizy</div>
+          <h2 className="mb-14 text-center text-3xl font-black tracking-tight md:text-4xl">
+            Tout ce dont votre<br />cercle a besoin.
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              ["Cotisations automatiques", "Planifiez, cotisez et suivez les paiements de votre groupe en temps réel.", TrendingUp],
-              ["Score de confiance", "Chaque membre est noté sur sa ponctualité. Les mauvais payeurs sont détectés automatiquement.", ShieldCheck],
-              ["Multi-devise native", "XOF, EUR, USD, NGN, GHS, KES et 10 autres. Votre diaspora, toutes devises.", Globe],
-              ["Paiements mobiles", "Stripe, Wave, Orange Money, MTN MoMo, Flutterwave et virement bancaire.", CreditCard],
-              ["Wallet intégré", "Solde personnel, historique complet et paiement en 1 clic depuis le wallet.", Users],
-              ["PWA installable", "Fonctionne comme une app native sur Android et iOS. Aucun store requis.", Smartphone]
-            ].map(([title, desc, Icon]) => {
-              const I = Icon as React.ElementType;
-              return (
-                <div key={String(title)} className="glass rounded-3xl p-5">
-                  <I className="mb-4 text-emerald-400" size={22} />
-                  <p className="mb-2 font-black">{String(title)}</p>
-                  <p className="text-sm leading-6 text-smoke">{String(desc)}</p>
+              { icon: TrendingUp, title: "Cotisations automatiques", desc: "Planifiez, cotisez et suivez les paiements de votre groupe en temps réel. Score de confiance calculé automatiquement.", accent: true },
+              { icon: Shield, title: "Score de confiance", desc: "Chaque paiement à l'heure renforce votre réputation. Débutant → Bronze → Avancé → Gold → Élite.", accent: false },
+              { icon: Globe, title: "16 devises natives", desc: "XOF, EUR, USD, NGN, GHS, KES et 10 autres. Votre diaspora, toutes devises, sans conversion.", accent: false },
+              { icon: Zap, title: "Paiements mobiles", desc: "Wallet intégré, Stripe, Wave, Orange Money, MTN MoMo, Flutterwave. Payer en 1 clic.", accent: false },
+              { icon: Users, title: "Partage viral", desc: "Chaque groupe a une page publique. Partagez le lien, les membres rejoignent sans compte au préalable.", accent: false },
+              { icon: Smartphone, title: "PWA installable", desc: "Fonctionne comme une app native sur Android et iOS. Aucun App Store requis.", accent: false },
+            ].map(({ icon: Icon, title, desc, accent }) => (
+              <div key={title} className={`glass rounded-3xl p-6 transition hover:bg-[var(--surface-strong)] ${accent ? "ring-1 ring-emerald-400/20" : ""}`}>
+                <div className={`mb-4 grid h-11 w-11 place-items-center rounded-2xl ${accent ? "bg-emerald-500 text-ink shadow-glow" : "bg-[var(--surface-strong)] text-emerald-400"}`}>
+                  <Icon size={20} />
                 </div>
-              );
-            })}
+                <p className="mb-2 font-black">{title}</p>
+                <p className="text-sm leading-6 text-[var(--muted)]">{desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section className="py-16 text-center">
-          <h2 className="mb-4 text-3xl font-black md:text-4xl">Prêt à kotiser ?</h2>
-          <p className="mb-8 text-smoke">Créez votre groupe en 2 minutes. C'est gratuit.</p>
-          <Link href="/register" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-8 text-base font-black text-ink shadow-glow">
+        {/* ── CTA FINAL ── */}
+        <section className="py-20 text-center">
+          <h2 className="mb-3 text-4xl font-black tracking-tight md:text-5xl">Prêt à kotiser ?</h2>
+          <p className="mb-8 text-[var(--muted)]">Créez votre groupe en 2 minutes. C'est gratuit.</p>
+          <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-ink shadow-glow transition hover:bg-emerald-400">
             Créer mon compte <ArrowRight size={20} />
           </Link>
         </section>
 
-        <footer className="border-t border-white/10 py-8 text-center text-xs text-smoke">
-          © {new Date().getFullYear()} Kotizy — L'épargne collective, réinventée.
-          {" · "}
-          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text)] transition-colors">
+        {/* ── FOOTER ── */}
+        <footer className="flex items-center justify-between border-t border-[var(--surface-strong)] py-8 text-xs text-[var(--muted)]">
+          <span>© {new Date().getFullYear()} Kotizy</span>
+          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--text)]">
             Un produit KAH Digital
           </a>
         </footer>

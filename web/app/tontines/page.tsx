@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { JoinTontineForm } from "@/components/app/join-tontine-form";
 import { MobileShell } from "@/components/app/mobile-shell";
-import { PageHeading } from "@/components/app/page-heading";
 import { ProgressBar } from "@/components/app/progress-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
@@ -15,40 +14,60 @@ export default async function TontinesPage() {
   const memberships = await getUserTontines(session.userId);
 
   return (
-    <MobileShell user={session} title="Tontines">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <PageHeading eyebrow="Groupes" title="Mes tontines">
-          Creation, rotation, cotisations et chat groupe.
-        </PageHeading>
-        <Link href="/tontines/create" className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-500 text-ink shadow-glow" aria-label="Creer">
-          <Plus size={20} />
+    <MobileShell user={session} title="Groupes">
+      {/* Header */}
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">Mes tontines</p>
+          <h1 className="text-2xl font-black">Groupes</h1>
+        </div>
+        <Link
+          href="/tontines/create"
+          className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400"
+          aria-label="Créer"
+        >
+          <Plus size={16} /> Nouveau
         </Link>
       </div>
+
       <JoinTontineForm />
-      <div className="mt-4 space-y-3">
-        {memberships.map(({ tontineGroup, status }) => {
-          const paid = tontineGroup.contributions.filter((item) => item.status === "PAID").length;
-          const progress = pct(paid, tontineGroup.memberships.length || tontineGroup.maxMembers);
-          return (
-            <Link key={tontineGroup.id} href={`/tontines/${tontineGroup.id}`} className="glass block rounded-3xl p-4">
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-black">{tontineGroup.name}</p>
-                  <p className="text-sm text-smoke">
-                    {money(tontineGroup.contributionCents, tontineGroup.currency)} · {tontineGroup.currency} · {tontineGroup.frequency}
-                  </p>
+
+      {memberships.length === 0 ? (
+        <div className="glass mt-4 rounded-3xl p-8 text-center">
+          <p className="text-3xl mb-3">🤝</p>
+          <p className="font-black">Aucun groupe pour l'instant</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Créez un cercle ou rejoignez-en un avec un code d'invitation.</p>
+          <Link href="/tontines/create" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-ink shadow-glow">
+            <Plus size={14} /> Créer mon premier groupe
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {memberships.map(({ tontineGroup, status }) => {
+            const paid = tontineGroup.contributions.filter((c) => c.status === "PAID").length;
+            const total = tontineGroup.memberships.length || tontineGroup.maxMembers;
+            const progress = pct(paid, total);
+            return (
+              <Link key={tontineGroup.id} href={`/tontines/${tontineGroup.id}`} className="glass block rounded-3xl p-5 transition hover:bg-[var(--surface-strong)]">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-black">{tontineGroup.name}</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">
+                      {money(tontineGroup.contributionCents, tontineGroup.currency)} · {tontineGroup.frequency}
+                    </p>
+                  </div>
+                  <StatusBadge value={status} />
                 </div>
-                <StatusBadge value={status} />
-              </div>
-              <ProgressBar value={progress} />
-              <div className="mt-3 flex justify-between text-xs text-smoke">
-                <span>{tontineGroup.memberships.length}/{tontineGroup.maxMembers} membres</span>
-                <span>Due {dateShort(tontineGroup.nextDueAt)}</span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+                <ProgressBar value={progress} />
+                <div className="mt-2.5 flex items-center justify-between text-[10px] text-[var(--muted)]">
+                  <span>{tontineGroup.memberships.length}/{tontineGroup.maxMembers} membres · {progress}% collecté</span>
+                  <span>Dû {dateShort(tontineGroup.nextDueAt)}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </MobileShell>
   );
 }
