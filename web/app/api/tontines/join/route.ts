@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  // Rate limit strict : 5 tentatives / 10 min (brute force sur codes)
-  const limit = await rateLimit(request, "join-tontine", 5, 600_000);
+  // Rate limit : 20 tentatives / 5 min — protège contre brute force sans bloquer l'usage légitime
+  const limit = await rateLimit(request, "join-tontine", 20, 300_000);
   if (!limit.ok) return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 10 minutes." }, { status: 429 });
 
   const parsed = joinSchema.safeParse(await safeJson(request));
