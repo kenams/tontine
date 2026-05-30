@@ -11,6 +11,7 @@ import { penalizeLate, rewardPayment } from "@/lib/trust";
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
 export async function GET(request: NextRequest) {
+  try {
   const secret = process.env.CRON_SECRET;
   if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,11 +23,10 @@ export async function GET(request: NextRequest) {
   const report = { advanced: 0, autopaid: 0, autofailed: 0, payouts: 0, reminders: 0, late: 0 };
 
   // ── 1. RAPPELS 3 jours avant échéance ────────────────────────────────────────
-  const upcomingMemberships = await prisma.membership.findMany({
+  const upcomingMembershipsRaw = await prisma.membership.findMany({
     where: {
       status: "ACTIVE",
       paidThisRound: false,
-      reminderSentAt: null,
       tontineGroup: { status: "ACTIVE", nextDueAt: { gte: now, lte: in3Days } },
     },
     include: {
@@ -34,24 +34,28 @@ export async function GET(request: NextRequest) {
       tontineGroup: { select: { name: true, contributionCents: true, currency: true, nextDueAt: true } },
     },
   });
+  // Filtre JS: reminderSentAt null (champ nouveau, pas encore dans client local)
+  const upcomingMemberships = upcomingMembershipsRaw.filter(
+    (m) => !(m as unknown as { reminderSentAt: Date | null }).reminderSentAt
+  );
 
   for (const m of upcomingMemberships) {
     const dueStr = m.tontineGroup.nextDueAt.toLocaleDateString("fr-FR");
     const amt = money(m.tontineGroup.contributionCents, m.tontineGroup.currency);
-    void sendDueReminderEmail(m.user.email, m.user.fullName, m.tontineGroup.name, amt, dueStr, m.autoPayEnabled);
+    const autoPayOn = !!(m as unknown as { autoPayEnabled: boolean }).autoPayEnabled;
+    void sendDueReminderEmail(m.user.email, m.user.fullName, m.tontineGroup.name, amt, dueStr, autoPayOn);
     void sendPushToUser(m.userId, {
       title: `⏰ Cotisation ${m.tontineGroup.name} dans 3 jours`,
-      body: `${amt} à payer avant le ${dueStr}${m.autoPayEnabled ? " (auto-pay activé)" : ""}`,
+      body: `${amt} à payer avant le ${dueStr}${autoPayOn ? " (auto-pay activé)" : ""}`,
       url: "/tontines",
     });
-    await prisma.membership.update({ where: { id: m.id }, data: { reminderSentAt: now } });
+    await prisma.membership.update({ where: { id: m.id }, data: { reminderSentAt: now } as never });
     report.reminders++;
   }
 
   // ── 2. AUTO-PAY — prélèvement automatique à l'échéance ───────────────────────
-  const autoPayMemberships = await prisma.membership.findMany({
+  const autoPayMembershipsRaw = await prisma.membership.findMany({
     where: {
-      autoPayEnabled: true,
       paidThisRound: false,
       status: "ACTIVE",
       tontineGroup: { status: "ACTIVE", nextDueAt: { lte: now } },
@@ -61,6 +65,10 @@ export async function GET(request: NextRequest) {
       tontineGroup: { select: { id: true, name: true, contributionCents: true, currency: true, nextDueAt: true } },
     },
   });
+  // Filtre JS: autoPayEnabled = true
+  const autoPayMemberships = autoPayMembershipsRaw.filter(
+    (m) => !!(m as unknown as { autoPayEnabled: boolean }).autoPayEnabled
+  );
 
   for (const m of autoPayMemberships) {
     const group = m.tontineGroup;
@@ -241,4 +249,8 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, ...report });
+  } catch (err) {
+    console.error("[cron/advance-rounds]", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
