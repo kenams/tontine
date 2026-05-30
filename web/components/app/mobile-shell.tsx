@@ -53,7 +53,14 @@ export function MobileShell({ children, user, title }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pb-28 pt-4">{children}</main>
+      <main className="flex-1 px-4 pb-28 pt-4">
+        {children}
+        <div className="mt-8 flex flex-wrap justify-center gap-3 pb-2 text-[10px] text-[var(--muted)]">
+          <Link href="/legal/cgu" className="hover:text-[var(--text)]">CGU</Link>
+          <Link href="/legal/confidentialite" className="hover:text-[var(--text)]">Confidentialité</Link>
+          <Link href="/legal/mentions-legales" className="hover:text-[var(--text)]">Mentions légales</Link>
+        </div>
+      </main>
 
       {/* Bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-[var(--surface-strong)] bg-[var(--bg)]/92 px-3 py-2 backdrop-blur-2xl safe-bottom">

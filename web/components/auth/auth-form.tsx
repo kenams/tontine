@@ -232,6 +232,16 @@ export function AuthForm({ mode, admin = false }: Props) {
               <>
                 <PasswordStrength password={password} />
                 <PasswordInput name="confirm" placeholder="Confirmer le mot de passe" autoComplete="new-password" />
+                <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[var(--surface)] px-4 py-3 cursor-pointer">
+                  <input type="checkbox" name="cgu" required className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500" />
+                  <span className="text-xs text-[var(--muted)] leading-relaxed">
+                    J'accepte les{" "}
+                    <Link href="/legal/cgu" target="_blank" className="text-emerald-400 hover:underline font-bold">CGU</Link>
+                    {" "}et la{" "}
+                    <Link href="/legal/confidentialite" target="_blank" className="text-emerald-400 hover:underline font-bold">politique de confidentialité</Link>
+                    {" "}de Kotizy. Je certifie avoir 18 ans ou plus.
+                  </span>
+                </label>
               </>
             )}
 
