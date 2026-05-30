@@ -47,21 +47,36 @@ body {
 button, input, select, textarea { font: inherit; }
 
 /* ── Select — dark mode natif browser ──────────────────────── */
+/* Force color-scheme au niveau html pour que Chrome Windows respecte le thème natif */
+html.dark  { color-scheme: dark; }
+html.light { color-scheme: light; }
+
 select {
   color-scheme: dark;
   background-color: rgba(255, 255, 255, 0.08);
   color: var(--text);
 }
 select option {
-  background-color: #111a12;
+  background-color: #0f1a10;
   color: #f0ede8;
 }
-.light select {
+html.dark select {
+  color-scheme: dark;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f7f3e8;
+}
+html.dark select option {
+  background-color: #0f1a10;
+  color: #f7f3e8;
+}
+.light select,
+html.light select {
   color-scheme: light;
   background-color: rgba(5, 7, 6, 0.05);
   color: #06120c;
 }
-.light select option {
+.light select option,
+html.light select option {
   background-color: #ffffff;
   color: #06120c;
 }

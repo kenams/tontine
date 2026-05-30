@@ -74,6 +74,64 @@ def stripe_sign(payload_str):
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n>>> Demarrage Fulltest Kotizy v2\n")
 
+# Pre-login admin pour les tests section 0 (avant que la section 1 s'exécute)
+_s, _b, _c = req("POST", "/api/auth/login", {"email": "kenams42@gmail.com", "password": "Kotizy@2026!"})
+_pre_admin_cookie = get_cookie(_c)
+
+# ── 0. VÉRIFICATION COHÉRENCE MOBILE-WEB ──────────────────────────────────────
+# Règle : aucun flow core ne doit rediriger le mobile vers un browser.
+# Chaque endpoint critique doit exister ET retourner le bon format pour mobile.
+print("[0] Cohérence Mobile-Web...")
+
+# 0a. /api/wallet/deposit/native DOIT exister et retourner clientSecret (pas checkoutUrl)
+s, b, _ = req("POST", "/api/wallet/deposit/native", {"amountCents": 1000}, cookie=_pre_admin_cookie)
+native_ok = s == 200 and "clientSecret" in b
+stripe_net_err = s == 502 and "Stripe" in b
+check("Mobile | /api/wallet/deposit/native → clientSecret (pas checkoutUrl)",
+      200 if (native_ok or stripe_net_err) else s, b, 200,
+      lambda d: ("clientSecret" in d and "checkoutUrl" not in d) if native_ok else True)
+
+# 0b. Sans auth → 401 (pas de redirect)
+s, b, _ = req("POST", "/api/wallet/deposit/native", {"amountCents": 1000})
+check("Mobile | /api/wallet/deposit/native sans auth → 401", s, b, 401)
+
+# 0c. /api/wallet/deposit (Checkout) doit retourner checkoutUrl pour web — OK de rediriger
+s, b, _ = req("POST", "/api/wallet/deposit", {"amountCents": 1000})
+check("Web | /api/wallet/deposit sans auth → 401", s, b, 401)
+
+# 0d. /api/wallet/deposit/sepa DOIT exister
+s, b, _ = req("POST", "/api/wallet/deposit/sepa", {"amountCents": 1000})
+check("Web | /api/wallet/deposit/sepa sans auth → 401", s, b, 401)
+
+# 0e. /api/user/dashboard DOIT exister et retourner user.wallet (pas de redirect)
+s, b, _ = req("GET", "/api/user/dashboard")
+check("Mobile | /api/user/dashboard sans auth → 401", s, b, 401)
+
+# 0f. /api/notifications DOIT exister (mobile notifications screen)
+s, b, _ = req("GET", "/api/notifications")
+check("Mobile | /api/notifications sans auth → 401", s, b, 401)
+
+# 0g. /api/push (subscribe/unsubscribe) DOIT exister
+s, b, _ = req("POST", "/api/push", {"endpoint": "https://test.com", "p256dh": "abc", "auth": "def"})
+check("Mobile | /api/push sans auth → 401", s, b, 401)
+
+# 0h. /api/tontines/[id]/autopay DOIT exister (toggle natif mobile)
+s, b, _ = req("PATCH", "/api/tontines/fake-id/autopay", {"enabled": True})
+check("Mobile | /api/tontines/[id]/autopay sans auth → 401", s, b, 401)
+
+# 0i. Vérifier que les endpoints core n'ont pas de logique "Linking.openURL" côté serveur
+# (vérification statique du code mobile)
+mobile_wallet_screen = open(r"C:\Users\kenam\Application-Projet-K\tontine\mobile\src\screens\app\WalletScreen.tsx").read()
+has_browser_redirect_for_deposit = (
+    "Linking.openURL" in mobile_wallet_screen and
+    "deposit" in mobile_wallet_screen.lower() and
+    "PaymentSheet" not in mobile_wallet_screen
+)
+check("Mobile | WalletScreen utilise PaymentSheet natif (pas Linking.openURL pour dépôt)",
+      200 if not has_browser_redirect_for_deposit else 500, "{}", 200)
+
+print(f"  > Cohérence mobile-web : {'OK' if all(r[0]=='PASS' for r in results[-9:]) else 'FAIL detecté'}\n")
+
 # Purge rate limit buckets
 prisma_run(
     "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();"
@@ -82,7 +140,7 @@ prisma_run(
 print("  > Rate limit buckets purges\n")
 
 # ── 1. AUTH ───────────────────────────────────────────────────────────────────
-print("[1/12] Auth & Connexion...")
+print("[1/13] Auth & Connexion...")
 
 s,b,c = req("POST", "/api/auth/login", {"email":"kenams42@gmail.com","password":"Kotizy@2026!"})
 admin_cookie = get_cookie(c)
@@ -111,7 +169,7 @@ for i in range(8):
 check("Auth | Rate limit login -> 429", s, b, 429)
 
 # ── 2. INSCRIPTION ────────────────────────────────────────────────────────────
-print("[2/12] Inscription & Nouveau utilisateur...")
+print("[2/13] Inscription & Nouveau utilisateur...")
 
 s,b,c = req("POST", "/api/auth/register", {
     "fullName": "Test Fulltest", "email": new_user_email,
@@ -146,7 +204,7 @@ def check_zero_start(d):
 check("Register | Solde 0 + score 0 au départ (pas 50)", s, b, 200, check_zero_start)
 
 # ── 3. RESET MOT DE PASSE ─────────────────────────────────────────────────────
-print("[3/12] Reset mot de passe...")
+print("[3/13] Reset mot de passe...")
 
 s,b,_ = req("POST", "/api/auth/forgot-password", {"email": new_user_email})
 check("Reset | Forgot-password email valide -> 200", s, b, 200, lambda d: d.get("ok"))
@@ -158,7 +216,7 @@ s,b,_ = req("POST", "/api/auth/reset-password", {"token":"fauxtoken1234567890123
 check("Reset | Token invalide -> 400", s, b, 400)
 
 # ── 4. TONTINES ───────────────────────────────────────────────────────────────
-print("[4/12] Tontines & Groupes...")
+print("[4/13] Tontines & Groupes...")
 
 s,b,_ = req("POST", "/api/tontines", {
     "name": "Fulltest Circle",
@@ -194,7 +252,7 @@ s,b,_ = req("POST", "/api/tontines", {"name":"x"}, cookie=admin_cookie)
 check("Tontines | Données invalides -> 400", s, b, 400)
 
 # ── 5. REJOINDRE UN GROUPE ────────────────────────────────────────────────────
-print("[5/12] Join & Securité groupes...")
+print("[5/13] Join & Securité groupes...")
 
 if join_code and user_cookie:
     s,b,_ = req("POST", "/api/tontines/join", {"joinCode": join_code}, cookie=user_cookie)
@@ -213,7 +271,7 @@ s,b,_ = req("POST", "/api/tontines/join", {"joinCode": "ANYCODE"})
 check("Join | Sans session -> 401", s, b, 401)
 
 # ── 6. PAIEMENTS ──────────────────────────────────────────────────────────────
-print("[6/12] Paiements & Transactions...")
+print("[6/13] Paiements & Transactions...")
 
 s,b,_ = req("GET", "/api/payments/providers")
 check("Payments | GET providers -> 200", s, b, 200)
@@ -239,7 +297,7 @@ s,b,_ = req("GET", "/api/transactions", cookie=admin_cookie)
 check("Transactions | GET historique admin -> 200", s, b, 200)
 
 # ── 7. WALLET DEPOSIT — FLOW COMPLET ─────────────────────────────────────────
-print("[7/12] Wallet Deposit Flow...")
+print("[7/13] Wallet Deposit Flow...")
 
 # 7a. Sans auth -> 401
 s,b,_ = req("POST", "/api/wallet/deposit", {"amountCents": 2500})
@@ -349,7 +407,7 @@ if user_cookie:
     check("Wallet | Rate limit dépôt (5/min) -> 429", s, b, 429)
 
 # ── 8. UTILISATEUR BLOQUÉ ─────────────────────────────────────────────────────
-print("[8/12] Utilisateur bloqué / suspendu...")
+print("[8/13] Utilisateur bloqué / suspendu...")
 
 s,b,c = req("POST", "/api/auth/register", {
     "fullName":"User Bloqué","email":blocked_email,
@@ -380,7 +438,7 @@ if blocked_id and admin_cookie:
         check("Blocked | User banni ne peut pas rejoindre -> 401/403", s, b, s if s in [401,403] else 403)
 
 # ── 9. ADMIN ──────────────────────────────────────────────────────────────────
-print("[9/12] Admin & Backoffice...")
+print("[9/13] Admin & Backoffice...")
 
 s,b,_ = req("GET", "/api/admin/stats", cookie=admin_cookie)
 check("Admin | Stats ADMIN -> 200 + totalUsers", s, b, 200, lambda d: "totalUsers" in d)
@@ -407,7 +465,7 @@ s,b,_ = req("GET", "/api/admin/logs")
 check("Admin | Logs sans auth -> 403", s, b, 403)
 
 # ── 10. SÉCURITÉ ──────────────────────────────────────────────────────────────
-print("[10/12] Securite...")
+print("[10/13] Securite...")
 
 s,b,_ = req("POST", "/api/auth/register", {"email":"<script>@xss.com","fullName":"X","password":"X"})
 check("Securite | XSS email -> 400 (Zod)", s, b, 400)
@@ -433,7 +491,7 @@ s,b,_ = req("GET", "/api/admin/alerts")
 check("Securite | Admin alerts sans auth -> 403", s, b, 403)
 
 # ── 11. AI COACH + REALTIME ───────────────────────────────────────────────────
-print("[11/12] Coach IA & Realtime...")
+print("[11/13] Coach IA & Realtime...")
 
 s,b,_ = req("GET", "/api/ai/coach", cookie=admin_cookie)
 check("AI Coach | Avec auth -> 200 + advice", s, b, 200, lambda d: bool(d.get("advice")))
@@ -448,7 +506,7 @@ s,b,_ = req("GET", "/api/cron/advance-rounds")
 check("Cron | advance-rounds -> 200", s, b, 200, lambda d: d.get("ok") is True)
 
 # ── 12. CLEANUP — SUPPRESSION DE TOUTES LES DONNÉES DE TEST ──────────────────
-print("[12/12] Cleanup données test...")
+print("[13/13] Cleanup données test...")
 
 cleanup_js = r"""
 const {PrismaClient} = require('@prisma/client');

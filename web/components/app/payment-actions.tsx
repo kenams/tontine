@@ -99,7 +99,7 @@ export function ContributionButton({
         <select
           value={provider}
           onChange={(e) => { setProvider(e.target.value); setMessage(null); }}
-          className="min-h-11 rounded-2xl border border-white/10 px-3 text-sm outline-none transition focus:border-emerald-400/40"
+          className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.08] px-3 text-sm outline-none transition focus:border-emerald-400/40"
           style={{ colorScheme: "dark" }}
         >
           {PROVIDERS.map((p) => (
