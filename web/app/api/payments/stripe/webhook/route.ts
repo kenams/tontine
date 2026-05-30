@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
@@ -123,6 +124,9 @@ async function creditWallet(session: Stripe.Checkout.Session, eventType: string)
     });
   });
 
+  // Invalider le cache dashboard de cet utilisateur
+  revalidateTag(`user-${userId}`);
+
   return { updated: true };
 }
 
@@ -225,9 +229,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, ...result });
   }
 
-  // SEPA bank transfer — PaymentIntent succeeds quand le virement arrive (1-3 jours)
+  // PaymentIntent succeeded — SEPA virement (1-3j) OU paiement natif mobile (instantané)
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
+
+    // Paiement natif mobile (Stripe SDK iOS/Android) — créditer wallet immédiatement
+    if (pi.metadata?.type === "WALLET_DEPOSIT" && pi.metadata?.walletId) {
+      const walletId = pi.metadata.walletId;
+      const transactionId = pi.metadata.transactionId;
+      const userId = pi.metadata.userId;
+      if (walletId && transactionId && userId) {
+        await prisma.$transaction(async (tx) => {
+          const txRecord = await tx.transaction.findUnique({ where: { id: transactionId }, select: { amountCents: true } });
+          if (!txRecord) return;
+          await tx.wallet.update({ where: { id: walletId }, data: { balanceCents: { increment: txRecord.amountCents } } });
+          await tx.transaction.update({
+            where: { id: transactionId },
+            data: { status: "PAID", riskScore: 5, metadata: JSON.stringify({ mode: "stripe_native", paymentIntentId: pi.id, type: "WALLET_DEPOSIT" }) },
+          });
+          await tx.notification.create({
+            data: { userId, title: "Dépôt confirmé ✅", body: "Votre wallet a été crédité via le paiement mobile.", type: "PAYMENT" },
+          });
+        });
+        revalidateTag(`user-${userId}`);
+        return NextResponse.json({ received: true, updated: true });
+      }
+    }
+
     if (pi.metadata?.type === "WALLET_DEPOSIT_SEPA") {
       const walletId = pi.metadata.walletId;
       const transactionId = pi.metadata.transactionId;
@@ -245,6 +273,7 @@ export async function POST(request: NextRequest) {
             data: { userId, title: "Virement SEPA reçu ✅", body: "Votre virement a été reçu et crédité sur votre wallet Kotizy.", type: "PAYMENT" },
           });
         });
+        revalidateTag(`user-${userId}`);
         return NextResponse.json({ received: true, updated: true });
       }
     }
