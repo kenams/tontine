@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "TontineApp",
-    "slug": "tontine-app",
-    "version": "1.0.0",
+    "name": "Kotizy",
+    "slug": "kotizy",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -10,15 +10,17 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1A1A2E"
+      "backgroundColor": "#080b07"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kahdigital.kotizy"
     },
     "android": {
+      "package": "com.kahdigital.kotizy",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1A1A2E"
+        "backgroundColor": "#080b07"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -27,13 +29,13 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "projectName": "TontineApp"
+      "projectName": "Kotizy"
     },
     "plugins": [
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.tontineapp"
+          "merchantIdentifier": "merchant.com.kahdigital.kotizy"
         }
       ]
     ]

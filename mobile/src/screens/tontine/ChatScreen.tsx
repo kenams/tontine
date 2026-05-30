@@ -110,7 +110,7 @@ export function ChatScreen({ navigation, route }: ChatScreenProps) {
   }
 
   return (
-    <ScreenContainer tone="light" scrollable={false}>
+    <ScreenContainer tone="dark" scrollable={false}>
       <KeyboardAvoidingView
         style={styles.wrapper}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
