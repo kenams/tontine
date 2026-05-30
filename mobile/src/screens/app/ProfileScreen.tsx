@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -165,7 +166,9 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={s.actions}>
           {[
             { icon: "create-outline" as const, label: "Modifier le profil", onPress: () => setEditing(true), color: colors.text },
-            { icon: "share-outline" as const, label: "Mon profil public", onPress: () => {}, color: colors.primary },
+            { icon: "share-outline" as const, label: "Mon profil public", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/u/" + (user?.fullName?.toLowerCase().replace(/\s+/g, "-") ?? "")), color: colors.primary },
+            { icon: "document-text-outline" as const, label: "CGU & Confidentialité", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/legal/confidentialite"), color: colors.textMuted },
+            { icon: "download-outline" as const, label: "Exporter mes données (RGPD)", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/api/user/delete"), color: colors.textMuted },
             { icon: "log-out-outline" as const, label: "Déconnexion", onPress: confirmLogout, color: colors.danger },
           ].map((item) => (
             <Pressable key={item.label} style={s.actionRow} onPress={item.onPress}>
