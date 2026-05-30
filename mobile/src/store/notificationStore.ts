@@ -1,10 +1,7 @@
 import { create } from "zustand";
 
-import { cloneDemoNotifications } from "../data/demo-data";
 import { getNotifications as getNotificationsService, markAllAsRead as markAllAsReadService, markAsRead as markAsReadService } from "../services/notificationService";
-import { useAppStore } from "./appStore";
 import type { AppNotification } from "../types/entities";
-import { devLog } from "../utils/logger";
 
 type NotificationStore = {
   notifications: AppNotification[];
@@ -16,98 +13,37 @@ type NotificationStore = {
   markAllAsRead: () => Promise<void>;
 };
 
-function computeUnreadCount(notifications: AppNotification[]) {
-  return notifications.filter((notification) => !notification.read).length;
+function countUnread(list: AppNotification[]) {
+  return list.filter((n) => !n.read).length;
 }
 
-const initialNotifications = cloneDemoNotifications();
-
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
-  notifications: initialNotifications,
-  unreadCount: computeUnreadCount(initialNotifications),
+  notifications: [],
+  unreadCount: 0,
   isLoading: false,
   errorMessage: null,
 
   fetchNotifications: async () => {
     set({ isLoading: true, errorMessage: null });
-
     try {
       const payload = await getNotificationsService();
-
-      set({
-        notifications: payload.notifications,
-        unreadCount: payload.unreadCount,
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
-
+      set({ notifications: payload.notifications, unreadCount: payload.unreadCount, isLoading: false, errorMessage: null });
       return payload.notifications;
     } catch {
-      const notifications = cloneDemoNotifications();
-      devLog("Mode demo active pour les notifications");
-
-      set({
-        notifications,
-        unreadCount: computeUnreadCount(notifications),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-
-      return notifications;
+      set({ isLoading: false, errorMessage: null });
+      return [];
     }
   },
 
   markAsRead: async (id) => {
-    set({ isLoading: true, errorMessage: null });
-
-    try {
-      await markAsReadService(id);
-      const notifications = get().notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      );
-
-      set({
-        notifications,
-        unreadCount: computeUnreadCount(notifications),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
-    } catch {
-      const notifications = get().notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      );
-      devLog("Mode demo active pour le marquage d'une notification");
-
-      set({
-        notifications,
-        unreadCount: computeUnreadCount(notifications),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-    }
+    try { await markAsReadService(id); } catch {}
+    const list = get().notifications.map((n) => n.id === id ? { ...n, read: true } : n);
+    set({ notifications: list, unreadCount: countUnread(list) });
   },
 
   markAllAsRead: async () => {
-    set({ isLoading: true, errorMessage: null });
-
-    try {
-      await markAllAsReadService();
-    } catch {
-      devLog("Mode demo active pour le marquage global des notifications");
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-    }
-
-    const notifications = get().notifications.map((notification) => ({ ...notification, read: true }));
-
-    set({
-      notifications,
-      unreadCount: 0,
-      isLoading: false,
-      errorMessage: null
-    });
-  }
+    try { await markAllAsReadService(); } catch {}
+    const list = get().notifications.map((n) => ({ ...n, read: true }));
+    set({ notifications: list, unreadCount: 0, isLoading: false });
+  },
 }));

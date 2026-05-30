@@ -1,12 +1,8 @@
 import { create } from "zustand";
 
-import { cloneDemoMessages, demoUser } from "../data/demo-data";
 import { getMessages as getMessagesService, sendMessage as sendMessageService } from "../services/chatService";
-import { useAppStore } from "./appStore";
 import { useAuthStore } from "./authStore";
 import type { TontineMessage } from "../types/entities";
-import { createDemoId } from "./store-utils";
-import { devLog } from "../utils/logger";
 
 type ChatStore = {
   messages: TontineMessage[];
@@ -21,176 +17,87 @@ type ChatStore = {
   addMessage: (tontineId: string, message: TontineMessage) => void;
 };
 
-function computeUnreadCount(unreadByTontine: Record<string, number>) {
-  return Object.values(unreadByTontine).reduce((sum, count) => sum + count, 0);
+function computeUnread(map: Record<string, number>) {
+  return Object.values(map).reduce((s, n) => s + n, 0);
 }
-
-const initialMessages = cloneDemoMessages();
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
-  messagesByTontine: initialMessages,
-  unreadByTontine: {
-    "t-001": 3,
-    "t-002": 1,
-    "t-003": 0
-  },
-  unreadCount: 4,
+  messagesByTontine: {},
+  unreadByTontine: {},
+  unreadCount: 0,
   activeTontineId: null,
   isLoading: false,
   errorMessage: null,
 
   fetchMessages: async (tontineId) => {
     set({ isLoading: true, errorMessage: null });
-
     try {
       const payload = await getMessagesService(tontineId);
-      const unreadByTontine = {
-        ...get().unreadByTontine,
-        [tontineId]: 0
-      };
-
-      set((state) => ({
+      const unread = { ...get().unreadByTontine, [tontineId]: 0 };
+      set((s) => ({
         messages: payload.messages,
-        messagesByTontine: {
-          ...state.messagesByTontine,
-          [tontineId]: payload.messages
-        },
+        messagesByTontine: { ...s.messagesByTontine, [tontineId]: payload.messages },
         activeTontineId: tontineId,
-        unreadByTontine,
-        unreadCount: computeUnreadCount(unreadByTontine),
+        unreadByTontine: unread,
+        unreadCount: computeUnread(unread),
         isLoading: false,
-        errorMessage: null
+        errorMessage: null,
       }));
-      useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
-
       return payload.messages;
     } catch {
-      const messages = get().messagesByTontine[tontineId]?.map((message) => ({ ...message })) ?? [];
-      const unreadByTontine = {
-        ...get().unreadByTontine,
-        [tontineId]: 0
-      };
-      devLog("Mode demo active pour le chat");
-
-      set({
-        messages,
-        activeTontineId: tontineId,
-        unreadByTontine,
-        unreadCount: computeUnreadCount(unreadByTontine),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-
-      return messages;
+      set({ messages: [], activeTontineId: tontineId, isLoading: false, errorMessage: null });
+      return [];
     }
   },
 
   sendMessage: async (tontineId, content) => {
-    const trimmedContent = content.trim();
-
-    if (!trimmedContent) {
-      set({ errorMessage: "Le message ne peut pas etre vide." });
-      throw new Error("Le message ne peut pas etre vide.");
-    }
-
-    const user = useAuthStore.getState().user ?? demoUser;
-    const temporaryMessage: TontineMessage = {
+    const trimmed = content.trim();
+    if (!trimmed) throw new Error("Message vide.");
+    const user = useAuthStore.getState().user;
+    const temp: TontineMessage = {
       id: `temp-${Date.now()}`,
       tontineId,
-      senderId: user.id,
-      senderName: user.fullName.split(" ")[0] ?? user.fullName,
-      content: trimmedContent,
+      senderId: user?.id ?? "unknown",
+      senderName: user?.fullName?.split(" ")[0] ?? "Moi",
+      content: trimmed,
       createdAt: new Date().toISOString(),
       senderType: "user",
-      avatarUrl: user.avatarUrl
+      avatarUrl: user?.avatarUrl,
     };
-
-    const currentMessages = get().messagesByTontine[tontineId] ?? [];
-    const optimisticMessages = [...currentMessages, temporaryMessage];
-
+    const current = get().messagesByTontine[tontineId] ?? [];
+    const optimistic = [...current, temp];
     set({
-      messagesByTontine: {
-        ...get().messagesByTontine,
-        [tontineId]: optimisticMessages
-      },
-      messages: optimisticMessages,
+      messagesByTontine: { ...get().messagesByTontine, [tontineId]: optimistic },
+      messages: optimistic,
       activeTontineId: tontineId,
       isLoading: true,
-      errorMessage: null
     });
-
     try {
-      const persistedMessage = await sendMessageService(tontineId, trimmedContent);
-      const syncedMessages = optimisticMessages.map((message) =>
-        message.id === temporaryMessage.id ? persistedMessage : message
-      );
-      const unreadByTontine = {
-        ...get().unreadByTontine,
-        [tontineId]: 0
-      };
-
-      set({
-        messagesByTontine: {
-          ...get().messagesByTontine,
-          [tontineId]: syncedMessages
-        },
-        messages: syncedMessages,
-        unreadByTontine,
-        unreadCount: computeUnreadCount(unreadByTontine),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
-
-      return persistedMessage;
+      const persisted = await sendMessageService(tontineId, trimmed);
+      const synced = optimistic.map((m) => (m.id === temp.id ? persisted : m));
+      set({ messagesByTontine: { ...get().messagesByTontine, [tontineId]: synced }, messages: synced, isLoading: false });
+      return persisted;
     } catch {
-      const unreadByTontine = {
-        ...get().unreadByTontine,
-        [tontineId]: 0
-      };
-      devLog("Mode demo active pour l'envoi de message");
-
-      set({
-        messagesByTontine: {
-          ...get().messagesByTontine,
-          [tontineId]: optimisticMessages
-        },
-        messages: optimisticMessages,
-        unreadByTontine,
-        unreadCount: computeUnreadCount(unreadByTontine),
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-
-      return temporaryMessage;
+      set({ isLoading: false });
+      return temp;
     }
   },
 
   addMessage: (tontineId, message) => {
-    const currentMessages = get().messagesByTontine[tontineId] ?? [];
-
-    if (currentMessages.some((existingMessage) => existingMessage.id === message.id)) {
-      return;
-    }
-
-    const nextMessages = [...currentMessages, message];
+    const current = get().messagesByTontine[tontineId] ?? [];
+    if (current.some((m) => m.id === message.id)) return;
+    const next = [...current, message];
     const isActive = get().activeTontineId === tontineId;
-    const unreadByTontine = {
+    const unread = {
       ...get().unreadByTontine,
-      [tontineId]: isActive ? 0 : (get().unreadByTontine[tontineId] ?? 0) + 1
+      [tontineId]: isActive ? 0 : (get().unreadByTontine[tontineId] ?? 0) + 1,
     };
-
     set({
-      messagesByTontine: {
-        ...get().messagesByTontine,
-        [tontineId]: nextMessages
-      },
-      messages: isActive ? nextMessages : get().messages,
-      unreadByTontine,
-      unreadCount: computeUnreadCount(unreadByTontine)
+      messagesByTontine: { ...get().messagesByTontine, [tontineId]: next },
+      messages: isActive ? next : get().messages,
+      unreadByTontine: unread,
+      unreadCount: computeUnread(unread),
     });
-  }
+  },
 }));

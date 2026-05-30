@@ -38,7 +38,7 @@ export function ChatListScreen() {
   );
 
   return (
-    <ScreenContainer tone="light">
+    <ScreenContainer tone="dark">
       <AppHeader title="Conversations" showAvatar />
 
       <View style={styles.heroCard}>

@@ -24,6 +24,7 @@ export type WalletStackParamList = {
 
 export type MainTabParamList = {
   HomeStack: NavigatorScreenParams<HomeStackParamList>;
+  Groupes: undefined;
   WalletStack: NavigatorScreenParams<WalletStackParamList>;
   Notifications: undefined;
   Profile: undefined;

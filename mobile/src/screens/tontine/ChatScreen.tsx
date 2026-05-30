@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { AppHeader } from "../../components/AppHeader";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { ScreenContainer } from "../../components/common/ScreenContainer";
-import { demoMembersByTontine, demoTontines } from "../../data/demo-data";
+
 import { subscribeToMessages, unsubscribe } from "../../services/realtimeService";
 import { useAuthStore } from "../../store/authStore";
 import { useChatStore } from "../../store/chatStore";
@@ -45,9 +45,8 @@ export function ChatScreen({ navigation, route }: ChatScreenProps) {
   const tontine =
     currentTontine?.id === tontineId
       ? currentTontine
-      : tontines.find((item) => item.id === tontineId) ?? demoTontines.find((item) => item.id === tontineId);
-  const membersCount =
-    tontine?.members?.length ?? demoMembersByTontine[tontineId]?.length ?? tontine?.membersCount ?? 0;
+      : tontines.find((item) => item.id === tontineId);
+  const membersCount = tontine?.members?.length ?? tontine?.membersCount ?? 0;
   const invertedMessages = useMemo(() => [...messages].reverse(), [messages]);
 
   useFocusEffect(
