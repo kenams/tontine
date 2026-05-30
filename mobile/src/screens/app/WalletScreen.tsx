@@ -292,7 +292,7 @@ export function WalletScreen() {
 
           <Pressable
             style={s.actionBtn}
-            onPress={() => Alert.alert("Retrait SEPA", "Le retrait SEPA est disponible sur l'application web Kotizy.\n\ntontineapp-web.vercel.app/wallet/withdraw")}
+            onPress={() => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/wallet/withdraw", { toolbarColor: "#080b07" })}
           >
             <View style={[s.actionIcon, { backgroundColor: `${colors.gold}22` }]}>
               <Ionicons name="arrow-up-circle" size={28} color={colors.gold} />
