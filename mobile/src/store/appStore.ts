@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
 import { APP_VERSION, API_URL } from "../config/constants";
-import { devLog } from "../utils/logger";
 
 type AppStore = {
   isBackendAvailable: boolean;
@@ -20,27 +19,15 @@ export const useAppStore = create<AppStore>((set) => ({
 
   checkBackendHealth: async () => {
     set({ isLoading: true });
-
     try {
-      const response = await fetch(`${API_URL}/health`);
-
-      if (!response.ok) {
-        throw new Error("Backend indisponible");
-      }
-
-      set({
-        isBackendAvailable: true,
-        isDemoMode: false,
-        isLoading: false
-      });
-      devLog("Backend disponible");
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(`${API_URL}/api/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      set({ isBackendAvailable: response.ok, isDemoMode: false, isLoading: false });
     } catch {
-      set({
-        isBackendAvailable: false,
-        isDemoMode: true,
-        isLoading: false
-      });
-      devLog("Backend indisponible, mode demo active");
+      // Vrai problème réseau — pas de mode démo en prod
+      set({ isBackendAvailable: false, isDemoMode: false, isLoading: false });
     }
   },
 

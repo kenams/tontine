@@ -1,13 +1,10 @@
 import { create } from "zustand";
 
-import { demoUser } from "../data/demo-data";
 import { login as loginService, logout as logoutService, refreshSession, register as registerService } from "../services/authService";
 import { updateProfile as updateProfileService } from "../services/userService";
 import { setUnauthorizedHandler } from "../services/api";
-import { saveUser } from "../services/storage";
 import { useAppStore } from "./appStore";
 import type { UpdateProfilePayload, UserProfile } from "../types/entities";
-import { devLog, devWarn } from "../utils/logger";
 
 type AuthStore = {
   initialized: boolean;
@@ -27,14 +24,6 @@ type AuthStore = {
   signOut: () => Promise<void>;
 };
 
-function buildFallbackUser(payload?: Partial<UserProfile>): UserProfile {
-  return {
-    ...demoUser,
-    ...payload,
-    phone: payload?.phone ?? payload?.phoneNumber ?? demoUser.phone,
-    phoneNumber: payload?.phoneNumber ?? payload?.phone ?? demoUser.phoneNumber
-  };
-}
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   initialized: false,
@@ -89,39 +78,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    */
   login: async (email, password) => {
     set({ isLoading: true, errorMessage: null });
-
     try {
       const response = await loginService({ email, password });
-
-      set({
-        initialized: true,
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-        errorMessage: null
-      });
+      set({ initialized: true, user: response.user, isAuthenticated: true, isLoading: false, errorMessage: null });
       useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
       return true;
     } catch (error) {
-      devLog("Backend indisponible, mode demo active");
-
-      const fallbackUser = buildFallbackUser({ email });
-      await saveUser(fallbackUser).catch(() => undefined);
-
-      set({
-        initialized: true,
-        user: fallbackUser,
-        isAuthenticated: true,
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-
-      if (error instanceof Error && error.message !== "Impossible de joindre le serveur") {
-        devWarn("Connexion API indisponible, fallback demo utilise.", error.message);
-      }
-
-      return true;
+      const msg = error instanceof Error ? error.message : "Connexion impossible.";
+      set({ initialized: true, isAuthenticated: false, isLoading: false, errorMessage: msg });
+      return false;
     }
   },
 
@@ -130,39 +95,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    */
   register: async (email, password, fullName, phone) => {
     set({ isLoading: true, errorMessage: null });
-
     try {
       const response = await registerService({ email, password, fullName, phone });
-
-      set({
-        initialized: true,
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-        errorMessage: null
-      });
+      set({ initialized: true, user: response.user, isAuthenticated: true, isLoading: false, errorMessage: null });
       useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
       return true;
     } catch (error) {
-      devLog("Backend indisponible, mode demo active");
-
-      const fallbackUser = buildFallbackUser({ email, fullName, phone, phoneNumber: phone });
-      await saveUser(fallbackUser).catch(() => undefined);
-
-      set({
-        initialized: true,
-        user: fallbackUser,
-        isAuthenticated: true,
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-
-      if (error instanceof Error && error.message !== "Impossible de joindre le serveur") {
-        devWarn("Inscription API indisponible, fallback demo utilise.", error.message);
-      }
-
-      return true;
+      const msg = error instanceof Error ? error.message : "Inscription impossible.";
+      set({ initialized: true, isAuthenticated: false, isLoading: false, errorMessage: msg });
+      return false;
     }
   },
 
@@ -206,30 +147,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         phone: data.phone ?? data.phoneNumber,
         avatarUrl: data.avatarUrl
       });
-
-      set({
-        user: nextUser,
-        isLoading: false,
-        errorMessage: null
-      });
+      set({ user: nextUser, isLoading: false, errorMessage: null });
       useAppStore.setState({ isBackendAvailable: true, isDemoMode: false });
-    } catch {
-      const nextUser = buildFallbackUser({
-        ...currentUser,
-        ...data,
-        phone: data.phone ?? data.phoneNumber ?? currentUser.phone,
-        phoneNumber: data.phoneNumber ?? data.phone ?? currentUser.phoneNumber
-      });
-
-      await saveUser(nextUser).catch(() => undefined);
-
-      set({
-        user: nextUser,
-        isLoading: false,
-        errorMessage: null
-      });
-      useAppStore.setState({ isBackendAvailable: false, isDemoMode: true });
-      devLog("Backend indisponible, mode demo active");
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Impossible de mettre à jour le profil.";
+      set({ isLoading: false, errorMessage: msg });
     }
   },
 
