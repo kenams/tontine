@@ -1,363 +1,231 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AppHeader } from "../../components/AppHeader";
-import { Badge } from "../../components/Badge";
-import { Button } from "../../components/Button";
-import { EmptyState } from "../../components/EmptyState";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { MemberRow } from "../../components/MemberRow";
-import { ProgressBar } from "../../components/ProgressBar";
-import { ScreenContainer } from "../../components/common/ScreenContainer";
-import { demoMembersByTontine, demoPayoutsByTontine } from "../../data/demo-data";
-import { useAuthStore } from "../../store/authStore";
-import { useContributionStore } from "../../store/contributionStore";
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
 import type { TontineDetailScreenProps } from "../../types/navigation";
 
-/**
- * Détail d'une tontine avec une hiérarchie plus lisible sur mobile.
- */
+function fmtMoney(amount: number, currency: string) {
+  return amount.toLocaleString("fr-FR", { style: "currency", currency: currency || "EUR" });
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function initials(name: string) {
+  return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+}
+
 export function TontineDetailScreen({ navigation, route }: TontineDetailScreenProps) {
   const { tontineId } = route.params;
+  const tontine = useTontineStore((s) => s.currentTontine);
+  const fetchTontineById = useTontineStore((s) => s.fetchTontineById);
+  const contribute = useTontineStore((s) => s.contribute);
+  const toggleAutoPay = useTontineStore((s) => s.toggleAutoPay);
 
-  const user = useAuthStore((state) => state.user);
-  const currentTontine = useTontineStore((state) => state.currentTontine);
-  const fetchTontineById = useTontineStore((state) => state.fetchTontineById);
-  const isTontineLoading = useTontineStore((state) => state.isLoading);
+  const [paying, setPaying] = useState(false);
+  const [autoPayOn, setAutoPayOn] = useState(false);
+  const [autoPayLoading, setAutoPayLoading] = useState(false);
 
-  const contributions = useContributionStore((state) => state.contributions);
-  const fetchContributions = useContributionStore((state) => state.fetchContributions);
-  const isContributionLoading = useContributionStore((state) => state.isLoading);
+  useFocusEffect(useCallback(() => {
+    void fetchTontineById(tontineId);
+  }, [fetchTontineById, tontineId]));
 
-  useFocusEffect(
-    useCallback(() => {
-      void fetchTontineById(tontineId);
-      void fetchContributions(tontineId);
-    }, [fetchContributions, fetchTontineById, tontineId])
-  );
-
-  const members = currentTontine?.members ?? demoMembersByTontine[tontineId] ?? [];
-  const payouts = currentTontine?.distributions ?? demoPayoutsByTontine[tontineId] ?? [];
-
-  const paidCount = contributions.filter((contribution) => contribution.status === "paid").length;
-  const currentMember = members.find((member) => member.userId === user?.id);
-  const alreadyPaid = currentMember
-    ? contributions.some(
-        (contribution) =>
-          (contribution.memberId === currentMember.id || contribution.memberId === currentMember.userId) &&
-          contribution.status === "paid"
-      )
-    : false;
-
-  const estimatedEndDate = useMemo(() => {
-    if (!currentTontine?.startDate) {
-      return null;
-    }
-
-    const start = new Date(currentTontine.startDate);
-    const duration =
-      currentTontine.frequency === "monthly" ? 30 : currentTontine.frequency === "biweekly" ? 14 : 7;
-    start.setDate(start.getDate() + duration * currentTontine.totalRounds);
-    return start;
-  }, [currentTontine]);
-
-  if (isTontineLoading && !currentTontine) {
+  if (!tontine) {
     return (
-      <ScreenContainer tone="light">
-        <LoadingSpinner message="Chargement des details de la tontine..." />
-      </ScreenContainer>
+      <SafeAreaView style={s.safe}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator color={colors.primary} size="large" />
+        </View>
+      </SafeAreaView>
     );
   }
 
-  if (!currentTontine) {
-    return (
-      <ScreenContainer tone="light">
-        <EmptyState
-          title="Tontine introuvable"
-          description="Impossible de retrouver cette tontine dans le mode demonstration."
-        />
-      </ScreenContainer>
-    );
+  const progress = tontine.progression
+    ? (tontine.progression.paidMembers / Math.max(tontine.progression.totalMembers, 1)) * 100
+    : 0;
+
+  async function handlePay() {
+    setPaying(true);
+    try {
+      const res = await contribute(tontineId, "WALLET");
+      if (res.status === "PAID") {
+        Alert.alert("✅ Payé", "Cotisation enregistrée depuis votre wallet.");
+      } else if (res.checkoutUrl) {
+        Alert.alert("Stripe", "Paiement Stripe initié. Ouvrez le lien depuis votre navigateur.");
+      } else {
+        Alert.alert("En attente", "Paiement en attente de confirmation.");
+      }
+      void fetchTontineById(tontineId);
+    } catch (err) {
+      Alert.alert("Erreur", err instanceof Error ? err.message : "Paiement impossible.");
+    }
+    setPaying(false);
+  }
+
+  async function handleToggleAutoPay(val: boolean) {
+    setAutoPayLoading(true);
+    try {
+      await toggleAutoPay(tontineId, val);
+      setAutoPayOn(val);
+    } catch {}
+    setAutoPayLoading(false);
   }
 
   return (
-    <ScreenContainer tone="light" scrollable={false}>
-      <View style={styles.wrapper}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <AppHeader title="Détail" showBack onBack={() => navigation.goBack()} />
-
-          <View style={styles.heroCard}>
-            <View style={styles.heroTop}>
-              <View style={styles.heroCopy}>
-                <Text style={styles.title}>{currentTontine.name}</Text>
-                <Text style={styles.subtitle}>
-                  {currentTontine.contributionAmount}€ / {formatFrequency(currentTontine.frequency)}
-                </Text>
-              </View>
-              <Badge
-                label={currentTontine.status === "active" ? "Active" : "Terminée"}
-                variant={currentTontine.status === "active" ? "success" : "neutral"}
-              />
-            </View>
-
-            <Text style={styles.description}>{currentTontine.description}</Text>
-
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricLabel}>Début</Text>
-                <Text style={styles.metricValue}>
-                  {formatDate(currentTontine.startDate ?? currentTontine.nextPayoutDate)}
-                </Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricLabel}>Fin estimée</Text>
-                <Text style={styles.metricValue}>
-                  {estimatedEndDate ? formatDate(estimatedEndDate.toISOString()) : "A définir"}
-                </Text>
-              </View>
-            </View>
+    <SafeAreaView style={s.safe}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={s.header}>
+          <Pressable style={s.back} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={20} color={colors.text} />
+          </Pressable>
+          <Text style={s.headerTitle} numberOfLines={1}>{tontine.name}</Text>
+          <View style={s.statusBadge}>
+            <Text style={s.statusTxt}>{tontine.status === "active" ? "Actif" : tontine.status}</Text>
           </View>
+        </View>
 
-          <View style={styles.highlightCard}>
-            <Text style={styles.highlightEyebrow}>Ce mois-ci</Text>
-            <Text style={styles.highlightTitle}>
-              {currentTontine.currentBeneficiary ?? "Bénéficiaire à définir"}
-            </Text>
-            <Text style={styles.highlightText}>
-              {currentTontine.myTurn === 0
-                ? "🎉 C'est votre tour. La cagnotte mensuelle vous est destinée."
-                : `Tour ${currentTontine.currentRound} en cours. Le groupe verse actuellement pour ${currentTontine.currentBeneficiary}.`}
-            </Text>
-          </View>
+        {/* Carte principale */}
+        <View style={s.mainCard}>
+          <Text style={s.mainCode}>{tontine.joinCode}</Text>
+          <Text style={s.mainAmt}>{fmtMoney(tontine.contributionAmount, tontine.currency)}</Text>
+          <Text style={s.mainSub}>Prochaine échéance : {fmtDate(tontine.nextPayoutDate)}</Text>
+          <View style={s.pb}><View style={[s.pbFill, { width: `${Math.min(progress, 100)}%` as `${number}%` }]} /></View>
+          <Text style={s.pbTxt}>{progress.toFixed(0)}% du cycle · Round {tontine.currentRound}/{tontine.totalRounds}</Text>
+        </View>
 
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Progression du tour</Text>
-            <ProgressBar
-              value={currentTontine.progression?.paidMembers ?? paidCount}
-              total={currentTontine.progression?.totalMembers ?? currentTontine.membersCount}
-              label="Membres ayant payé"
-            />
-          </View>
-
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Membres</Text>
-              <Text style={styles.sectionMeta}>{members.length} participants</Text>
+        {/* Stats */}
+        <View style={s.statsRow}>
+          {[
+            { label: "Membres", val: `${tontine.membersCount}/${tontine.maxMembers ?? tontine.membersCount}` },
+            { label: "Payés", val: String(tontine.progression?.paidMembers ?? 0) },
+            { label: "Pot total", val: fmtMoney(tontine.totalPot ?? 0, tontine.currency) },
+          ].map(({ label, val }) => (
+            <View key={label} style={s.statCard}>
+              <Text style={s.statVal}>{val}</Text>
+              <Text style={s.statLbl}>{label}</Text>
             </View>
-            {members.map((member) => (
-              <MemberRow key={member.id} member={member} />
+          ))}
+        </View>
+
+        {/* Actions */}
+        <View style={s.section}>
+          {/* Payer */}
+          <Pressable style={[s.payBtn, paying && s.payBtnDisabled]} onPress={() => void handlePay()} disabled={paying}>
+            {paying
+              ? <ActivityIndicator color={colors.dark} size="small" />
+              : <><Ionicons name="card" size={20} color={colors.dark} /><Text style={s.payBtnTxt}>Payer ma cotisation</Text></>
+            }
+          </Pressable>
+
+          {/* Auto-pay */}
+          <View style={s.autoPayCard}>
+            <View style={s.autoPayLeft}>
+              <Ionicons name="flash" size={20} color={autoPayOn ? colors.primary : colors.textMuted} />
+              <View>
+                <Text style={s.autoPayTitle}>Auto-paiement</Text>
+                <Text style={s.autoPaySub}>{autoPayOn ? "Prélevé automatiquement à l'échéance" : "Paiement manuel requis"}</Text>
+              </View>
+            </View>
+            {autoPayLoading
+              ? <ActivityIndicator color={colors.primary} size="small" />
+              : <Switch value={autoPayOn} onValueChange={(v) => void handleToggleAutoPay(v)} trackColor={{ false: colors.border, true: `${colors.primary}66` }} thumbColor={autoPayOn ? colors.primary : colors.textMuted} />
+            }
+          </View>
+        </View>
+
+        {/* Membres */}
+        {tontine.members && tontine.members.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Ordre de passage</Text>
+            {tontine.members.map((m) => (
+              <View key={m.id} style={s.memberRow}>
+                <View style={s.memberAvatar}>
+                  <Text style={s.memberAvatarTxt}>{initials(m.fullName)}</Text>
+                </View>
+                <View style={s.memberInfo}>
+                  <Text style={s.memberName}>{m.payoutOrder}. {m.fullName}</Text>
+                </View>
+                <View style={[s.memberStatus,
+                  m.paymentStatus === "paid" ? s.statusPaid :
+                  m.paymentStatus === "late" ? s.statusLate : s.statusPending
+                ]}>
+                  <Text style={[s.memberStatusTxt,
+                    m.paymentStatus === "paid" ? { color: colors.primary } :
+                    m.paymentStatus === "late" ? { color: colors.danger } : { color: colors.textMuted }
+                  ]}>
+                    {m.paymentStatus === "paid" ? "Payé" : m.paymentStatus === "late" ? "Retard" : "En attente"}
+                  </Text>
+                </View>
+              </View>
             ))}
           </View>
+        )}
 
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Historique</Text>
-              <Text style={styles.sectionMeta}>{payouts.length} distributions</Text>
-            </View>
-            {payouts.length ? (
-              payouts.map((payout) => (
-                <View key={payout.id} style={styles.historyRow}>
-                  <View style={styles.historyCopy}>
-                    <Text style={styles.historyDate}>{formatDate(payout.scheduledAt)}</Text>
-                    <Text style={styles.historySubtitle}>Distribution programmée</Text>
-                  </View>
-                  <Text style={styles.historyAmount}>{payout.amount}€</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptyText}>Aucune distribution passée pour l'instant.</Text>
-            )}
+        {/* Description */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Description</Text>
+          <View style={s.descCard}>
+            <Text style={s.descTxt}>{tontine.description}</Text>
           </View>
-
-          <Button variant="secondary" onPress={() => navigation.navigate("Chat", { tontineId })}>
-            Ouvrir le chat du groupe
-          </Button>
-        </ScrollView>
-
-        <View style={styles.bottomBar}>
-          <Button
-            onPress={() =>
-              navigation.navigate("Payment", {
-                tontineId,
-                amount: currentTontine.contributionAmount,
-                tontineName: currentTontine.name
-              })
-            }
-            disabled={alreadyPaid}
-            loading={isContributionLoading}
-          >
-            {alreadyPaid ? "Déjà payé ✅" : `Cotiser ${currentTontine.contributionAmount}€`}
-          </Button>
         </View>
-      </View>
-    </ScreenContainer>
+
+        <View style={{ height: 80 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  }).format(new Date(value));
-}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.dark },
 
-function formatFrequency(value: "weekly" | "biweekly" | "monthly") {
-  if (value === "weekly") {
-    return "semaine";
-  }
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, gap: 12 },
+  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  headerTitle: { flex: 1, fontSize: 18, color: colors.text, fontWeight: "900" },
+  statusBadge: { backgroundColor: `${colors.primary}22`, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  statusTxt: { color: colors.primary, fontSize: 12, fontWeight: "700" },
 
-  if (value === "biweekly") {
-    return "quinzaine";
-  }
+  mainCard: { marginHorizontal: 20, marginBottom: 12, backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border, gap: 8 },
+  mainCode: { fontSize: 11, color: colors.textMuted, fontWeight: "700", letterSpacing: 2 },
+  mainAmt: { fontSize: 36, color: colors.text, fontWeight: "900" },
+  mainSub: { fontSize: 13, color: colors.textMuted },
+  pb: { height: 6, backgroundColor: colors.surfaceCard, borderRadius: 3, overflow: "hidden", marginTop: 4 },
+  pbFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 3 },
+  pbTxt: { fontSize: 12, color: colors.textMuted },
 
-  return "mois";
-}
+  statsRow: { flexDirection: "row", gap: 8, marginHorizontal: 20, marginBottom: 16 },
+  statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  statVal: { fontSize: 16, color: colors.text, fontWeight: "900", textAlign: "center" },
+  statLbl: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
 
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1
-  },
-  scrollContent: {
-    gap: 16,
-    paddingBottom: 120
-  },
-  heroCard: {
-    borderRadius: 24,
-    padding: 18,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 14
-  },
-  heroTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12
-  },
-  heroCopy: {
-    flex: 1,
-    gap: 4
-  },
-  title: {
-    color: colors.text,
-    fontSize: 26,
-    fontWeight: "800"
-  },
-  subtitle: {
-    color: colors.primary,
-    fontSize: 15,
-    fontWeight: "700"
-  },
-  description: {
-    color: colors.textMuted,
-    lineHeight: 22
-  },
-  metricsRow: {
-    flexDirection: "row",
-    gap: 10
-  },
-  metricCard: {
-    flex: 1,
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: colors.surfaceMuted,
-    gap: 4
-  },
-  metricLabel: {
-    color: colors.textMuted,
-    fontSize: 12
-  },
-  metricValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "700"
-  },
-  highlightCard: {
-    borderRadius: 24,
-    padding: 18,
-    backgroundColor: colors.primary,
-    gap: 8
-  },
-  highlightEyebrow: {
-    color: "rgba(255,255,255,0.76)",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase"
-  },
-  highlightTitle: {
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: "800"
-  },
-  highlightText: {
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 22
-  },
-  sectionCard: {
-    borderRadius: 22,
-    padding: 18,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 12
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: 12
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800"
-  },
-  sectionMeta: {
-    color: colors.textMuted,
-    fontSize: 12
-  },
-  historyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: colors.surfaceMuted
-  },
-  historyCopy: {
-    flex: 1,
-    gap: 2
-  },
-  historyDate: {
-    color: colors.text,
-    fontWeight: "700"
-  },
-  historySubtitle: {
-    color: colors.textMuted,
-    fontSize: 12
-  },
-  historyAmount: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: "800"
-  },
-  emptyText: {
-    color: colors.textMuted
-  },
-  bottomBar: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: "rgba(255,243,238,0.98)"
-  }
+  section: { paddingHorizontal: 20, marginBottom: 16 },
+  sectionTitle: { fontSize: 15, color: colors.text, fontWeight: "900", marginBottom: 10 },
+
+  payBtn: { backgroundColor: colors.primary, borderRadius: 18, paddingVertical: 16, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10, marginBottom: 10 },
+  payBtnDisabled: { opacity: 0.5 },
+  payBtnTxt: { color: colors.dark, fontSize: 16, fontWeight: "900" },
+
+  autoPayCard: { backgroundColor: colors.surface, borderRadius: 18, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: colors.border },
+  autoPayLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  autoPayTitle: { fontSize: 14, color: colors.text, fontWeight: "800" },
+  autoPaySub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+
+  memberRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  memberAvatar: { width: 40, height: 40, borderRadius: 12, backgroundColor: `${colors.primary}22`, justifyContent: "center", alignItems: "center" },
+  memberAvatarTxt: { color: colors.primary, fontWeight: "900", fontSize: 15 },
+  memberInfo: { flex: 1 },
+  memberName: { color: colors.text, fontWeight: "700", fontSize: 14 },
+  memberStatus: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  statusPaid: { backgroundColor: `${colors.primary}22` },
+  statusLate: { backgroundColor: `${colors.danger}22` },
+  statusPending: { backgroundColor: colors.surfaceCard },
+  memberStatusTxt: { fontSize: 11, fontWeight: "700" },
+
+  descCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border },
+  descTxt: { color: colors.textMuted, fontSize: 14, lineHeight: 22 },
 });

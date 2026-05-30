@@ -67,11 +67,11 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
       >
         <View style={styles.brandBlock}>
           <View style={styles.brandBadge}>
-            <Text style={styles.brandBadgeText}>T</Text>
+            <Text style={styles.brandBadgeText}>K</Text>
           </View>
-          <Text style={styles.brand}>TontineApp</Text>
+          <Text style={styles.brand}>Kotizy</Text>
           <Text style={styles.brandSubtitle}>
-            Votre cercle d’épargne, pensé d’abord pour le mobile, simple à suivre et rassurant au quotidien.
+            L’épargne collective réinventée. Score de confiance, wallet intégré, paiement automatique.
           </Text>
         </View>
 

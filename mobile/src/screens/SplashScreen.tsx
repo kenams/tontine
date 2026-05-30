@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+// Kotizy splash
 
 import { useAppStore } from "../store/appStore";
 import { useAuthStore } from "../store/authStore";
@@ -84,15 +85,15 @@ export function SplashScreen({ navigation }: SplashScreenProps) {
   });
 
   return (
-    <LinearGradient colors={["#1A1A2E", "#2D2D5E"]} style={styles.container}>
+    <LinearGradient colors={["#080b07" as const, "#111a10" as const]} style={styles.container}>
       <View style={styles.centerContent}>
         <Animated.View style={[styles.logoShell, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
-          <Text style={styles.logoText}>T</Text>
+          <Text style={styles.logoText}>K</Text>
         </Animated.View>
 
-        <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>TontineApp</Animated.Text>
+        <Animated.Text style={[styles.title, { opacity: titleOpacity }]}>Kotizy</Animated.Text>
         <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
-          Epargnez ensemble
+          L'épargne collective, réinventée.
         </Animated.Text>
 
         <View style={styles.metaRow}>

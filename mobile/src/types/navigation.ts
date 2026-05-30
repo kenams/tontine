@@ -11,15 +11,21 @@ export type AuthStackParamList = {
 export type HomeStackParamList = {
   Home: undefined;
   CreateTontine: undefined;
+  JoinTontine: undefined;
   TontineDetail: { tontineId: string };
   Chat: { tontineId: string };
   Payment: { tontineId: string; amount: number; tontineName: string };
   Notifications: undefined;
 };
 
+export type WalletStackParamList = {
+  Wallet: undefined;
+};
+
 export type MainTabParamList = {
   HomeStack: NavigatorScreenParams<HomeStackParamList>;
-  ChatList: undefined;
+  WalletStack: NavigatorScreenParams<WalletStackParamList>;
+  Notifications: undefined;
   Profile: undefined;
 };
 
@@ -34,15 +40,13 @@ export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Re
 
 export type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, "Home">;
 export type CreateTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "CreateTontine">;
+export type JoinTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "JoinTontine">;
 export type TontineDetailScreenProps = NativeStackScreenProps<HomeStackParamList, "TontineDetail">;
 export type ChatScreenProps = NativeStackScreenProps<HomeStackParamList, "Chat">;
 export type PaymentScreenProps = NativeStackScreenProps<HomeStackParamList, "Payment">;
 export type NotificationsScreenProps = NativeStackScreenProps<HomeStackParamList, "Notifications">;
 
-export type ChatListScreenProps = CompositeScreenProps<
-  BottomTabScreenProps<MainTabParamList, "ChatList">,
-  NativeStackScreenProps<RootStackParamList>
->;
+export type WalletScreenProps = NativeStackScreenProps<WalletStackParamList, "Wallet">;
 
 export type ProfileScreenProps = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, "Profile">,

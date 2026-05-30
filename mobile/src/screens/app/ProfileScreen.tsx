@@ -1,284 +1,225 @@
-import { useMemo, useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AppHeader } from "../../components/AppHeader";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
-import { ScreenContainer } from "../../components/common/ScreenContainer";
+import { apiCall } from "../../services/api";
 import { useAuthStore } from "../../store/authStore";
-import { useContributionStore } from "../../store/contributionStore";
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
 import type { ProfileScreenProps } from "../../types/navigation";
 
-/**
- * Profil utilisateur avec sections plus respirantes sur mobile.
- */
-export function ProfileScreen(props: ProfileScreenProps) {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-  const updateProfile = useAuthStore((state) => state.updateProfile);
-  const tontines = useTontineStore((state) => state.tontines);
-  const contributionsByTontine = useContributionStore((state) => state.contributionsByTontine);
+type DashboardData = {
+  user: {
+    trustScore?: { score: number; paymentReliability: number; fraudRisk: number } | null;
+    wallet?: { balanceCents: number; currency: string } | null;
+  };
+};
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+function trustLevel(score: number) {
+  if (score >= 95) return { label: "Élite", color: colors.gold };
+  if (score >= 85) return { label: "Gold", color: colors.gold };
+  if (score >= 70) return { label: "Avancé", color: colors.primary };
+  if (score >= 50) return { label: "Intermédiaire", color: colors.textMuted };
+  if (score >= 30) return { label: "Bronze", color: colors.warning };
+  return { label: "Débutant", color: colors.textMuted };
+}
+
+function initials(name: string) {
+  return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+}
+
+export function ProfileScreen({ navigation }: ProfileScreenProps) {
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const tontines = useTontineStore((s) => s.tontines);
+
+  const [dashData, setDashData] = useState<DashboardData | null>(null);
+  const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
-  const [phone, setPhone] = useState(user?.phone ?? user?.phoneNumber ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [saving, setSaving] = useState(false);
 
-  const totalSaved = useMemo(() => {
-    return Object.values(contributionsByTontine)
-      .flat()
-      .filter((contribution) => contribution.status === "paid")
-      .reduce((sum, contribution) => sum + contribution.amount, 0);
-  }, [contributionsByTontine]);
+  useEffect(() => {
+    apiCall<DashboardData>("get", "/api/user/dashboard").then(setDashData).catch(() => {});
+  }, []);
 
-  const initials = useMemo(() => {
-    return (user?.fullName ?? "TU")
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [user?.fullName]);
+  const trust = dashData?.user?.trustScore?.score ?? 0;
+  const level = trustLevel(trust);
+  const wallet = dashData?.user?.wallet;
 
-  async function handleSaveProfile() {
-    await updateProfile({ fullName: fullName.trim(), phone: phone.trim(), phoneNumber: phone.trim() });
-    setIsModalVisible(false);
+  async function saveProfile() {
+    if (!fullName.trim()) return;
+    setSaving(true);
+    try {
+      await apiCall("patch", "/api/user/profile", { fullName: fullName.trim(), phone: phone.trim() });
+      setEditing(false);
+    } catch (err) {
+      Alert.alert("Erreur", err instanceof Error ? err.message : "Impossible de sauvegarder");
+    }
+    setSaving(false);
   }
 
-  function handleLogout() {
-    Alert.alert("Se deconnecter", "Voulez-vous vraiment quitter votre espace ?", [
+  function confirmLogout() {
+    Alert.alert("Déconnexion", "Voulez-vous vous déconnecter ?", [
       { text: "Annuler", style: "cancel" },
-      {
-        text: "Se deconnecter",
-        style: "destructive",
-        onPress: () => void logout()
-      }
+      { text: "Déconnexion", style: "destructive", onPress: () => void logout() },
     ]);
   }
 
   return (
-    <ScreenContainer tone="light">
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <AppHeader
-          title="Mon profil"
-          showNotification
-          onNotificationPress={() => props.navigation.navigate("HomeStack", { screen: "Notifications" })}
-        />
+    <SafeAreaView style={s.safe}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={s.header}>
+          <Text style={s.title}>Profil</Text>
+        </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+        {/* Avatar + identité */}
+        <View style={s.avatarCard}>
+          <View style={s.avatar}>
+            <Text style={s.avatarTxt}>{initials(user?.fullName ?? "KO")}</Text>
           </View>
-          <Text style={styles.name}>{user?.fullName ?? "Utilisateur"}</Text>
-          <Text style={styles.meta}>{user?.email ?? "profil@tontineapp.fr"}</Text>
-          <Text style={styles.meta}>{user?.phone ?? user?.phoneNumber ?? "Numero non renseigne"}</Text>
-          <View style={styles.buttonWrap}>
-            <Button variant="ghost" onPress={() => setIsModalVisible(true)}>
-              Modifier
-            </Button>
+          <Text style={s.name}>{user?.fullName}</Text>
+          <Text style={s.email}>{user?.email}</Text>
+          <View style={[s.levelBadge, { backgroundColor: `${level.color}22` }]}>
+            <Text style={[s.levelTxt, { color: level.color }]}>{level.label}</Text>
           </View>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{tontines.length}</Text>
-            <Text style={styles.statLabel}>Tontines actives</Text>
+        {/* Trust score */}
+        <View style={s.card}>
+          <View style={s.cardRow}>
+            <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
+            <Text style={s.cardTitle}>Score de confiance</Text>
+            <Text style={[s.cardVal, { color: level.color }]}>{trust}/100</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{totalSaved}€</Text>
-            <Text style={styles.statLabel}>Total epargne</Text>
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: `${trust}%` as `${number}%`, backgroundColor: level.color }]} />
           </View>
-          <View style={styles.statCardWide}>
-            <Text style={styles.statValue}>98%</Text>
-            <Text style={styles.statLabel}>Ponctualite</Text>
-          </View>
+          <Text style={s.cardSub}>
+            {trust === 0
+              ? "Payez votre première cotisation pour commencer à construire votre réputation."
+              : `Niveau ${level.label} · Chaque paiement à temps +2 pts`}
+          </Text>
         </View>
 
-        <View style={styles.settingsCard}>
-          <Text style={styles.settingsTitle}>Parametres</Text>
-
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Notifications</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              thumbColor={colors.white}
-              trackColor={{ false: "rgba(26,26,46,0.16)", true: colors.primary }}
-            />
-          </View>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Langue</Text>
-            <Text style={styles.settingValue}>FR</Text>
-          </View>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Confidentialite</Text>
-            <Text style={styles.settingValue}>Standard</Text>
-          </View>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Aide & Support</Text>
-            <Text style={styles.settingValue}>Disponible</Text>
-          </View>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>A propos de TontineApp</Text>
-            <Text style={styles.settingValue}>v1 demo</Text>
-          </View>
-        </View>
-
-        <Button variant="danger" onPress={handleLogout}>
-          Se deconnecter
-        </Button>
-      </ScrollView>
-
-      <Modal visible={isModalVisible} transparent animationType="fade">
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Modifier le profil</Text>
-            <Input label="Nom complet" placeholder="Votre nom" value={fullName} onChangeText={setFullName} />
-            <Input
-              label="Telephone"
-              placeholder="+33 6 12 34 56 78"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-            />
-            <View style={styles.modalActions}>
-              <Button variant="ghost" onPress={() => setIsModalVisible(false)}>
-                Annuler
-              </Button>
-              <Button onPress={() => void handleSaveProfile()}>Enregistrer</Button>
+        {/* Wallet */}
+        {wallet && (
+          <View style={s.card}>
+            <View style={s.cardRow}>
+              <Ionicons name="wallet" size={18} color={colors.gold} />
+              <Text style={s.cardTitle}>Wallet Kotizy</Text>
+              <Text style={[s.cardVal, { color: colors.primary }]}>
+                {(wallet.balanceCents / 100).toLocaleString("fr-FR", { style: "currency", currency: wallet.currency })}
+              </Text>
             </View>
           </View>
+        )}
+
+        {/* Stats */}
+        <View style={s.statsRow}>
+          {[
+            { label: "Groupes", val: tontines.length },
+            { label: "Actifs", val: tontines.filter((t) => t.status === "active").length },
+          ].map(({ label, val }) => (
+            <View key={label} style={s.statCard}>
+              <Text style={s.statVal}>{val}</Text>
+              <Text style={s.statLbl}>{label}</Text>
+            </View>
+          ))}
         </View>
-      </Modal>
-    </ScreenContainer>
+
+        {/* Édition profil */}
+        {editing ? (
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Modifier le profil</Text>
+            <Text style={s.inputLbl}>Nom complet</Text>
+            <TextInput
+              style={s.input}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Prénom Nom"
+              placeholderTextColor={colors.textMuted}
+            />
+            <Text style={s.inputLbl}>Téléphone</Text>
+            <TextInput
+              style={s.input}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+33 6 00 00 00 00"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="phone-pad"
+            />
+            <View style={s.editBtns}>
+              <Pressable style={s.btnSave} onPress={() => void saveProfile()} disabled={saving}>
+                {saving ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.btnSaveTxt}>Enregistrer</Text>}
+              </Pressable>
+              <Pressable style={s.btnCancel} onPress={() => { setEditing(false); setFullName(user?.fullName ?? ""); setPhone(user?.phone ?? ""); }}>
+                <Text style={s.btnCancelTxt}>Annuler</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {/* Actions */}
+        <View style={s.actions}>
+          {[
+            { icon: "create-outline" as const, label: "Modifier le profil", onPress: () => setEditing(true), color: colors.text },
+            { icon: "share-outline" as const, label: "Mon profil public", onPress: () => {}, color: colors.primary },
+            { icon: "log-out-outline" as const, label: "Déconnexion", onPress: confirmLogout, color: colors.danger },
+          ].map((item) => (
+            <Pressable key={item.label} style={s.actionRow} onPress={item.onPress}>
+              <View style={[s.actionIcon, { backgroundColor: `${item.color}15` }]}>
+                <Ionicons name={item.icon} size={20} color={item.color} />
+              </View>
+              <Text style={[s.actionLbl, { color: item.color }]}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={{ height: 80 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  scrollContent: {
-    gap: 16,
-    paddingBottom: 28
-  },
-  profileCard: {
-    borderRadius: 28,
-    padding: 22,
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.primary
-  },
-  avatarText: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: "800"
-  },
-  name: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: "800",
-    marginTop: 4
-  },
-  meta: {
-    color: colors.textMuted
-  },
-  buttonWrap: {
-    width: "100%",
-    marginTop: 10
-  },
-  statsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12
-  },
-  statCard: {
-    width: "48%",
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 6
-  },
-  statCardWide: {
-    width: "100%",
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 6
-  },
-  statValue: {
-    color: colors.primary,
-    fontSize: 22,
-    fontWeight: "800"
-  },
-  statLabel: {
-    color: colors.textMuted,
-    lineHeight: 19
-  },
-  settingsCard: {
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8
-  },
-  settingsTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-    marginBottom: 6
-  },
-  settingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(26,26,46,0.06)"
-  },
-  settingLabel: {
-    color: colors.text,
-    fontSize: 15
-  },
-  settingValue: {
-    color: colors.textMuted,
-    fontWeight: "600"
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(26,26,46,0.42)",
-    justifyContent: "center",
-    padding: 20
-  },
-  modalCard: {
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: colors.surface,
-    gap: 14
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: "800"
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12
-  }
-});
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.dark },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  title: { fontSize: 28, color: colors.text, fontWeight: "900" },
 
+  avatarCard: { alignItems: "center", padding: 24, gap: 8 },
+  avatar: { width: 80, height: 80, borderRadius: 24, backgroundColor: colors.primary, justifyContent: "center", alignItems: "center", marginBottom: 4 },
+  avatarTxt: { color: colors.dark, fontSize: 28, fontWeight: "900" },
+  name: { fontSize: 22, color: colors.text, fontWeight: "900" },
+  email: { fontSize: 14, color: colors.textMuted },
+  levelBadge: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, marginTop: 4 },
+  levelTxt: { fontSize: 13, fontWeight: "800" },
+
+  card: { marginHorizontal: 20, marginBottom: 12, backgroundColor: colors.surface, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border, gap: 10 },
+  cardRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  cardTitle: { flex: 1, fontSize: 15, color: colors.text, fontWeight: "800" },
+  cardVal: { fontSize: 18, fontWeight: "900" },
+  cardSub: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  progressTrack: { height: 6, backgroundColor: colors.surfaceCard, borderRadius: 3, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 3 },
+
+  statsRow: { flexDirection: "row", gap: 12, marginHorizontal: 20, marginBottom: 12 },
+  statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 14, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  statVal: { fontSize: 24, color: colors.text, fontWeight: "900" },
+  statLbl: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+
+  inputLbl: { fontSize: 12, color: colors.textMuted, fontWeight: "700", marginBottom: 4 },
+  input: { backgroundColor: colors.surfaceCard, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.text, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  editBtns: { flexDirection: "row", gap: 10, marginTop: 4 },
+  btnSave: { flex: 1, backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 12, alignItems: "center" },
+  btnSaveTxt: { color: colors.dark, fontWeight: "900", fontSize: 14 },
+  btnCancel: { flex: 1, backgroundColor: colors.surfaceCard, borderRadius: 14, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  btnCancelTxt: { color: colors.textMuted, fontWeight: "700", fontSize: 14 },
+
+  actions: { marginHorizontal: 20, gap: 8, marginBottom: 8 },
+  actionRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border },
+  actionIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  actionLbl: { flex: 1, fontSize: 15, fontWeight: "700" },
+});
