@@ -1,9 +1,8 @@
 import { unstable_cache } from "next/cache";
-import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { defaultCurrency } from "@/lib/currency";
 
-export const getUserDashboard = cache(async (userId: string) => {
+async function _getUserDashboard(userId: string) {
   const [user, memberships, transactions, notifications] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -49,7 +48,11 @@ export const getUserDashboard = cache(async (userId: string) => {
     .sort((a, b) => a.nextDueAt.getTime() - b.nextDueAt.getTime())[0];
 
   return { user, memberships, transactions, notifications, totalSaved, nextMembership };
-});
+}
+
+// Cache cross-request 15s par userId — évite les requêtes DB sur chaque navigation entre onglets
+export const getUserDashboard = (userId: string) =>
+  unstable_cache(_getUserDashboard, ["user-dashboard", userId], { revalidate: 15, tags: [`user-${userId}`] })(userId);
 
 export async function getTontineDetail(groupId: string, userId?: string) {
   const group = await prisma.tontineGroup.findUniqueOrThrow({
@@ -87,7 +90,7 @@ export async function getTontineDetail(groupId: string, userId?: string) {
   return { group, isMember };
 }
 
-export async function getUserTontines(userId: string) {
+async function _getUserTontines(userId: string) {
   return prisma.membership.findMany({
     where: { userId },
     include: {
@@ -102,6 +105,9 @@ export async function getUserTontines(userId: string) {
     orderBy: { joinedAt: "desc" }
   });
 }
+
+export const getUserTontines = (userId: string) =>
+  unstable_cache(_getUserTontines, ["user-tontines", userId], { revalidate: 15, tags: [`user-${userId}`] })(userId);
 
 export async function getAdminStats() {
   try {
