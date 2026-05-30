@@ -1,225 +1,188 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AppHeader } from "../../components/AppHeader";
-import { EmptyState } from "../../components/EmptyState";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { StatsCard } from "../../components/StatsCard";
-import { TontineCard } from "../../components/TontineCard";
-import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { useAuthStore } from "../../store/authStore";
-import { useContributionStore } from "../../store/contributionStore";
-import { useNotificationStore } from "../../store/notificationStore";
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
 import type { HomeScreenProps } from "../../types/navigation";
 
-/**
- * Tableau de bord principal repensé pour un usage téléphone.
- */
 export function HomeScreen({ navigation }: HomeScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const tontines = useTontineStore((s) => s.tontines);
+  const fetchMyTontines = useTontineStore((s) => s.fetchMyTontines);
 
-  const user = useAuthStore((state) => state.user);
-  const tontines = useTontineStore((state) => state.tontines);
-  const fetchMyTontines = useTontineStore((state) => state.fetchMyTontines);
-  const isTontineLoading = useTontineStore((state) => state.isLoading);
-  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
-  const contributionsByTontine = useContributionStore((state) => state.contributionsByTontine);
+  useFocusEffect(useCallback(() => { void fetchMyTontines(); }, [fetchMyTontines]));
 
-  const totalSaved = useMemo(() => {
-    return Object.values(contributionsByTontine)
-      .flat()
-      .filter((contribution) => contribution.status === "paid")
-      .reduce((sum, contribution) => sum + contribution.amount, 0);
-  }, [contributionsByTontine]);
-
-  const paidCountByTontine = useMemo(() => {
-    return Object.fromEntries(
-      Object.entries(contributionsByTontine).map(([tontineId, contributions]) => [
-        tontineId,
-        contributions.filter((contribution) => contribution.status === "paid").length
-      ])
-    ) as Record<string, number>;
-  }, [contributionsByTontine]);
-
-  /**
-   * Recharge les données visibles sur le tableau de bord.
-   */
-  const loadDashboard = useCallback(async () => {
-    await Promise.all([fetchMyTontines(), fetchNotifications()]);
-  }, [fetchMyTontines, fetchNotifications]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void loadDashboard();
-    }, [loadDashboard])
-  );
-
-  async function handleRefresh() {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadDashboard();
+    await fetchMyTontines();
     setRefreshing(false);
-  }
+  }, [fetchMyTontines]);
+
+  const totalSaved = tontines.reduce((s, t) => s + t.contributionAmount * (t.progression?.paidMembers ?? 0), 0);
+  const activeGroups = tontines.filter((t) => t.status === "active").length;
 
   return (
-    <ScreenContainer tone="light">
-      <FlatList
-        data={tontines}
-        keyExtractor={(item) => item.id}
+    <SafeAreaView style={s.safe}>
+      <ScrollView
+        style={s.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={colors.primary} />
-        }
-        ListHeaderComponent={
-          <View style={styles.headerContent}>
-            <AppHeader
-              title="Accueil"
-              showNotification
-              showAvatar
-              onNotificationPress={() => navigation.navigate("Notifications")}
-              onAvatarPress={() => navigation.getParent()?.navigate("Profile")}
-            />
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
+        {/* Header */}
+        <View style={s.header}>
+          <View>
+            <Text style={s.greeting}>Bonjour,</Text>
+            <Text style={s.name}>{user?.fullName?.split(" ")[0] ?? "—"}</Text>
+          </View>
+          <Pressable style={s.notifBtn} onPress={() => navigation.navigate("Notifications" as never)}>
+            <Ionicons name="notifications-outline" size={22} color={colors.text} />
+          </Pressable>
+        </View>
 
+        {/* Wallet card premium */}
+        <LinearGradient colors={["#1a2419", "#243322"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
+          <View style={s.cardTop}>
             <View>
-              <Text style={styles.greeting}>Bonjour, {user?.fullName ?? "Kenams"} 👋</Text>
-              <Text style={styles.subtitle}>Voici la vue d'ensemble de vos tontines actives.</Text>
+              <Text style={s.cardLabel}>KOTIZY BLACK</Text>
+              <Text style={s.cardBalance}>
+                {totalSaved.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+              </Text>
+              <Text style={s.cardSub}>Épargne collective</Text>
             </View>
+            <View style={s.cardIcon}>
+              <Ionicons name="wallet" size={24} color={colors.gold} />
+            </View>
+          </View>
+          <View style={s.cardStats}>
+            <View style={s.stat}><Text style={s.statVal}>{activeGroups}</Text><Text style={s.statLbl}>Actifs</Text></View>
+            <View style={s.divider} />
+            <View style={s.stat}><Text style={s.statVal}>{tontines.length}</Text><Text style={s.statLbl}>Total</Text></View>
+          </View>
+        </LinearGradient>
 
-            <View style={styles.heroCard}>
-              <View style={styles.heroTextBlock}>
-                <Text style={styles.heroLabel}>Ce mois-ci</Text>
-                <Text style={styles.heroValue}>
-                  {tontines.length > 0 ? `${tontines.length} groupes suivis` : "Aucun groupe actif"}
-                </Text>
-                <Text style={styles.heroDescription}>
-                  Suivez vos paiements, vos tours de passage et les rappels importants depuis un seul espace.
-                </Text>
+        {/* Actions rapides */}
+        <View style={s.actions}>
+          {[
+            { icon: "add-circle-outline" as const, label: "Créer", screen: "CreateTontine" },
+            { icon: "enter-outline" as const, label: "Rejoindre", screen: "JoinTontine" },
+            { icon: "wallet-outline" as const, label: "Wallet", screen: "Wallet" },
+            { icon: "person-outline" as const, label: "Profil", screen: "Profile" },
+          ].map((a) => (
+            <Pressable key={a.label} style={s.actionBtn} onPress={() => navigation.navigate(a.screen as never)}>
+              <View style={s.actionIcon}>
+                <Ionicons name={a.icon} size={20} color={colors.primary} />
               </View>
-            </View>
+              <Text style={s.actionLbl}>{a.label}</Text>
+            </Pressable>
+          ))}
+        </View>
 
-            <View style={styles.statsRow}>
-              <StatsCard label="Total epargne" value={`${totalSaved}€`} icon="wallet-outline" />
-              <StatsCard label="Tontines actives" value={`${tontines.length}`} icon="people-outline" />
-            </View>
-
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>Mes tontines</Text>
-              <Pressable>
-                <Text style={styles.sectionLink}>Voir tout</Text>
+        {/* Mes tontines */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Mes tontines</Text>
+          {tontines.length === 0 ? (
+            <View style={s.empty}>
+              <Ionicons name="people-outline" size={40} color={colors.textMuted} />
+              <Text style={s.emptyText}>Aucune tontine. Créez ou rejoignez un groupe.</Text>
+              <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("CreateTontine" as never)}>
+                <Text style={s.emptyBtnText}>Créer un groupe</Text>
               </Pressable>
             </View>
-
-            {isTontineLoading && !tontines.length ? <LoadingSpinner message="Chargement des tontines..." /> : null}
-          </View>
-        }
-        renderItem={({ item }) => (
-          <TontineCard
-            tontine={item}
-            paidCount={paidCountByTontine[item.id] ?? 0}
-            onPress={() => navigation.navigate("TontineDetail", { tontineId: item.id })}
-          />
-        )}
-        ListEmptyComponent={
-          !isTontineLoading ? (
-            <EmptyState
-              title="Aucune tontine pour l'instant"
-              description={"Creez votre premiere tontine !"}
-              ctaLabel="Creer une tontine"
-              onPress={() => navigation.navigate("CreateTontine")}
-            />
-          ) : null
-        }
-      />
-
-      <Pressable style={styles.floatingButton} onPress={() => navigation.navigate("CreateTontine")}>
-        <Ionicons name="add" size={28} color={colors.white} />
-      </Pressable>
-    </ScreenContainer>
+          ) : (
+            tontines.map((t) => {
+              const pct = t.progression
+                ? (t.progression.paidMembers / Math.max(t.progression.totalMembers, 1)) * 100
+                : 0;
+              return (
+                <Pressable
+                  key={t.id}
+                  style={s.tCard}
+                  onPress={() => navigation.navigate("TontineDetail" as never, { tontineId: t.id } as never)}
+                >
+                  <View style={s.tCardTop}>
+                    <View style={s.tAvatar}>
+                      <Text style={s.tAvatarTxt}>{t.name[0]?.toUpperCase()}</Text>
+                    </View>
+                    <View style={s.tInfo}>
+                      <Text style={s.tName}>{t.name}</Text>
+                      <Text style={s.tSub}>
+                        {t.contributionAmount.toLocaleString("fr-FR", { style: "currency", currency: t.currency })}
+                        {" · "}{t.membersCount} membres
+                      </Text>
+                    </View>
+                    <View style={[s.badge, t.status === "active" ? s.badgeActive : s.badgeOther]}>
+                      <Text style={[s.badgeTxt, t.status === "active" ? s.badgeTxtActive : s.badgeTxtOther]}>
+                        {t.status === "active" ? "Actif" : t.status === "completed" ? "Terminé" : "Attente"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={s.pb}><View style={[s.pbFill, { width: `${Math.min(pct, 100)}%` }]} /></View>
+                  <Text style={s.pbTxt}>
+                    {t.progression?.paidMembers ?? 0}/{t.progression?.totalMembers ?? t.membersCount} · Round {t.currentRound}/{t.totalRounds}
+                  </Text>
+                </Pressable>
+              );
+            })
+          )}
+        </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  listContent: {
-    gap: 0,
-    paddingBottom: 120
-  },
-  headerContent: {
-    gap: 16,
-    marginBottom: 14
-  },
-  greeting: {
-    color: colors.text,
-    fontSize: 26,
-    fontWeight: "800"
-  },
-  subtitle: {
-    color: colors.textMuted,
-    marginTop: 6,
-    lineHeight: 21
-  },
-  heroCard: {
-    borderRadius: 24,
-    padding: 18,
-    backgroundColor: colors.dark,
-    gap: 10
-  },
-  heroTextBlock: {
-    gap: 6
-  },
-  heroLabel: {
-    color: "rgba(255,255,255,0.72)",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    fontSize: 12,
-    fontWeight: "700"
-  },
-  heroValue: {
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: "800"
-  },
-  heroDescription: {
-    color: "rgba(255,255,255,0.76)",
-    lineHeight: 20
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12
-  },
-  sectionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: "800"
-  },
-  sectionLink: {
-    color: colors.primary,
-    fontWeight: "700"
-  },
-  floatingButton: {
-    position: "absolute",
-    right: 20,
-    bottom: 26,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 8
-  }
-});
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.dark },
+  scroll: { flex: 1 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", px: 20, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  greeting: { fontSize: 13, color: colors.textMuted, fontWeight: "600" },
+  name: { fontSize: 26, color: colors.text, fontWeight: "900", marginTop: 2 },
+  notifBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
 
+  card: { marginHorizontal: 20, marginVertical: 12, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border },
+  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
+  cardLabel: { fontSize: 10, color: `${colors.primary}99`, fontWeight: "800", letterSpacing: 2, marginBottom: 6 },
+  cardBalance: { fontSize: 32, color: colors.text, fontWeight: "900" },
+  cardSub: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
+  cardIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${colors.gold}22`, justifyContent: "center", alignItems: "center" },
+  cardStats: { flexDirection: "row", alignItems: "center" },
+  stat: { flex: 1, alignItems: "center" },
+  statVal: { fontSize: 20, color: colors.text, fontWeight: "900" },
+  statLbl: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  divider: { width: 1, height: 32, backgroundColor: colors.border },
+
+  actions: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 24 },
+  actionBtn: { alignItems: "center", gap: 6 },
+  actionIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  actionLbl: { fontSize: 11, color: colors.textMuted, fontWeight: "700" },
+
+  section: { paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 16, color: colors.text, fontWeight: "900", marginBottom: 12 },
+  empty: { alignItems: "center", paddingVertical: 40, gap: 12 },
+  emptyText: { fontSize: 14, color: colors.textMuted, textAlign: "center" },
+  emptyBtn: { backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 12, marginTop: 4 },
+  emptyBtnText: { color: colors.dark, fontWeight: "900", fontSize: 14 },
+
+  tCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  tCardTop: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 12 },
+  tAvatar: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${colors.primary}22`, justifyContent: "center", alignItems: "center" },
+  tAvatarTxt: { color: colors.primary, fontWeight: "900", fontSize: 18 },
+  tInfo: { flex: 1 },
+  tName: { color: colors.text, fontWeight: "900", fontSize: 15 },
+  tSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  badgeActive: { backgroundColor: `${colors.primary}22` },
+  badgeOther: { backgroundColor: colors.surfaceCard },
+  badgeTxt: { fontSize: 11, fontWeight: "700" },
+  badgeTxtActive: { color: colors.primary },
+  badgeTxtOther: { color: colors.textMuted },
+  pb: { height: 4, backgroundColor: colors.surfaceCard, borderRadius: 4, overflow: "hidden", marginBottom: 8 },
+  pbFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 4 },
+  pbTxt: { fontSize: 11, color: colors.textMuted },
+});

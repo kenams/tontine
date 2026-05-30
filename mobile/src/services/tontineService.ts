@@ -1,212 +1,142 @@
-import type { CreateTontinePayload, Tontine, TontineMember } from "../types/entities";
-import { PAGINATION } from "../config/constants";
+import type { Tontine, TontineMember } from "../types/entities";
 import { apiCall } from "./api";
-import { mapMember, mapTontine } from "./mappers";
-import { getUser } from "./storage";
 
-type BackendTontinePayload = {
-  tontine: {
-    id: string;
-    name: string;
-    description: string;
-    amount: number;
-    frequency: string;
-    startDate: string;
-    endDate: string;
-    maxMembers: number;
-    status: string;
-    createdBy: string;
-    createdAt: string;
-    membersCount?: number;
-    progression?: {
-      paidMembers: number;
-      totalMembers: number;
-    };
-    members?: Array<{
-      id: string;
-      tontineId: string;
-      userId: string;
-      orderPosition: number;
-      joinDate: string;
-      status: string;
-      user?: {
-        id: string;
-        email: string;
-        fullName: string;
-        phone?: string;
-        avatarUrl?: string;
-        createdAt?: string;
-      } | null;
-    }>;
-    contributions?: Array<{
-      id: string;
-      tontineId: string;
-      userId: string;
-      amount: number;
-      dueDate: string;
-      paidDate?: string | null;
-      status: string;
-    }>;
-    distributions?: Array<{
-      id: string;
-      tontineId: string;
-      beneficiaryId: string;
-      amount: number;
-      scheduledDate: string;
-      paidDate?: string | null;
-      status: string;
-      beneficiary?: {
-        id: string;
-        email: string;
-        fullName: string;
-        phone?: string;
-        avatarUrl?: string;
-        createdAt?: string;
-      } | null;
-    }>;
-  };
-};
-
-type BackendTontinesPayload = {
-  tontines: BackendTontinePayload["tontine"][];
-};
-
-type MembersPayload = {
-  members: Array<{
-    id: string;
-    tontineId: string;
-    userId: string;
-    orderPosition: number;
-    joinDate: string;
-    status: string;
-    user?: {
-      id: string;
-      email: string;
-      fullName: string;
-      phone?: string;
-      avatarUrl?: string;
-      createdAt?: string;
-    } | null;
-  }>;
-};
-
-export type CreateTontineRequest = {
+// Types Kotizy API
+type KotizGroup = {
+  id: string;
   name: string;
-  amount: number;
-  frequency: "MONTHLY" | "BIWEEKLY" | "WEEKLY";
+  description: string;
+  contributionCents: number;
+  currency: string;
+  frequency: string;
   maxMembers: number;
-  startDate: string;
-  description?: string;
+  status: string;
+  joinCode: string;
+  currentRound: number;
+  nextDueAt: string;
+  createdAt: string;
+  memberships?: KotizMembership[];
+  contributions?: KotizContribution[];
 };
 
-export type TontineFilters = {
-  status?: string;
-  page?: number;
-  limit?: number;
+type KotizMembership = {
+  id: string;
+  userId: string;
+  tontineGroupId: string;
+  payoutOrder: number;
+  status: string;
+  paidThisRound: boolean;
+  autoPayEnabled: boolean;
+  joinedAt: string;
+  user?: { id: string; fullName: string; email: string; avatarUrl?: string | null; trustScore?: { score: number } | null };
 };
 
-function mapFrequencyToApi(frequency: CreateTontinePayload["frequency"]): CreateTontineRequest["frequency"] {
-  switch (frequency) {
-    case "weekly":
-      return "WEEKLY";
-    case "biweekly":
-      return "BIWEEKLY";
-    default:
-      return "MONTHLY";
-  }
+type KotizContribution = {
+  id: string;
+  userId: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  dueAt: string;
+  paidAt?: string | null;
+};
+
+function mapStatus(s: string): Tontine["status"] {
+  if (s === "ACTIVE") return "active";
+  if (s === "COMPLETED") return "completed";
+  if (s === "PAUSED") return "cancelled";
+  return "open";
 }
 
-/**
- * Retourne les tontines de l'utilisateur connecte.
- */
-export async function getMyTontines(filters?: TontineFilters): Promise<Tontine[]> {
-  const params = new URLSearchParams();
-
-  if (filters?.status) {
-    params.set("status", filters.status);
-  }
-
-  params.set("page", String(filters?.page ?? PAGINATION.DEFAULT_PAGE));
-  params.set("limit", String(filters?.limit ?? PAGINATION.DEFAULT_LIMIT));
-
-  const payload = await apiCall<BackendTontinesPayload>(
-    "get",
-    `/api/tontines${params.toString() ? `?${params.toString()}` : ""}`
-  );
-  const user = await getUser();
-
-  return payload.tontines.map((tontine) => mapTontine(tontine, user?.id));
+function mapFreq(f: string): Tontine["frequency"] {
+  if (f === "WEEKLY") return "weekly";
+  if (f === "BIWEEKLY") return "biweekly";
+  return "monthly";
 }
 
-/**
- * Cree une nouvelle tontine sur le backend.
- */
-export async function createTontine(data: CreateTontinePayload): Promise<Tontine> {
-  const user = await getUser();
-  const payload = await apiCall<BackendTontinePayload>("post", "/api/tontines", {
-    name: data.name,
-    amount: data.contributionAmount,
-    frequency: mapFrequencyToApi(data.frequency),
-    maxMembers: data.membersCount,
-    startDate: data.startDate,
-    description: data.description
-  });
-
-  return mapTontine(payload.tontine, user?.id);
+export function mapKotizGroup(g: KotizGroup, myUserId?: string): Tontine {
+  const paid = g.contributions?.filter((c) => c.status === "PAID").length ?? 0;
+  const total = g.memberships?.length ?? g.maxMembers;
+  return {
+    id: g.id,
+    name: g.name,
+    description: g.description,
+    contributionAmount: g.contributionCents / 100,
+    currency: g.currency as "EUR",
+    frequency: mapFreq(g.frequency),
+    membersCount: total,
+    currentRound: g.currentRound,
+    totalRounds: g.maxMembers,
+    nextPayoutDate: g.nextDueAt,
+    status: mapStatus(g.status),
+    isPrivate: false,
+    maxMembers: g.maxMembers,
+    totalPot: (g.contributionCents * total) / 100,
+    joinCode: g.joinCode,
+    members: g.memberships?.map((m) => mapKotizMembership(m, g.id)),
+    progression: { paidMembers: paid, totalMembers: total },
+    myTurn: g.memberships?.find((m) => m.userId === myUserId)?.payoutOrder,
+  };
 }
 
-/**
- * Recupere le detail complet d'une tontine.
- */
+function mapKotizMembership(m: KotizMembership, groupId: string): TontineMember {
+  return {
+    id: m.id,
+    tontineId: groupId,
+    userId: m.userId,
+    fullName: m.user?.fullName ?? "Membre",
+    avatarUrl: m.user?.avatarUrl ?? undefined,
+    role: "member",
+    payoutOrder: m.payoutOrder,
+    paymentStatus: m.paidThisRound ? "paid" : (m.status === "LATE" ? "late" : "pending"),
+    joinedAt: m.joinedAt,
+  };
+}
+
+export async function getMyTontines(): Promise<Tontine[]> {
+  const res = await apiCall<{ tontines: KotizGroup[] }>("get", "/api/tontines");
+  return res.tontines.map((g) => mapKotizGroup(g));
+}
+
 export async function getTontineById(id: string): Promise<Tontine> {
-  const user = await getUser();
-  const payload = await apiCall<BackendTontinePayload>("get", `/api/tontines/${id}`);
-
-  return mapTontine(payload.tontine, user?.id);
+  const res = await apiCall<{ group: KotizGroup }>("get", `/api/tontines/${id}`);
+  return mapKotizGroup(res.group);
 }
 
-/**
- * Met a jour une tontine existante.
- */
-export async function updateTontine(id: string, data: Partial<CreateTontineRequest>): Promise<Tontine> {
-  const user = await getUser();
-  const payload = await apiCall<BackendTontinePayload>("put", `/api/tontines/${id}`, data);
-
-  return mapTontine(payload.tontine, user?.id);
+export async function createTontine(data: {
+  name: string;
+  description: string;
+  contributionAmount: number;
+  currency: string;
+  frequency: string;
+  maxMembers: number;
+  rules: string;
+}): Promise<Tontine> {
+  const res = await apiCall<{ group: KotizGroup }>("post", "/api/tontines", {
+    name: data.name,
+    description: data.description,
+    contributionAmount: data.contributionAmount,
+    currency: data.currency,
+    frequency: data.frequency.toUpperCase(),
+    maxMembers: data.maxMembers,
+    rules: data.rules,
+  });
+  return mapKotizGroup(res.group);
 }
 
-/**
- * Supprime une tontine cote backend.
- */
-export async function deleteTontine(id: string): Promise<void> {
-  await apiCall<null>("delete", `/api/tontines/${id}`);
+export async function joinTontine(joinCode: string): Promise<{ groupId: string; alreadyMember: boolean }> {
+  const res = await apiCall<{ groupId: string; alreadyMember?: boolean }>("post", "/api/tontines/join", { joinCode });
+  return { groupId: res.groupId, alreadyMember: !!res.alreadyMember };
 }
 
-/**
- * Retourne les membres d'une tontine.
- */
-export async function getMembers(tontineId: string): Promise<TontineMember[]> {
-  const payload = await apiCall<MembersPayload>("get", `/api/tontines/${tontineId}/members`);
-
-  return payload.members.map(mapMember);
+export async function contribute(tontineId: string, provider = "WALLET"): Promise<{ ok: boolean; status: string; checkoutUrl?: string }> {
+  return apiCall("post", `/api/tontines/${tontineId}/contribute`, { provider });
 }
 
-/**
- * Invite un membre par email.
- */
-export async function inviteMember(tontineId: string, email: string): Promise<TontineMember> {
-  const payload = await apiCall<{ member: MembersPayload["members"][number] }>(
-    "post",
-    `/api/tontines/${tontineId}/members/invite`,
-    { email }
-  );
-
-  return mapMember(payload.member);
+export async function toggleAutoPay(tontineId: string, enabled: boolean): Promise<void> {
+  await apiCall("patch", `/api/tontines/${tontineId}/autopay`, { enabled });
 }
 
-/**
- * Retire un membre d'une tontine.
- */
-export async function removeMember(tontineId: string, userId: string): Promise<void> {
-  await apiCall<null>("delete", `/api/tontines/${tontineId}/members/${userId}`);
+export async function inviteMember(tontineId: string, email: string): Promise<void> {
+  await apiCall("post", `/api/tontines/${tontineId}/invite`, { email });
 }

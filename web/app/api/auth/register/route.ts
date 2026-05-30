@@ -68,7 +68,12 @@ export async function POST(request: NextRequest) {
   });
   const response = isFormPost
     ? NextResponse.redirect(redirectUrl(request, "/onboarding"), { status: 303 })
-    : NextResponse.json({ ok: true, redirectTo: "/onboarding" });
+    : NextResponse.json({
+        ok: true,
+        redirectTo: "/onboarding",
+        token,
+        user: { id: user.id, email: user.email, fullName: user.fullName, role: "USER", phone: null }
+      });
   setSessionCookie(response, token);
   return response;
 }

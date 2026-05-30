@@ -46,12 +46,16 @@ export async function POST(request: NextRequest) {
   });
 
   const redirectTo = user.role === "ADMIN" ? "/admin" : "/dashboard";
+  const isMobile = request.headers.get("x-client-type") === "mobile" || request.headers.get("x-platform") === "mobile";
   const response = isFormPost
     ? NextResponse.redirect(redirectUrl(request, redirectTo), { status: 303 })
     : NextResponse.json({
         ok: true,
         role: user.role,
-        redirectTo
+        redirectTo,
+        // Inclus pour les clients mobiles (Bearer token)
+        token,
+        user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role, phone: user.phone ?? null }
       });
   setSessionCookie(response, token);
 
