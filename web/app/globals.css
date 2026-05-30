@@ -46,6 +46,26 @@ body {
 
 button, input, select, textarea { font: inherit; }
 
+/* ── Select — dark mode natif browser ──────────────────────── */
+select {
+  color-scheme: dark;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+select option {
+  background-color: #111a12;
+  color: #f0ede8;
+}
+.light select {
+  color-scheme: light;
+  background-color: rgba(5, 7, 6, 0.05);
+  color: #06120c;
+}
+.light select option {
+  background-color: #ffffff;
+  color: #06120c;
+}
+
 ::selection { background: rgba(18, 199, 127, 0.3); }
 
 /* ── Glass ─────────────────────────────────────────────────── */

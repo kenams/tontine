@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, Building2, CheckCircle2, CreditCard, Info, RefreshCw, Smartphone, WalletCards } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Building2, CheckCircle2, CreditCard, Smartphone, WalletCards, Zap } from "lucide-react";
 import Link from "next/link";
 
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -8,11 +8,38 @@ import { requireUser } from "@/lib/auth";
 import { getUserDashboard } from "@/lib/data";
 import { dateShort, money } from "@/lib/format";
 
-const providers = [
-  { name: "Revolut", icon: RefreshCw, desc: "Virement SEPA instantané", status: "Bientôt" },
-  { name: "Stripe", icon: CreditCard, desc: "Carte Visa / Mastercard", status: "Actif" },
-  { name: "Mobile Money", icon: Smartphone, desc: "Wave, Orange, MTN MoMo", status: "Bientôt" },
-  { name: "Virement bancaire", icon: Building2, desc: "IBAN · SWIFT · SEPA", status: "Bientôt" },
+const TYPE_LABELS: Record<string, string> = {
+  CONTRIBUTION: "Cotisation",
+  WALLET_DEPOSIT: "Dépôt",
+  WALLET_WITHDRAWAL: "Retrait",
+  PAYOUT: "Payout reçu",
+};
+
+const DEPOSIT_METHODS = [
+  {
+    href: "/wallet/deposit",
+    icon: CreditCard,
+    label: "Carte bancaire",
+    sub: "Visa · Mastercard · Apple Pay · Google Pay · Revolut",
+    badge: "Instantané",
+    active: true,
+  },
+  {
+    href: "/wallet/deposit/sepa",
+    icon: Building2,
+    label: "Virement SEPA",
+    sub: "IBAN virtuel — compatible toutes banques EU",
+    badge: "1–3 jours",
+    active: true,
+  },
+  {
+    href: null,
+    icon: Smartphone,
+    label: "Mobile Money",
+    sub: "Wave · Orange Money · MTN MoMo",
+    badge: "Bientôt",
+    active: false,
+  },
 ];
 
 export default async function WalletPage({
@@ -26,13 +53,17 @@ export default async function WalletPage({
   const wallet = user.wallet;
   const walletCurrency = wallet?.currency ?? "EUR";
   const balance = wallet?.balanceCents ?? 0;
-  const paid = transactions.filter((t) => t.status === "PAID" && t.type !== "WALLET_DEPOSIT").reduce((s, t) => s + t.amountCents, 0);
-  const pending = transactions.filter((t) => t.status === "PENDING").reduce((s, t) => s + t.amountCents, 0);
+  const paid = transactions
+    .filter((t) => t.status === "PAID" && t.type === "CONTRIBUTION")
+    .reduce((s, t) => s + t.amountCents, 0);
+  const deposited = transactions
+    .filter((t) => t.status === "PAID" && t.type === "WALLET_DEPOSIT")
+    .reduce((s, t) => s + t.amountCents, 0);
 
   return (
     <MobileShell user={session} title="Wallet">
-      <PageHeading eyebrow="Wallet personnel" title={money(balance, walletCurrency)}>
-        Solde disponible pour payer vos cotisations en 1 clic.
+      <PageHeading eyebrow="Wallet Kotizy" title={money(balance, walletCurrency)}>
+        Solde disponible — payer vos cotisations en 1 clic.
       </PageHeading>
 
       {query.deposit === "success" && (
@@ -60,55 +91,56 @@ export default async function WalletPage({
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Actions principales */}
       <div className="mb-4 grid grid-cols-2 gap-3">
         <Link href="/wallet/deposit" className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] active:scale-95">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15">
             <ArrowDownToLine size={18} className="text-emerald-400" />
           </div>
           <span className="text-xs font-bold">Déposer</span>
-          <span className="text-[10px] text-emerald-400">Stripe</span>
+          <span className="text-[10px] font-bold text-emerald-400">Carte · SEPA · +</span>
         </Link>
         <Link href="/wallet/withdraw" className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] active:scale-95">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
             <ArrowUpFromLine size={18} className="text-[var(--text)]" />
           </div>
           <span className="text-xs font-bold">Retirer</span>
-          <span className="text-[10px] text-[var(--muted)]">SEPA</span>
+          <span className="text-[10px] text-[var(--muted)]">Virement SEPA</span>
         </Link>
       </div>
 
-      {/* Info dépôt */}
-      <div className="glass mb-4 flex gap-3 rounded-3xl p-4">
-        <Info size={16} className="mt-0.5 shrink-0 text-gold" />
-        <div>
-          <p className="text-sm font-bold">Comment alimenter votre wallet ?</p>
-          <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-            Transférez de l'argent depuis Revolut, votre banque ou un autre service vers votre wallet Kotizy. Les fonds sont ensuite disponibles pour payer vos cotisations en 1 clic, sans frais supplémentaires.
-          </p>
-        </div>
-      </div>
-
-      {/* Méthodes de dépôt */}
+      {/* Méthodes de dépôt — cliquables */}
       <div className="glass mb-4 rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Méthodes de dépôt</p>
+        <p className="mb-3 text-sm font-black">Alimenter votre wallet</p>
         <div className="space-y-2">
-          {providers.map((p) => {
-            const Icon = p.icon;
-            const active = p.status === "Actif";
+          {DEPOSIT_METHODS.map((m) => {
+            const Icon = m.icon;
+            const Wrapper = m.href ? Link : "div";
             return (
-              <div key={p.name} className={`flex items-center gap-3 rounded-2xl p-3 ${active ? "bg-emerald-500/8 ring-1 ring-emerald-400/20" : "bg-[var(--surface)]"}`}>
-                <div className={`grid h-10 w-10 place-items-center rounded-xl ${active ? "bg-emerald-500/20" : "bg-[var(--surface-strong)]"}`}>
-                  <Icon size={16} className={active ? "text-emerald-400" : "text-[var(--muted)]"} />
+              <Wrapper
+                key={m.label}
+                // @ts-expect-error href optional
+                href={m.href ?? undefined}
+                className={`flex items-center gap-3 rounded-2xl p-3 transition ${
+                  m.active
+                    ? "bg-emerald-500/8 ring-1 ring-emerald-400/20 hover:bg-emerald-500/12 cursor-pointer"
+                    : "bg-[var(--surface)] opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <div className={`grid h-10 w-10 place-items-center rounded-xl ${m.active ? "bg-emerald-500/20" : "bg-[var(--surface-strong)]"}`}>
+                  <Icon size={16} className={m.active ? "text-emerald-400" : "text-[var(--muted)]"} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold">{p.name}</p>
-                  <p className="text-xs text-[var(--muted)]">{p.desc}</p>
+                  <p className="text-sm font-bold">{m.label}</p>
+                  <p className="text-xs text-[var(--muted)]">{m.sub}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${active ? "bg-emerald-500/15 text-emerald-400" : "bg-[var(--surface-strong)] text-[var(--muted)]"}`}>
-                  {p.status}
-                </span>
-              </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${m.active ? "bg-emerald-500/15 text-emerald-400" : "bg-[var(--surface-strong)] text-[var(--muted)]"}`}>
+                    {m.badge}
+                  </span>
+                  {m.active && <Zap size={12} className="text-emerald-400" />}
+                </div>
+              </Wrapper>
             );
           })}
         </div>
@@ -121,40 +153,47 @@ export default async function WalletPage({
           <p className="text-xl font-black text-emerald-400">{money(paid, walletCurrency)}</p>
         </div>
         <div className="glass rounded-3xl p-4">
-          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">En attente</p>
-          <p className="text-xl font-black text-gold">{money(pending, walletCurrency)}</p>
+          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">Total déposé</p>
+          <p className="text-xl font-black text-gold">{money(deposited, walletCurrency)}</p>
         </div>
       </div>
 
-      {/* Historique */}
+      {/* Historique transactions */}
       <div className="glass rounded-3xl p-4">
         <p className="mb-3 text-sm font-black">Historique</p>
         {transactions.length === 0 ? (
           <div className="py-6 text-center">
             <WalletCards size={24} className="mx-auto mb-2 text-[var(--muted)]" />
-            <p className="text-sm text-[var(--muted)]">Aucune transaction. Cotisez dans un groupe pour démarrer votre historique.</p>
+            <p className="text-sm text-[var(--muted)]">Aucune transaction. Déposez des fonds ou cotisez dans un groupe.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {transactions.slice(0, 10).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className={`grid h-10 w-10 place-items-center rounded-2xl ${tx.status === "PAID" ? "bg-emerald-500/15" : "bg-[var(--surface-strong)]"}`}>
-                    <WalletCards size={15} className={tx.status === "PAID" ? "text-emerald-400" : "text-[var(--muted)]"} />
+            {transactions.slice(0, 12).map((tx) => {
+              const isDeposit = tx.type === "WALLET_DEPOSIT";
+              const isPayout = tx.type === "PAYOUT";
+              const label = tx.tontineGroup?.name ?? TYPE_LABELS[tx.type] ?? tx.type;
+              const sign = (isDeposit || isPayout) && tx.status === "PAID" ? "+" : "−";
+              const amtColor = (isDeposit || isPayout) && tx.status === "PAID" ? "text-emerald-400" : "text-[var(--text)]";
+              return (
+                <div key={tx.id} className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={`grid h-10 w-10 place-items-center rounded-2xl ${tx.status === "PAID" ? "bg-emerald-500/15" : "bg-[var(--surface-strong)]"}`}>
+                      <WalletCards size={15} className={tx.status === "PAID" ? "text-emerald-400" : "text-[var(--muted)]"} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">{label}</p>
+                      <p className="text-[10px] text-[var(--muted)]">{dateShort(tx.createdAt)} · {tx.provider}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{tx.tontineGroup?.name ?? tx.type}</p>
-                    <p className="text-[10px] text-[var(--muted)]">{dateShort(tx.createdAt)} · {tx.provider}</p>
+                  <div className="text-right">
+                    <p className={`text-sm font-black ${amtColor}`}>
+                      {sign}{money(tx.amountCents, tx.currency)}
+                    </p>
+                    <StatusBadge value={tx.status} />
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`text-sm font-black ${tx.status === "PAID" ? "text-emerald-400" : "text-[var(--text)]"}`}>
-                    {tx.status === "PAID" ? "−" : ""}{money(tx.amountCents, tx.currency)}
-                  </p>
-                  <StatusBadge value={tx.status} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -25,6 +25,7 @@ export function UserStatusActions({ userId, status }: { userId: string; status: 
           router.refresh();
         }}
         className="min-h-9 rounded-xl border border-white/10 bg-white/[0.08] px-2 text-xs outline-none"
+        style={{ colorScheme: "dark" }}
       >
         <option value="ACTIVE">Actif</option>
         <option value="REVIEW">Review</option>

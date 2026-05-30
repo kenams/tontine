@@ -52,11 +52,12 @@ export function CreateTontineForm() {
       <select
         name="currency"
         className="min-h-12 w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 text-sm outline-none"
-        defaultValue="XOF"
+        defaultValue="EUR"
+        style={{ colorScheme: "dark" }}
       >
         {SUPPORTED_CURRENCIES.map((currency) => (
           <option key={currency.code} value={currency.code}>
-            {currency.code} - {currency.label}
+            {currency.code} — {currency.label}
           </option>
         ))}
       </select>
@@ -64,6 +65,7 @@ export function CreateTontineForm() {
         name="frequency"
         className="min-h-12 w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 text-sm outline-none"
         defaultValue="MONTHLY"
+        style={{ colorScheme: "dark" }}
       >
         <option value="WEEKLY">Hebdomadaire</option>
         <option value="BIWEEKLY">Toutes les 2 semaines</option>
