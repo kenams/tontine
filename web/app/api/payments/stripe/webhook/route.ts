@@ -225,5 +225,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, ...result });
   }
 
+  // SEPA bank transfer — PaymentIntent succeeds quand le virement arrive (1-3 jours)
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    if (pi.metadata?.type === "WALLET_DEPOSIT_SEPA") {
+      const walletId = pi.metadata.walletId;
+      const transactionId = pi.metadata.transactionId;
+      const userId = pi.metadata.userId;
+      if (walletId && transactionId && userId) {
+        await prisma.$transaction(async (tx) => {
+          const txRecord = await tx.transaction.findUnique({ where: { id: transactionId }, select: { amountCents: true } });
+          if (!txRecord) return;
+          await tx.wallet.update({ where: { id: walletId }, data: { balanceCents: { increment: txRecord.amountCents } } });
+          await tx.transaction.update({
+            where: { id: transactionId },
+            data: { status: "PAID", metadata: JSON.stringify({ mode: "sepa_bank_transfer", paymentIntentId: pi.id, type: "WALLET_DEPOSIT_SEPA" }) },
+          });
+          await tx.notification.create({
+            data: { userId, title: "Virement SEPA reçu ✅", body: "Votre virement a été reçu et crédité sur votre wallet Kotizy.", type: "PAYMENT" },
+          });
+        });
+        return NextResponse.json({ received: true, updated: true });
+      }
+    }
+  }
+
   return NextResponse.json({ received: true, ignored: event.type });
 }

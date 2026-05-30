@@ -73,13 +73,15 @@ export async function createWalletDepositCheckoutSession(input: {
     currency: input.currency,
   };
 
-  return stripe.checkout.sessions.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (stripe.checkout.sessions.create as any)({
     mode: "payment",
     customer_email: input.user.email,
     client_reference_id: input.transactionId,
     success_url: successUrl,
     cancel_url: cancelUrl,
-    payment_method_types: ["card"],
+    // Toutes les méthodes actives sur le compte Stripe : Apple Pay, Google Pay, Link, Klarna, iDEAL…
+    automatic_payment_methods: { enabled: true },
     line_items: [
       {
         quantity: 1,
@@ -95,7 +97,91 @@ export async function createWalletDepositCheckoutSession(input: {
     ],
     metadata,
     payment_intent_data: { metadata },
+    locale: "fr",
+  }) as ReturnType<typeof stripe.checkout.sessions.create>;
+}
+
+// Résultat retourné à l'utilisateur pour le virement SEPA
+export type SepaTransferInstructions = {
+  iban: string;
+  bic: string;
+  accountHolderName: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  paymentIntentId: string;
+  hostedInstructionsUrl?: string;
+};
+
+export async function createSepaBankTransferPaymentIntent(input: {
+  user: { id: string; email: string; fullName: string; stripeCustomerId?: string | null };
+  walletId: string;
+  transactionId: string;
+  amountCents: number;
+}): Promise<SepaTransferInstructions> {
+  const stripe = getStripe();
+  if (!stripe) throw new Error("Stripe is not configured");
+
+  // Créer ou récupérer le Stripe Customer
+  let customerId = input.user.stripeCustomerId ?? "";
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: input.user.email,
+      name: input.user.fullName,
+      metadata: { kotizUserId: input.user.id },
+    });
+    customerId = customer.id;
+    // Sauvegarder l'ID Stripe sur le user (caller)
+    const { prisma } = await import("@/lib/db");
+    await prisma.user.update({ where: { id: input.user.id }, data: { stripeCustomerId: customerId } as never });
+  }
+
+  const metadata = {
+    type: "WALLET_DEPOSIT_SEPA",
+    transactionId: input.transactionId,
+    walletId: input.walletId,
+    userId: input.user.id,
+    currency: "eur",
+  };
+
+  const pi = await stripe.paymentIntents.create({
+    amount: input.amountCents,
+    currency: "eur",
+    customer: customerId,
+    payment_method_types: ["customer_balance"],
+    payment_method_data: { type: "customer_balance" },
+    payment_method_options: {
+      customer_balance: {
+        funding_type: "bank_transfer",
+        bank_transfer: {
+          type: "eu_bank_transfer",
+          eu_bank_transfer: { country: "FR" },
+        },
+      },
+    },
+    confirm: true,
+    metadata,
   });
+
+  const instructions = (pi.next_action as { display_bank_transfer_instructions?: {
+    financial_addresses?: Array<{ iban?: { iban: string; bic: string; account_holder_name: string }; type: string }>;
+    reference?: string;
+    hosted_instructions_url?: string;
+  } })?.display_bank_transfer_instructions;
+
+  const ibanAddress = instructions?.financial_addresses?.find((a) => a.type === "iban")?.iban;
+  if (!ibanAddress) throw new Error("IBAN virtuel non disponible — activez bank_transfer sur votre compte Stripe.");
+
+  return {
+    iban: ibanAddress.iban,
+    bic: ibanAddress.bic,
+    accountHolderName: ibanAddress.account_holder_name,
+    reference: instructions?.reference ?? input.transactionId.slice(0, 12).toUpperCase(),
+    amount: input.amountCents / 100,
+    currency: "EUR",
+    paymentIntentId: pi.id,
+    hostedInstructionsUrl: instructions?.hosted_instructions_url,
+  };
 }
 
 export async function createContributionCheckoutSession(input: {
@@ -121,13 +207,14 @@ export async function createContributionCheckoutSession(input: {
     currency: input.group.currency
   };
 
-  return stripe.checkout.sessions.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (stripe.checkout.sessions.create as any)({
     mode: "payment",
     customer_email: input.user.email,
     client_reference_id: input.transactionId,
     success_url: successUrl,
     cancel_url: cancelUrl,
-    payment_method_types: ["card"],
+    automatic_payment_methods: { enabled: true },
     line_items: [
       {
         quantity: 1,
@@ -137,15 +224,12 @@ export async function createContributionCheckoutSession(input: {
           product_data: {
             name: `Cotisation ${input.group.name}`,
             description: input.group.description.slice(0, 500),
-            metadata: {
-              tontineGroupId: input.group.id,
-              product: "tontine_contribution"
-            }
-          }
-        }
-      }
+          },
+        },
+      },
     ],
     metadata,
-    payment_intent_data: { metadata }
-  });
+    payment_intent_data: { metadata },
+    locale: "fr",
+  }) as ReturnType<typeof stripe.checkout.sessions.create>;
 }

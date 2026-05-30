@@ -1,8 +1,11 @@
 "use client";
 
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react";
+import {
+  ArrowLeft, Building2, CreditCard, Loader2,
+  Smartphone, Star, Zap,
+} from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,11 +19,43 @@ const PRESETS = [
   { label: "200 €", cents: 20000 },
 ];
 
+type Method = "card" | "sepa" | "mobile";
+
+const METHODS = [
+  {
+    id: "card" as Method,
+    icon: CreditCard,
+    label: "Carte / Apple Pay / Google Pay",
+    sub: "Visa · Mastercard · Apple Pay · Google Pay · Revolut",
+    badge: "Instantané",
+    badgeColor: "bg-emerald-500/15 text-emerald-400",
+    available: true,
+  },
+  {
+    id: "sepa" as Method,
+    icon: Building2,
+    label: "Virement SEPA",
+    sub: "IBAN virtuel · Compatible toutes banques EU",
+    badge: "1-3 jours",
+    badgeColor: "bg-white/10 text-[var(--muted)]",
+    available: true,
+  },
+  {
+    id: "mobile" as Method,
+    icon: Smartphone,
+    label: "Mobile Money",
+    sub: "Wave · Orange Money · MTN MoMo",
+    badge: "Bientôt",
+    badgeColor: "bg-white/10 text-[var(--muted)]",
+    available: false,
+  },
+];
+
 function DepositContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const cancelled = searchParams.get("cancelled") === "1";
 
+  const [method, setMethod] = useState<Method>("card");
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,39 +64,32 @@ function DepositContent() {
   const amountCents = selected ?? (custom ? Math.round(parseFloat(custom) * 100) : null);
 
   async function handleDeposit() {
-    if (!amountCents || amountCents < 500) {
-      setError("Montant minimum : 5 €");
-      return;
-    }
-    if (amountCents > 500_000) {
-      setError("Montant maximum : 5 000 €");
-      return;
-    }
+    if (!amountCents || amountCents < 500) { setError("Montant minimum : 5 €"); return; }
+    if (amountCents > 500_000) { setError("Montant maximum : 5 000 €"); return; }
     setLoading(true);
     setError(null);
+
+    if (method === "sepa") {
+      window.location.assign("/wallet/deposit/sepa");
+      return;
+    }
 
     const res = await fetch("/api/wallet/deposit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amountCents }),
     });
-
     const data = await res.json().catch(() => null);
     setLoading(false);
-
-    if (!res.ok) {
-      setError(data?.error ?? "Erreur lors de la création du paiement.");
-      return;
-    }
-
-    if (data?.checkoutUrl) {
-      window.location.assign(data.checkoutUrl);
-    }
+    if (!res.ok) { setError(data?.error ?? "Erreur lors de la création du paiement."); return; }
+    if (data?.checkoutUrl) window.location.assign(data.checkoutUrl);
   }
 
   return (
     <div className="min-h-screen bg-[var(--bg)] px-4 py-8">
       <div className="mx-auto max-w-sm">
+
+        {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <Link href="/wallet" className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 hover:bg-white/15 transition">
             <ArrowLeft size={18} />
@@ -74,78 +102,115 @@ function DepositContent() {
 
         {cancelled && (
           <div className="mb-4 rounded-3xl border border-gold/30 bg-gold/10 p-4 text-sm font-bold text-gold">
-            Paiement annulé. Choisissez un montant pour réessayer.
+            Paiement annulé. Réessayez ci-dessous.
           </div>
         )}
 
+        {/* Méthodes */}
         <div className="glass mb-4 rounded-[1.75rem] p-5">
-          <p className="mb-4 text-sm font-black">Choisissez un montant</p>
-
-          <div className="mb-4 grid grid-cols-3 gap-2">
-            {PRESETS.map((p) => (
-              <button
-                key={p.cents}
-                onClick={() => { setSelected(p.cents); setCustom(""); setError(null); }}
-                className={`rounded-2xl py-3 text-sm font-bold transition ${
-                  selected === p.cents && !custom
-                    ? "bg-emerald-500 text-black"
-                    : "bg-white/10 hover:bg-white/15"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <p className="mb-3 text-sm font-black">Méthode de paiement</p>
+          <div className="space-y-2">
+            {METHODS.map((m) => {
+              const Icon = m.icon;
+              const active = method === m.id;
+              return (
+                <button
+                  key={m.id}
+                  disabled={!m.available}
+                  onClick={() => { if (m.available) { setMethod(m.id); setError(null); } }}
+                  className={`w-full flex items-center gap-3 rounded-2xl p-3 text-left transition ${
+                    active ? "ring-1 ring-emerald-400/40 bg-emerald-500/8" : m.available ? "bg-[var(--surface)] hover:bg-[var(--surface-strong)]" : "bg-[var(--surface)] opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${active ? "bg-emerald-500/20" : "bg-white/10"}`}>
+                    <Icon size={18} className={active ? "text-emerald-400" : "text-[var(--muted)]"} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-bold ${active ? "text-[var(--text)]" : "text-[var(--text)]"}`}>{m.label}</p>
+                    <p className="text-xs text-[var(--muted)] truncate">{m.sub}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${m.badgeColor}`}>{m.badge}</span>
+                  {active && <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400" />}
+                </button>
+              );
+            })}
           </div>
-
-          <div className="mb-5">
-            <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">Montant personnalisé (€)</label>
-            <input
-              type="number"
-              min="5"
-              max="5000"
-              step="1"
-              placeholder="ex : 75"
-              value={custom}
-              onChange={(e) => { setCustom(e.target.value); setSelected(null); setError(null); }}
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-sm outline-none focus:border-emerald-400/40 focus:bg-white/[0.12] transition"
-            />
-          </div>
-
-          {amountCents && amountCents >= 500 ? (
-            <div className="mb-4 rounded-2xl bg-emerald-500/10 px-4 py-3">
-              <p className="text-sm font-bold text-emerald-400">
-                Vous allez déposer <span className="text-lg">{(amountCents / 100).toFixed(2)} €</span>
-              </p>
-              <p className="text-xs text-[var(--muted)]">Paiement sécurisé par Stripe · Carte Visa / Mastercard</p>
-            </div>
-          ) : null}
-
-          {error && (
-            <div className="mb-4 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-300">
-              {error}
-            </div>
-          )}
-
-          <Button
-            onClick={handleDeposit}
-            disabled={loading || !amountCents || amountCents < 500}
-            className="w-full"
-          >
-            {loading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <CreditCard size={18} />
-            )}
-            {loading ? "Redirection Stripe..." : "Recharger via Stripe"}
-          </Button>
         </div>
 
+        {/* Montant — seulement pour carte (SEPA redirige) */}
+        {method === "card" && (
+          <div className="glass mb-4 rounded-[1.75rem] p-5">
+            <p className="mb-3 text-sm font-black">Montant</p>
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.cents}
+                  onClick={() => { setSelected(p.cents); setCustom(""); setError(null); }}
+                  className={`rounded-2xl py-3 text-sm font-bold transition ${selected === p.cents && !custom ? "bg-emerald-500 text-black" : "bg-white/10 hover:bg-white/15"}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="mb-4">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">Montant personnalisé (€)</label>
+              <input
+                type="number" min="5" max="5000" step="1" placeholder="ex : 75"
+                value={custom}
+                onChange={(e) => { setCustom(e.target.value); setSelected(null); setError(null); }}
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-sm outline-none focus:border-emerald-400/40 transition"
+              />
+            </div>
+            {amountCents && amountCents >= 500 && (
+              <div className="mb-3 flex items-center gap-2 rounded-2xl bg-emerald-500/10 px-4 py-3">
+                <Zap size={14} className="shrink-0 text-emerald-400" />
+                <p className="text-sm font-bold text-emerald-200">
+                  {(amountCents / 100).toFixed(2)} € · crédit instantané sur votre wallet
+                </p>
+              </div>
+            )}
+            {error && <div className="mb-3 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-300">{error}</div>}
+            <Button onClick={handleDeposit} disabled={loading || !amountCents || amountCents < 500} className="w-full">
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
+              {loading ? "Ouverture Stripe..." : "Payer avec Stripe"}
+            </Button>
+          </div>
+        )}
+
+        {/* CTA SEPA */}
+        {method === "sepa" && (
+          <div className="glass mb-4 rounded-[1.75rem] p-5">
+            <p className="mb-3 text-sm text-[var(--muted)]">
+              Nous allons générer un IBAN virtuel unique pour votre dépôt. Effectuez ensuite le virement depuis Revolut, N26 ou votre banque.
+            </p>
+            {error && <div className="mb-3 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-300">{error}</div>}
+            <Link href="/wallet/deposit/sepa" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/15 py-3.5 text-sm font-black hover:bg-white/20 transition">
+              <Building2 size={18} />
+              Obtenir mon IBAN de dépôt →
+            </Link>
+          </div>
+        )}
+
+        {/* Mobile Money */}
+        {method === "mobile" && (
+          <div className="glass mb-4 rounded-[1.75rem] p-5 text-center">
+            <Smartphone size={32} className="mx-auto mb-3 text-[var(--muted)]" />
+            <p className="font-black">Mobile Money — Bientôt</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">Wave, Orange Money et MTN MoMo sont en cours d'intégration. Vous serez notifié dès l'activation.</p>
+          </div>
+        )}
+
+        {/* Info sécurité */}
         <div className="glass rounded-3xl p-4 text-center">
-          <p className="text-xs text-[var(--muted)]">
-            Les fonds sont crédités instantanément après confirmation Stripe.<br />
-            Vous pourrez payer vos cotisations en 1 clic.
+          <div className="mb-1 flex items-center justify-center gap-1.5">
+            <Star size={12} className="text-gold" />
+            <p className="text-xs font-bold">Paiement sécurisé</p>
+          </div>
+          <p className="text-[11px] text-[var(--muted)]">
+            Chiffrement SSL · Stripe PCI-DSS Level 1 · Aucune donnée bancaire stockée par Kotizy
           </p>
         </div>
+
       </div>
     </div>
   );

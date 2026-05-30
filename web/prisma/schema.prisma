@@ -38,6 +38,7 @@ model User {
   createdTontines    TontineGroup[]       @relation("CreatedTontines")
   passwordResetTokens PasswordResetToken[]
   pushSubscriptions   PushSubscription[]
+  stripeCustomerId    String?
 }
 
 model Admin {
