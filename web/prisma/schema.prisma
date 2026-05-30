@@ -37,6 +37,7 @@ model User {
   votes           Vote[]
   createdTontines    TontineGroup[]       @relation("CreatedTontines")
   passwordResetTokens PasswordResetToken[]
+  pushSubscriptions   PushSubscription[]
 }
 
 model Admin {
@@ -91,22 +92,36 @@ model TontineGroup {
 }
 
 model Membership {
-  id              String       @id @default(cuid())
-  userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tontineGroupId  String
-  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
-  role            String       @default("MEMBER")
-  status          String       @default("ACTIVE")
-  payoutOrder     Int
-  joinedAt        DateTime     @default(now())
-  nextPayoutAt    DateTime?
-  paidThisRound   Boolean      @default(false)
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tontineGroupId   String
+  tontineGroup     TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  role             String       @default("MEMBER")
+  status           String       @default("ACTIVE")
+  payoutOrder      Int
+  joinedAt         DateTime     @default(now())
+  nextPayoutAt     DateTime?
+  paidThisRound    Boolean      @default(false)
+  autoPayEnabled   Boolean      @default(false)
+  reminderSentAt   DateTime?
 
   @@unique([userId, tontineGroupId])
   @@unique([tontineGroupId, payoutOrder])
   @@index([status])
   @@index([tontineGroupId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Contribution {

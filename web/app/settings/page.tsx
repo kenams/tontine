@@ -2,6 +2,7 @@ import { LockKeyhole } from "lucide-react";
 
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
+import { PushSubscribeButton } from "@/components/app/push-subscribe";
 import { SettingsToggles } from "@/components/app/settings-toggles";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { requireUser } from "@/lib/auth";
@@ -21,6 +22,8 @@ export default async function SettingsPage() {
         </div>
         <ThemeToggle />
       </div>
+
+      <PushSubscribeButton />
 
       <SettingsToggles />
 

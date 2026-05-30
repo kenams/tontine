@@ -1,6 +1,7 @@
 import { AlertTriangle, CalendarClock, PiggyBank, ShieldCheck, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { AutoPayToggle } from "@/components/app/autopay-toggle";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MobileShell } from "@/components/app/mobile-shell";
 import { ShareGroupButton } from "@/components/app/share-group";
@@ -25,9 +26,10 @@ export default async function TontineDetailPage({
   const session = await requireUser();
   const { id } = await params;
   const query = searchParams ? await searchParams : {};
-  const [detail, wallet] = await Promise.all([
+  const [detail, wallet, myMembership] = await Promise.all([
     getTontineDetail(id, session.userId).catch(() => null),
     prisma.wallet.findUnique({ where: { userId: session.userId }, select: { balanceCents: true, currency: true } }),
+    prisma.membership.findFirst({ where: { userId: session.userId, tontineGroupId: id }, select: { autoPayEnabled: true } }),
   ]);
   if (!detail || (!detail.isMember && session.role !== "ADMIN")) notFound();
   const { group } = detail;
@@ -82,6 +84,15 @@ export default async function TontineDetailPage({
           contributionCents={group.contributionCents}
           groupCurrency={group.currency}
         />
+        {myMembership && (
+          <AutoPayToggle
+            groupId={group.id}
+            initialEnabled={myMembership.autoPayEnabled}
+            walletBalance={wallet?.balanceCents ?? 0}
+            contributionCents={group.contributionCents}
+            currency={group.currency}
+          />
+        )}
         <ShareGroupButton joinCode={group.joinCode} />
         <InviteMemberForm groupId={group.id} />
       </div>

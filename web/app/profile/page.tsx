@@ -1,4 +1,4 @@
-import { Award, Copy, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound } from "lucide-react";
+import { Award, Copy, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -50,6 +50,13 @@ export default async function ProfilePage() {
             {level.label}
           </span>
         </div>
+        <Link
+          href={`/u/${encodeURIComponent(user.email.split("@")[0])}`}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold hover:bg-white/15 transition"
+          target="_blank"
+        >
+          <ExternalLink size={11} /> Voir mon profil public
+        </Link>
       </div>
 
       <ProfileEditForm initialName={user.fullName} initialPhone={user.phone} />

@@ -52,3 +52,63 @@ export async function sendContributionConfirmEmail(to: string, fullName: string,
     </div>`
   );
 }
+
+export async function sendDueReminderEmail(to: string, fullName: string, groupName: string, amount: string, dueDate: string, autoPayEnabled: boolean) {
+  await send(
+    to,
+    `⏰ Rappel — Cotisation ${groupName} dans 3 jours`,
+    `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+      <div style="background:#fef9c3;border-radius:12px;padding:12px 16px;margin-bottom:24px;display:inline-block">
+        <span style="font-size:13px;font-weight:700;color:#854d0e">⏰ Échéance dans 3 jours</span>
+      </div>
+      <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Rappel cotisation</h1>
+      <p style="color:#6b7280;margin:0 0 8px">Bonjour ${fullName}, votre cotisation pour <strong>${groupName}</strong> arrive à échéance le <strong>${dueDate}</strong>.</p>
+      <p style="color:#6b7280;margin:0 0 24px">Montant : <strong>${amount}</strong>${autoPayEnabled ? ' · <span style="color:#16a34a">Auto-paiement activé ✓</span>' : ''}</p>
+      ${autoPayEnabled
+        ? `<p style="background:#f0fdf4;border-radius:12px;padding:12px 16px;color:#15803d;font-size:13px;font-weight:700">Le prélèvement automatique est activé. Assurez-vous d'avoir le solde suffisant sur votre wallet.</p>`
+        : `<a href="${APP_URL}/tontines" style="display:inline-block;background:#22c55e;color:#050706;font-weight:900;padding:14px 28px;border-radius:16px;text-decoration:none;font-size:15px">Payer maintenant</a>`}
+    </div>`
+  );
+}
+
+export async function sendPayoutEmail(to: string, fullName: string, groupName: string, amount: string, round: number) {
+  await send(
+    to,
+    `🎉 C'est votre tour — ${groupName} vous verse ${amount}`,
+    `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+      <div style="background:#f0fdf4;border-radius:12px;padding:12px 16px;margin-bottom:24px;display:inline-block">
+        <span style="font-size:13px;font-weight:700;color:#15803d">🎉 Payout Round ${round}</span>
+      </div>
+      <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Vous recevez <span style="color:#22c55e">${amount}</span> !</h1>
+      <p style="color:#6b7280;margin:0 0 24px">Bonjour ${fullName}, c'est votre tour de recevoir le pot du groupe <strong>${groupName}</strong>. Les fonds ont été crédités sur votre wallet Kotizy.</p>
+      <a href="${APP_URL}/wallet" style="display:inline-block;background:#22c55e;color:#050706;font-weight:900;padding:14px 28px;border-radius:16px;text-decoration:none;font-size:15px">Voir mon wallet</a>
+    </div>`
+  );
+}
+
+export async function sendAutoPayConfirmEmail(to: string, fullName: string, groupName: string, amount: string) {
+  await send(
+    to,
+    `✅ Paiement automatique effectué — ${groupName}`,
+    `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+      <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Auto-paiement ✅</h1>
+      <p style="color:#6b7280;margin:0 0 24px">Bonjour ${fullName}, votre cotisation de <strong>${amount}</strong> pour <strong>${groupName}</strong> a été prélevée automatiquement depuis votre wallet.</p>
+      <a href="${APP_URL}/wallet" style="display:inline-block;background:#22c55e;color:#050706;font-weight:900;padding:14px 28px;border-radius:16px;text-decoration:none;font-size:15px">Voir mon wallet</a>
+    </div>`
+  );
+}
+
+export async function sendAutoPayFailEmail(to: string, fullName: string, groupName: string, amount: string) {
+  await send(
+    to,
+    `⚠️ Solde insuffisant — Auto-paiement échoué — ${groupName}`,
+    `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
+      <div style="background:#fef2f2;border-radius:12px;padding:12px 16px;margin-bottom:24px;display:inline-block">
+        <span style="font-size:13px;font-weight:700;color:#991b1b">⚠️ Solde insuffisant</span>
+      </div>
+      <h1 style="font-size:24px;font-weight:900;margin:0 0 8px">Auto-paiement échoué</h1>
+      <p style="color:#6b7280;margin:0 0 24px">Bonjour ${fullName}, le prélèvement automatique de <strong>${amount}</strong> pour <strong>${groupName}</strong> a échoué : solde wallet insuffisant. Payez manuellement pour éviter une pénalité.</p>
+      <a href="${APP_URL}/wallet/deposit" style="display:inline-block;background:#ef4444;color:#fff;font-weight:900;padding:14px 28px;border-radius:16px;text-decoration:none;font-size:15px">Recharger mon wallet</a>
+    </div>`
+  );
+}
