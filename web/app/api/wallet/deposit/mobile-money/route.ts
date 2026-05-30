@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       amountCents,
       currency: wallet.currency,
       provider: provider as string,
+      reference: `MM-${provider}-${session.userId}-${Date.now()}`,
       metadata: JSON.stringify({ mode: "mobile_money", provider, phoneNumber: phoneNumber.slice(-4).padStart(phoneNumber.length, "*") }),
     },
   });
