@@ -69,13 +69,13 @@ export default async function WalletPage({
           <span className="text-xs font-bold">Déposer</span>
           <span className="text-[10px] text-emerald-400">Stripe</span>
         </Link>
-        <button className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] opacity-60 cursor-not-allowed">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--surface-strong)]">
-            <ArrowUpFromLine size={18} className="text-[var(--muted)]" />
+        <Link href="/wallet/withdraw" className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] active:scale-95">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
+            <ArrowUpFromLine size={18} className="text-[var(--text)]" />
           </div>
-          <span className="text-xs font-bold text-[var(--muted)]">Retirer</span>
-          <span className="text-[10px] text-[var(--muted)]">Bientôt</span>
-        </button>
+          <span className="text-xs font-bold">Retirer</span>
+          <span className="text-[10px] text-[var(--muted)]">SEPA</span>
+        </Link>
       </div>
 
       {/* Info dépôt */}

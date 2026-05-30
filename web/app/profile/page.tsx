@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
+import { ProfileEditForm } from "@/components/app/profile-edit-form";
 import { ProgressBar } from "@/components/app/progress-bar";
 import { StatCard } from "@/components/app/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
   const session = await requireUser();
   const { user, memberships, transactions } = await getUserDashboard(session.userId);
   const walletCurrency = user.wallet?.currency ?? "XOF";
-  const trust = user.trustScore?.score ?? 50;
+  const trust = user.trustScore?.score ?? 0;
   const level = trustLevel(trust);
   const paidCount = transactions.filter((t) => t.status === "PAID").length;
   const lateCount = memberships.filter((m) => m.status === "LATE").length;
@@ -50,6 +51,8 @@ export default async function ProfilePage() {
           </span>
         </div>
       </div>
+
+      <ProfileEditForm initialName={user.fullName} initialPhone={user.phone} />
 
       {/* Stats */}
       <div className="mb-4 grid grid-cols-2 gap-3">
