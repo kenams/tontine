@@ -96,7 +96,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
   }
 
   return (
-    <ScreenContainer tone="light" scrollable={false}>
+    <ScreenContainer tone="dark" scrollable={false}>
       <View style={styles.wrapper}>
         <AppHeader title="Créer une tontine" showBack onBack={() => navigation.goBack()} />
 
@@ -287,24 +287,26 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 24,
     padding: 20,
-    backgroundColor: colors.dark,
+    backgroundColor: "rgba(34,197,94,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.2)",
     gap: 10
   },
   heroEyebrow: {
-    color: "rgba(255,255,255,0.72)",
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase"
   },
   heroTitle: {
-    color: colors.white,
-    fontSize: 26,
-    fontWeight: "800",
-    lineHeight: 32
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "900",
+    lineHeight: 28
   },
   heroText: {
-    color: "rgba(255,255,255,0.82)",
+    color: colors.textMuted,
     lineHeight: 22
   },
   card: {
@@ -423,9 +425,9 @@ const styles = StyleSheet.create({
   previewCard: {
     borderRadius: 24,
     padding: 18,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: "rgba(34,197,94,0.06)",
     borderWidth: 1,
-    borderColor: "#FFD9C8",
+    borderColor: "rgba(34,197,94,0.2)",
     gap: 12
   },
   previewEyebrow: {
@@ -438,7 +440,7 @@ const styles = StyleSheet.create({
   previewName: {
     color: colors.text,
     fontSize: 22,
-    fontWeight: "800"
+    fontWeight: "900"
   },
   previewGrid: {
     flexDirection: "row",
@@ -448,7 +450,9 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 18,
     padding: 14,
-    backgroundColor: "rgba(255,255,255,0.74)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
     gap: 4
   },
   previewMetricLabel: {
@@ -475,7 +479,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: "rgba(255,243,238,0.98)"
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(8,11,7,0.95)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)"
   }
 });
