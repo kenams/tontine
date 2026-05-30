@@ -17,4 +17,8 @@ export const colors = {
   warning: "#f59e0b",
   danger: "#ef4444",
   dangerLight: "#fef2f2",
+  // Aliases pour compatibilité avec les composants existants
+  surfaceMuted: "#1a2419",
+  primarySoft: "#0d2b14",
+  darkSoft: "#111a10",
 } as const;

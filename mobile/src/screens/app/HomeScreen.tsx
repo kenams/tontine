@@ -46,7 +46,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
 
         {/* Wallet card premium */}
-        <LinearGradient colors={["#1a2419", "#243322"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
+        <LinearGradient colors={["#1a2419", "#243322"] as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
           <View style={s.cardTop}>
             <View>
               <Text style={s.cardLabel}>KOTIZY BLACK</Text>
@@ -103,7 +103,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                 <Pressable
                   key={t.id}
                   style={s.tCard}
-                  onPress={() => navigation.navigate("TontineDetail" as never, { tontineId: t.id } as never)}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  onPress={() => (navigation as any).navigate("TontineDetail", { tontineId: t.id })}
                 >
                   <View style={s.tCardTop}>
                     <View style={s.tAvatar}>
@@ -140,7 +141,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.dark },
   scroll: { flex: 1 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", px: 20, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   greeting: { fontSize: 13, color: colors.textMuted, fontWeight: "600" },
   name: { fontSize: 26, color: colors.text, fontWeight: "900", marginTop: 2 },
   notifBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },

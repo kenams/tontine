@@ -79,12 +79,12 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
 
     await createTontine({
       name: name.trim(),
+      description: description.trim() || "Nouvelle tontine Kotizy",
       contributionAmount: parsedAmount,
-      frequency,
-      membersCount: members,
-      description: description.trim(),
-      startDate: parseFrenchDate(startDate)?.toISOString(),
-      isPrivate: true
+      currency: "EUR",
+      frequency: frequency.toUpperCase(),
+      maxMembers: members,
+      rules: "Cotisation avant la date limite. Ponctualité obligatoire.",
     });
 
     if (useTontineStore.getState().errorMessage) {
