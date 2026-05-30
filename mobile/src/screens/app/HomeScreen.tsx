@@ -69,12 +69,12 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         {/* Actions rapides */}
         <View style={s.actions}>
           {[
-            { icon: "add-circle-outline" as const, label: "Créer", screen: "CreateTontine" },
-            { icon: "enter-outline" as const, label: "Rejoindre", screen: "JoinTontine" },
-            { icon: "wallet-outline" as const, label: "Wallet", screen: "Wallet" },
-            { icon: "person-outline" as const, label: "Profil", screen: "Profile" },
+            { icon: "add-circle-outline" as const, label: "Créer",    screen: "CreateTontine" },
+            { icon: "enter-outline" as const,      label: "Rejoindre", screen: "JoinTontine" },
+            { icon: "wallet-outline" as const,     label: "Wallet",    screen: "WalletStack" },
+            { icon: "person-outline" as const,     label: "Profil",    screen: "Profile" },
           ].map((a) => (
-            <Pressable key={a.label} style={s.actionBtn} onPress={() => navigation.navigate(a.screen as never)}>
+            <Pressable key={a.label} style={s.actionBtn} onPress={() => (navigation as any).navigate(a.screen)}>
               <View style={s.actionIcon}>
                 <Ionicons name={a.icon} size={20} color={colors.primary} />
               </View>
