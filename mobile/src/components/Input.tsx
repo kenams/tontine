@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.07)",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16

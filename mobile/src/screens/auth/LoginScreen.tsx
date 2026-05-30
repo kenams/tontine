@@ -60,10 +60,9 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
   }
 
   return (
-    <ScreenContainer tone="dark" scrollable={false}>
+    <ScreenContainer tone="dark" scrollable>
       <KeyboardAvoidingView
-        style={styles.wrapper}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.brandBlock}>
           <View style={styles.brandBadge}>
@@ -71,24 +70,18 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
           </View>
           <Text style={styles.brand}>Kotizy</Text>
           <Text style={styles.brandSubtitle}>
-            L’épargne collective réinventée. Score de confiance, wallet intégré, paiement automatique.
+            L’épargne collective réinventée.
           </Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Connexion</Text>
-          <Text style={styles.cardDescription}>
-            Entrez dans votre espace pour retrouver vos tontines, vos cotisations et les messages du groupe.
-          </Text>
 
           <Input
             label="Email"
-            placeholder="kenams@tontineapp.fr"
+            placeholder="votre@email.com"
             value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-              setError(null);
-            }}
+            onChangeText={(value) => { setEmail(value); setError(null); }}
             keyboardType="email-address"
             autoCapitalize="none"
             error={emailError}
@@ -98,24 +91,21 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
             label="Mot de passe"
             placeholder="Votre mot de passe"
             value={password}
-            onChangeText={(value) => {
-              setPassword(value);
-              setError(null);
-            }}
+            onChangeText={(value) => { setPassword(value); setError(null); }}
             secureTextEntry={!showPassword}
-            onToggleSecure={() => setShowPassword((current) => !current)}
+            onToggleSecure={() => setShowPassword((c) => !c)}
             autoCapitalize="none"
             error={passwordError}
           />
 
-          {error || storeError ? <ErrorMessage message={error ?? storeError ?? ""} /> : null}
+          {(error ?? storeError) ? <ErrorMessage message={error ?? storeError ?? ""} /> : null}
 
           <Button onPress={() => void handleSubmit()} loading={isLoading} disabled={isFormDisabled}>
             Se connecter
           </Button>
 
-          <Pressable onPress={() => navigation.navigate("Register")}>
-            <Text style={styles.link}>Pas encore de compte ? S'inscrire</Text>
+          <Pressable onPress={() => navigation.navigate("Register")} style={styles.linkWrapper}>
+            <Text style={styles.link}>Pas encore de compte ? <Text style={styles.linkBold}>S’inscrire</Text></Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -124,70 +114,64 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingTop: 24,
-    paddingBottom: 12,
-    gap: 22
-  },
   brandBlock: {
     alignItems: "flex-start",
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 4,
-    paddingTop: 6
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   brandBadge: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.primary
+    backgroundColor: colors.primary,
+    marginBottom: 4,
   },
   brandBadgeText: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: "800"
+    color: "#080b07",
+    fontSize: 26,
+    fontWeight: "900",
   },
   brand: {
-    color: colors.primary,
-    fontSize: 36,
-    fontWeight: "800",
-    letterSpacing: 0.3
+    color: colors.text,
+    fontSize: 32,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
   brandSubtitle: {
-    color: "rgba(255,255,255,0.72)",
-    textAlign: "left",
-    lineHeight: 22
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
   },
   card: {
-    borderRadius: 28,
-    padding: 22,
-    gap: 16,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: 20,
+    gap: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.16,
-    shadowRadius: 30,
-    elevation: 8
+    borderColor: "rgba(255,255,255,0.1)",
   },
   cardTitle: {
     color: colors.text,
-    fontSize: 28,
-    fontWeight: "800"
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 2,
   },
-  cardDescription: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    marginBottom: 4
+  linkWrapper: {
+    paddingVertical: 6,
+    alignItems: "center",
   },
   link: {
-    color: colors.primary,
+    color: colors.textMuted,
     textAlign: "center",
-    fontWeight: "700"
-  }
+    fontSize: 14,
+  },
+  linkBold: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
 });
 

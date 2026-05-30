@@ -24,7 +24,7 @@ export function ScreenContainer({ children, scrollable = true, tone = "dark" }: 
 
   return (
     <LinearGradient
-      colors={tone === "light" ? ["#FFF8F4", "#FFF3EE", "#FDE9DF"] : ["#1A1A2E", "#22233D", "#131320"]}
+      colors={tone === "light" ? ["#f4f6f4", "#edf2ed", "#e6ede6"] : ["#080b07", "#0d1509", "#080b07"]}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   overlayDark: {
-    backgroundColor: "rgba(14, 16, 31, 0.84)"
+    backgroundColor: "transparent"
   },
   overlayLight: {
     backgroundColor: "rgba(255,243,238,0.88)"
