@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -52,17 +55,56 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const [kycStatus, setKycStatus] = useState<string>("NONE");
   const [kycLoading, setKycLoading] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("push_enabled").then((v) => setPushEnabled(v === "1"));
   }, []);
 
-  async function togglePush(val: boolean) {
-    setPushEnabled(val);
-    await AsyncStorage.setItem("push_enabled", val ? "1" : "0");
-    if (!val) {
-      apiCall("delete", "/api/push").catch(() => {});
+  async function registerPushToken() {
+    if (!Device.isDevice) return null;
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let finalStatus = existing;
+    if (existing !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
     }
+    if (finalStatus !== "granted") return null;
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "Kotizy",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+    const token = await Notifications.getExpoPushTokenAsync({
+      projectId: "5e1b5c7a-7b38-4f86-97ff-2e23614f0f95",
+    });
+    return token.data;
+  }
+
+  async function togglePush(val: boolean) {
+    setPushLoading(true);
+    try {
+      if (val) {
+        const token = await registerPushToken();
+        if (!token) {
+          Alert.alert("Notifications", "Autorisez les notifications dans les paramètres de votre téléphone.");
+          setPushLoading(false);
+          return;
+        }
+        await apiCall("post", "/api/push/expo", { token });
+        setPushEnabled(true);
+        await AsyncStorage.setItem("push_enabled", "1");
+      } else {
+        await apiCall("delete", "/api/push").catch(() => {});
+        setPushEnabled(false);
+        await AsyncStorage.setItem("push_enabled", "0");
+      }
+    } catch {
+      Alert.alert("Erreur", "Impossible de configurer les notifications.");
+    }
+    setPushLoading(false);
   }
 
   useEffect(() => {
@@ -227,14 +269,16 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
           <View style={s.cardRow}>
             <Ionicons name="notifications-outline" size={20} color={colors.primary} />
             <Text style={s.cardTitle}>Notifications push</Text>
-            <Switch
-              value={pushEnabled}
-              onValueChange={(v) => void togglePush(v)}
-              trackColor={{ false: colors.surfaceCard, true: `${colors.primary}66` }}
-              thumbColor={pushEnabled ? colors.primary : colors.textMuted}
-            />
+            {pushLoading ? <ActivityIndicator size="small" color={colors.primary} /> : (
+              <Switch
+                value={pushEnabled}
+                onValueChange={(v) => void togglePush(v)}
+                trackColor={{ false: colors.surfaceCard, true: `${colors.primary}66` }}
+                thumbColor={pushEnabled ? colors.primary : colors.textMuted}
+              />
+            )}
           </View>
-          <Text style={s.cardSub}>Rappels de cotisation, payout reçu, messages de groupe.</Text>
+          <Text style={s.cardSub}>{pushEnabled ? "✓ Activées — rappels, payout, messages." : "Activez pour recevoir rappels de cotisation et payouts."}</Text>
         </View>
 
         {/* Actions */}

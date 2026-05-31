@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,8 +7,13 @@ import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
 import type { JoinTontineScreenProps } from "../../types/navigation";
 
-export function JoinTontineScreen({ navigation }: JoinTontineScreenProps) {
-  const [code, setCode] = useState("");
+export function JoinTontineScreen({ navigation, route }: JoinTontineScreenProps) {
+  const params = route.params as { code?: string } | undefined;
+  const [code, setCode] = useState(params?.code?.toUpperCase() ?? "");
+
+  useEffect(() => {
+    if (params?.code) setCode(params.code.toUpperCase());
+  }, [params?.code]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const joinTontine = useTontineStore((s) => s.joinTontine);

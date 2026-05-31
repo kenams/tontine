@@ -41,6 +41,14 @@
         {
           "merchantIdentifier": "merchant.com.kahdigital.kotizy"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#22c55e",
+          "sounds": []
+        }
       ]
     ]
   }

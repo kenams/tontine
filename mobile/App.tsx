@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, type LinkingOptions } from "@react-navigation/native";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -11,10 +11,40 @@ import { AppNavigator } from "./src/navigation/AppNavigator";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { appNavigationTheme } from "./src/theme/theme";
 import { STRIPE_PUBLISHABLE_KEY } from "./src/config/constants";
+import type { RootStackParamList } from "./src/types/navigation";
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ["kotizy://", "https://tontineapp-web.vercel.app"],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          GroupesStack: {
+            screens: {
+              JoinTontine: "g/:code",
+              TontineDetail: "tontines/:tontineId",
+            },
+          },
+          HomeStack: {
+            screens: {
+              JoinTontine: "join/:code",
+            },
+          },
+        },
+      },
+      AuthStack: {
+        screens: {
+          Login: "login",
+          Register: "register",
+        },
+      },
+    },
+  },
+};
 
 function AppProviders() {
   return (
-    <NavigationContainer theme={appNavigationTheme}>
+    <NavigationContainer theme={appNavigationTheme} linking={linking}>
       <StatusBar style="dark" />
       <OfflineBanner />
       <AppNavigator />

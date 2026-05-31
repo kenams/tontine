@@ -40,6 +40,7 @@ model User {
   createdTontines    TontineGroup[]       @relation("CreatedTontines")
   passwordResetTokens PasswordResetToken[]
   pushSubscriptions   PushSubscription[]
+  expoPushToken       ExpoPushToken?
   stripeCustomerId    String?
 }
 
@@ -129,6 +130,15 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model ExpoPushToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Contribution {

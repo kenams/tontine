@@ -153,12 +153,15 @@ export async function GET(request: NextRequest) {
 
     // Payout automatique sur wallet du bénéficiaire
     if (payoutMembership && potCents > 0) {
+      const feeCents = Math.round(potCents * group.platformFeeBps / 10_000);
+      const netPayout = potCents - feeCents;
       const payoutRef = `PAYOUT-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+      const feeRef = `FEE-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
       await prisma.$transaction(async (tx) => {
         await tx.wallet.upsert({
           where: { userId: payoutMembership.userId },
-          create: { userId: payoutMembership.userId, balanceCents: potCents, currency: group.currency, status: "ACTIVE" },
-          update: { balanceCents: { increment: potCents } },
+          create: { userId: payoutMembership.userId, balanceCents: netPayout, currency: group.currency, status: "ACTIVE" },
+          update: { balanceCents: { increment: netPayout } },
         });
         await tx.transaction.create({
           data: {
@@ -166,20 +169,37 @@ export async function GET(request: NextRequest) {
             tontineGroupId: group.id,
             type: "PAYOUT",
             status: "PAID",
-            amountCents: potCents,
+            amountCents: netPayout,
             currency: group.currency,
             provider: "WALLET",
             reference: payoutRef,
             riskScore: 3,
-            metadata: JSON.stringify({ round: group.currentRound, mode: "auto_payout" }),
+            metadata: JSON.stringify({ round: group.currentRound, mode: "auto_payout", grossPot: potCents, feeCents }),
           },
         });
+        // Enregistrement des frais KAH Digital (1.25% du pot)
+        if (feeCents > 0) {
+          await tx.transaction.create({
+            data: {
+              userId: payoutMembership.userId,
+              tontineGroupId: group.id,
+              type: "PLATFORM_FEE",
+              status: "PAID",
+              amountCents: feeCents,
+              currency: group.currency,
+              provider: "WALLET",
+              reference: feeRef,
+              riskScore: 0,
+              metadata: JSON.stringify({ round: group.currentRound, bps: group.platformFeeBps }),
+            },
+          });
+        }
         await tx.notification.create({
           data: {
             userId: payoutMembership.userId,
             tontineGroupId: group.id,
             title: "🎉 Vous avez reçu le pot !",
-            body: `${money(potCents, group.currency)} crédités sur votre wallet depuis ${group.name} (Round ${group.currentRound}).`,
+            body: `${money(netPayout, group.currency)} crédités sur votre wallet depuis ${group.name} (Round ${group.currentRound}).`,
             type: "PAYOUT",
           },
         });
