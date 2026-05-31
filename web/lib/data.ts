@@ -123,7 +123,9 @@ export async function getAdminStats() {
     alerts,
     recentTransactions,
     users,
-    groups
+    groups,
+    feesAllTime,
+    feesThisMonth
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: "ACTIVE" } }),
@@ -140,7 +142,9 @@ export async function getAdminStats() {
       take: 10
     }),
     prisma.user.findMany({ include: { wallet: true, trustScore: true }, orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.tontineGroup.findMany({ include: { memberships: true, contributions: true }, take: 8 })
+    prisma.tontineGroup.findMany({ include: { memberships: true, contributions: true }, take: 8 }),
+    prisma.transaction.aggregate({ where: { type: "PLATFORM_FEE", status: "PAID" }, _sum: { amountCents: true } }),
+    prisma.transaction.aggregate({ where: { type: "PLATFORM_FEE", status: "PAID", createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } }, _sum: { amountCents: true } })
   ]);
 
   const volumeByCurrency = Object.entries(
@@ -166,7 +170,8 @@ export async function getAdminStats() {
     currency: primaryVolume.currency,
     amount: 0
   };
-  const platformRevenue = Math.round(primaryPaid.amount * 0.0125);
+  const platformRevenue = feesAllTime._sum.amountCents ?? 0;
+  const platformRevenueThisMonth = feesThisMonth._sum.amountCents ?? 0;
 
   const chart = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((month, index) => ({
     month,
@@ -183,6 +188,7 @@ export async function getAdminStats() {
     totalVolumeCurrency: primaryVolume.currency,
     volumeByCurrency,
     platformRevenue,
+    platformRevenueThisMonth,
     pendingTransactions,
     failedTransactions,
     lateMemberships,
