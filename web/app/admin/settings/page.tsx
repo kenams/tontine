@@ -20,7 +20,7 @@ export default async function AdminSettingsPage() {
     <AdminShell adminName={session.fullName}>
       <div className="mb-6">
         <p className="text-xs font-bold uppercase text-gold">Configuration</p>
-        <h1 className="mt-2 text-4xl font-black">Parametres admin</h1>
+        <h1 className="mt-2 text-4xl font-black">Paramètres admin</h1>
         <p className="mt-2 text-sm text-smoke">Etat des integrations et garde-fous de securite.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

@@ -12,8 +12,8 @@ import { requireUser } from "@/lib/auth";
 export default async function SettingsPage() {
   const session = await requireUser();
   return (
-    <MobileShell user={session} title="Parametres">
-      <PageHeading eyebrow="Compte" title="Parametres">
+    <MobileShell user={session} title="Paramètres">
+      <PageHeading eyebrow="Compte" title="Paramètres">
         Préférences, notifications et sécurité.
       </PageHeading>
 
