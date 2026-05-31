@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { getUserTontines } from "@/lib/data";
 import { dateShort, money, pct } from "@/lib/format";
+import { getTierFromCents } from "@/lib/tiers";
 
 export default async function TontinesPage() {
   const session = await requireUser();
@@ -47,12 +48,22 @@ export default async function TontinesPage() {
             const paid = tontineGroup.contributions.filter((c) => c.status === "PAID").length;
             const total = tontineGroup.memberships.length || tontineGroup.maxMembers;
             const progress = pct(paid, total);
+            const tier = getTierFromCents(tontineGroup.contributionCents);
             return (
-              <Link key={tontineGroup.id} href={`/tontines/${tontineGroup.id}`} className="glass block rounded-3xl p-5 transition hover:bg-[var(--surface-strong)]">
+              <Link key={tontineGroup.id} href={`/tontines/${tontineGroup.id}`}
+                className="block rounded-3xl p-5 transition hover:brightness-110"
+                style={{ background: `linear-gradient(135deg, var(--surface) 0%, ${tier.bg} 100%)`, border: `1px solid ${tier.border}` }}
+              >
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-base font-black">{tontineGroup.name}</p>
-                    <p className="mt-0.5 text-xs text-[var(--muted)]">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-base font-black">{tontineGroup.name}</span>
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black"
+                        style={{ background: tier.bg, color: tier.color, border: `1px solid ${tier.border}` }}>
+                        {tier.emoji} {tier.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--muted)]">
                       {money(tontineGroup.contributionCents, tontineGroup.currency)} · {tontineGroup.frequency}
                     </p>
                   </div>

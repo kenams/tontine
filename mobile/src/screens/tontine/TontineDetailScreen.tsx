@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { getTierFromCents } from "../../utils/tiers";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
@@ -117,6 +118,20 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
             </Pressable>
           </View>
         </View>
+
+        {/* Badge gem */}
+        {(() => {
+          const tier = getTierFromCents(Math.round(tontine.contributionAmount * 100));
+          return (
+            <View style={{ marginHorizontal: 20, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{ borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: tier.bg, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 14 }}>{tier.emoji}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "900", color: tier.color }}>Cercle {tier.name}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{tier.tagline}</Text>
+            </View>
+          );
+        })()}
 
         {/* Carte principale */}
         <View style={s.mainCard}>

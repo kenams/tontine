@@ -1,4 +1,5 @@
 import { ArrowRight, BadgeCheck, Globe, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
+import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
@@ -196,22 +197,78 @@ export default async function LandingPage() {
             </div>
           </section>
 
-          {/* ── SOCIAL PROOF ── */}
-          <section className="py-16">
-            <div className="rounded-3xl bg-emerald-500/6 p-8 ring-1 ring-emerald-500/15 md:p-12">
-              <div className="grid gap-8 md:grid-cols-3">
-                {[
-                  { val: "50€", label: "cotisation min.", sub: "par mois" },
-                  { val: "8", label: "membres max.", sub: "par groupe" },
-                  { val: "0€", label: "frais d'entrée", sub: "gratuit pour toujours" },
-                ].map(({ val, label, sub }) => (
-                  <div key={label} className="text-center">
-                    <p className="text-4xl font-black text-emerald-400">{val}</p>
-                    <p className="mt-1 font-bold text-white">{label}</p>
-                    <p className="text-sm text-white/40">{sub}</p>
+          {/* ── COMMENT ÇA MARCHE ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Simple comme bonjour</div>
+            <h2 className="mb-14 text-center text-3xl font-black text-white md:text-4xl">
+              Comment ça marche ?
+            </h2>
+            <div className="grid gap-6 md:grid-cols-3">
+              {[
+                {
+                  step: "01",
+                  title: "Créez votre cercle",
+                  desc: "Choisissez un montant (ex: 100€/mois), invitez 7 amis ou famille. Votre groupe est prêt en 2 minutes.",
+                  detail: "8 membres × 100€ = 800€ dans le pot",
+                },
+                {
+                  step: "02",
+                  title: "Chacun cotise chaque mois",
+                  desc: "À chaque échéance, chaque membre verse 100€ depuis son wallet. Automatique, rappel 3 jours avant.",
+                  detail: "Paiement en 1 clic, depuis votre banque européenne",
+                },
+                {
+                  step: "03",
+                  title: "Un membre reçoit le pot",
+                  desc: "À tour de rôle, un membre reçoit les 800€ d'un coup. En 8 mois, tout le monde aura reçu son pot.",
+                  detail: "Vous donnez 800€ sur 8 mois. Vous recevez 800€ en 1 fois.",
+                },
+              ].map(({ step, title, desc, detail }) => (
+                <div key={step} className="relative rounded-3xl bg-white/3 p-6 ring-1 ring-white/8">
+                  <div className="mb-4 text-5xl font-black text-emerald-500/20">{step}</div>
+                  <p className="mb-2 text-lg font-black text-white">{title}</p>
+                  <p className="text-sm leading-6 text-white/50">{desc}</p>
+                  <div className="mt-4 rounded-2xl bg-emerald-500/8 px-3 py-2 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/15">
+                    {detail}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-sm text-white/30">
+              La tontine = accès immédiat à un capital collectif, basé sur la confiance. <span className="text-white/50">Personne ne gagne, personne ne perd — mais tout le monde accède à plus.</span>
+            </p>
+          </section>
+
+          {/* ── NIVEAUX GEMS ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Tous les niveaux</div>
+            <h2 className="mb-4 text-center text-3xl font-black text-white md:text-4xl">
+              Choisissez votre cercle
+            </h2>
+            <p className="mb-12 text-center text-white/40">Des gems africaines pour valoriser votre engagement. Plus vous cotisez, plus vous brillez.</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {GEM_TIERS.map((tier) => (
+                <div
+                  key={tier.name}
+                  className="rounded-2xl p-5 transition hover:scale-[1.02]"
+                  style={{ background: tier.bg, border: `1px solid ${tier.border}` }}
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-2xl">{tier.emoji}</span>
+                    <div>
+                      <p className="font-black" style={{ color: tier.color }}>{tier.name}</p>
+                      <p className="text-[10px] text-white/35">{tier.origin}</p>
+                    </div>
+                  </div>
+                  <p className="mb-1 text-xs text-white/50">{tier.tagline}</p>
+                  <p className="text-sm font-bold text-white">
+                    {tier.maxCents === Infinity
+                      ? `${(tier.minCents / 100).toLocaleString("fr-FR")}€+`
+                      : `${(tier.minCents / 100).toLocaleString("fr-FR")} – ${(tier.maxCents / 100).toLocaleString("fr-FR")}€`}
+                    <span className="ml-1 text-[10px] font-normal text-white/35">/ mois</span>
+                  </p>
+                </div>
+              ))}
             </div>
           </section>
 

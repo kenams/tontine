@@ -1,4 +1,5 @@
 import { AlertTriangle, CalendarClock, PiggyBank, ShieldCheck, Users } from "lucide-react";
+import { getTierFromCents } from "@/lib/tiers";
 import { notFound } from "next/navigation";
 
 import { AutoPayToggle } from "@/components/app/autopay-toggle";
@@ -39,6 +40,18 @@ export default async function TontineDetailPage({
 
   return (
     <MobileShell user={session} title={group.name}>
+      {(() => {
+        const tier = getTierFromCents(group.contributionCents);
+        return (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black"
+              style={{ background: tier.bg, color: tier.color, border: `1px solid ${tier.border}` }}>
+              {tier.emoji} Cercle {tier.name}
+            </span>
+            <span className="text-xs text-[var(--muted)]">{tier.origin} · {tier.tagline}</span>
+          </div>
+        );
+      })()}
       <PageHeading eyebrow={group.joinCode} title={group.name}>
         {group.description}
       </PageHeading>
