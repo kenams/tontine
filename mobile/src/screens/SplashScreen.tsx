@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, Animated, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, ImageBackground, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+
+const WORLD_MAP = require("../../assets/world-map.png");
 // Kotizy splash
 
 import { useAppStore } from "../store/appStore";
@@ -85,7 +87,8 @@ export function SplashScreen({ navigation }: SplashScreenProps) {
   });
 
   return (
-    <LinearGradient colors={["#080b07" as const, "#111a10" as const]} style={styles.container}>
+    <ImageBackground source={WORLD_MAP} style={styles.container} imageStyle={{ opacity: 0.1, resizeMode: "cover", tintColor: "#22c55e" }}>
+    <LinearGradient colors={["#080b07cc" as const, "#080b0799" as const, "#080b07cc" as const]} style={StyleSheet.absoluteFill} />
       <View style={styles.centerContent}>
         <Animated.View style={[styles.logoShell, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
           <Text style={styles.logoText}>K</Text>
@@ -111,7 +114,7 @@ export function SplashScreen({ navigation }: SplashScreenProps) {
       <View style={styles.loaderTrack}>
         <Animated.View style={[styles.loaderFill, { width: progressWidth }]} />
       </View>
-    </LinearGradient>
+    </ImageBackground>
   );
 }
 
