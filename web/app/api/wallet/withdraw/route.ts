@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
 
   const { amountCents, iban, beneficiary } = parsed.data;
 
+  if (amountCents >= 50_000) {
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { kycStatus: true } });
+    if (user?.kycStatus !== "VERIFIED") {
+      return NextResponse.json({ error: "KYC requis pour les retraits supérieurs à 500€. Vérifiez votre identité dans votre profil.", kycRequired: true }, { status: 403 });
+    }
+  }
+
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.userId } });
   if (!wallet) return NextResponse.json({ error: "Wallet introuvable." }, { status: 404 });
   if (wallet.balanceCents < amountCents) {

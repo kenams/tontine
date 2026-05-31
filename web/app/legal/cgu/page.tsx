@@ -25,7 +25,13 @@ export default function CGUPage() {
 
         <section>
           <h2 className="text-xl font-bold">3. Wallet et paiements</h2>
-          <p className="text-[var(--muted)] leading-7">Le wallet Kotizy permet d'alimenter un solde pour participer aux tontines. Les paiements par carte sont traités par Stripe (PCI-DSS niveau 1). Kotizy ne stocke aucune donnée bancaire. Les fonds déposés sont utilisables exclusivement au sein de la plateforme pour les cotisations de tontines. Les retraits sont soumis à validation sous 3 jours ouvrés.</p>
+          <p className="text-[var(--muted)] leading-7">Le wallet Kotizy permet d'alimenter un solde pour participer aux tontines. Les paiements par carte bancaire et les services de monnaie électronique sont fournis par <strong>Stripe Payments Europe Ltd</strong>, établissement de monnaie électronique agréé par la Banque Centrale d'Irlande (numéro d'autorisation : C187865), conformément à la Directive européenne sur les services de paiement (DSP2). Kotizy ne stocke aucune donnée bancaire.</p>
+          <p className="text-[var(--muted)] leading-7 mt-2">Les fonds déposés sont utilisables exclusivement au sein de la plateforme pour les cotisations de tontines. Les retraits supérieurs à 500€ nécessitent une vérification d'identité (KYC) conformément aux obligations anti-blanchiment (LCB-FT). Les retraits validés sont traités sous 3 jours ouvrés.</p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold">3bis. Conformité réglementaire</h2>
+          <p className="text-[var(--muted)] leading-7">KAH Digital agit en qualité d'agent de services de paiement de Stripe Payments Europe Ltd. Les services de collecte et de redistribution de fonds dans le cadre des tontines sont opérés via l'infrastructure réglementée de Stripe. En cas de dépassement des seuils légaux de monnaie électronique, KAH Digital s'engage à procéder aux déclarations requises auprès de l'ACPR (Autorité de Contrôle Prudentiel et de Résolution).</p>
         </section>
 
         <section>

@@ -24,8 +24,10 @@ jobs:
         working-directory: web
 
       - name: Deploy to Vercel
-        run: npx vercel --prod --yes --cwd web
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_YWUq9bz3WHBgcl41XpyK8OUv
-          VERCEL_PROJECT_ID: prj_oM19AoeYhTxargcpfNmi2MGehXFM
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: team_YWUq9bz3WHBgcl41XpyK8OUv
+          vercel-project-id: prj_oM19AoeYhTxargcpfNmi2MGehXFM
+          working-directory: ./web
+          vercel-args: '--prod'

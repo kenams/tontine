@@ -4,6 +4,7 @@ import { login as loginService, logout as logoutService, refreshSession, registe
 import { updateProfile as updateProfileService } from "../services/userService";
 import { setUnauthorizedHandler } from "../services/api";
 import { useAppStore } from "./appStore";
+import { devWarn } from "../utils/logger";
 import type { UpdateProfilePayload, UserProfile } from "../types/entities";
 
 type AuthStore = {

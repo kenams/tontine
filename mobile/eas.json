@@ -12,13 +12,22 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "ios": { "distribution": "internal" }
+      "ios": { "distribution": "internal" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://tontineapp-web.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://cyatqgiiofddtaxjolle.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5YXRxZ2lpb2ZkZHRheGpvbGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTIyNDIsImV4cCI6MjA5NTQ2ODI0Mn0.1BzimeUwVZLskD1sjCqHeMOpQwS3zMUleFEdTxzZMC4",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51TDQW0GSZgm5QCNL5FquzxNvszUcrR4DUHAu6j6fFGyS41d117hHWcQee3Iy2mKhcCJMRSRdCdwwZmWCFv8ed9MV00khaCRijG"
+      }
     },
     "production": {
       "android": { "buildType": "app-bundle" },
       "ios": { "distribution": "store" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://tontineapp-web.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://tontineapp-web.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://cyatqgiiofddtaxjolle.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5YXRxZ2lpb2ZkZHRheGpvbGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4OTIyNDIsImV4cCI6MjA5NTQ2ODI0Mn0.1BzimeUwVZLskD1sjCqHeMOpQwS3zMUleFEdTxzZMC4",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51TDQW0GSZgm5QCNL5FquzxNvszUcrR4DUHAu6j6fFGyS41d117hHWcQee3Iy2mKhcCJMRSRdCdwwZmWCFv8ed9MV00khaCRijG"
       }
     }
   },

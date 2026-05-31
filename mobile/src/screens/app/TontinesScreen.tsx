@@ -14,6 +14,7 @@ import {
 
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import type { TontinesScreenProps } from "../../types/navigation";
 
 function fmt(amount: number, currency: string) {
   return amount.toLocaleString("fr-FR", { style: "currency", currency: currency || "EUR" });
@@ -25,7 +26,7 @@ function statusLabel(s: string) {
   return { label: "En attente", color: colors.warning };
 }
 
-export function TontinesScreen({ navigation }: { navigation: any }) {
+export function TontinesScreen({ navigation }: TontinesScreenProps) {
   const tontines = useTontineStore((s) => s.tontines);
   const fetchMyTontines = useTontineStore((s) => s.fetchMyTontines);
   const isLoading = useTontineStore((s) => s.isLoading);
@@ -47,10 +48,10 @@ export function TontinesScreen({ navigation }: { navigation: any }) {
           <Text style={s.sub}>{tontines.length} tontine{tontines.length !== 1 ? "s" : ""}</Text>
         </View>
         <View style={s.headerBtns}>
-          <Pressable style={s.iconBtn} onPress={() => navigation.navigate("HomeStack", { screen: "JoinTontine" })}>
+          <Pressable style={s.iconBtn} onPress={() => navigation.navigate("JoinTontine")}>
             <Ionicons name="enter-outline" size={20} color={colors.primary} />
           </Pressable>
-          <Pressable style={[s.iconBtn, s.primaryBtn]} onPress={() => navigation.navigate("HomeStack", { screen: "CreateTontine" })}>
+          <Pressable style={[s.iconBtn, s.primaryBtn]} onPress={() => navigation.navigate("CreateTontine")}>
             <Ionicons name="add" size={20} color={colors.dark} />
           </Pressable>
         </View>
@@ -75,7 +76,7 @@ export function TontinesScreen({ navigation }: { navigation: any }) {
             return (
               <Pressable
                 style={s.card}
-                onPress={() => navigation.navigate("HomeStack", { screen: "TontineDetail", params: { tontineId: item.id } })}
+                onPress={() => navigation.navigate("TontineDetail", { tontineId: item.id })}
               >
                 <View style={s.cardTop}>
                   <View style={s.avatar}>
@@ -106,7 +107,7 @@ export function TontinesScreen({ navigation }: { navigation: any }) {
               <Ionicons name="people-outline" size={48} color={colors.textMuted} />
               <Text style={s.emptyTitle}>Aucune tontine</Text>
               <Text style={s.emptyText}>Créez ou rejoignez un groupe pour commencer.</Text>
-              <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("HomeStack", { screen: "CreateTontine" })}>
+              <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("CreateTontine")}>
                 <Text style={s.emptyBtnTxt}>Créer un groupe</Text>
               </Pressable>
             </View>

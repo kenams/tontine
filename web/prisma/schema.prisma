@@ -17,7 +17,9 @@ model User {
   role            String         @default("USER")
   status          String         @default("ACTIVE")
   locale          String         @default("fr-FR")
-  kycStatus       String         @default("VERIFIED")
+  kycStatus       String         @default("NONE")
+  kycVerifiedAt   DateTime?
+  kycSessionId    String?
   avatarUrl       String?
   lastLoginAt     DateTime?
   createdAt       DateTime       @default(now())

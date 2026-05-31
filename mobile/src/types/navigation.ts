@@ -18,13 +18,21 @@ export type HomeStackParamList = {
   Notifications: undefined;
 };
 
+export type TontinesStackParamList = {
+  Tontines: undefined;
+  CreateTontine: undefined;
+  JoinTontine: undefined;
+  TontineDetail: { tontineId: string };
+  Chat: { tontineId: string };
+};
+
 export type WalletStackParamList = {
   Wallet: undefined;
 };
 
 export type MainTabParamList = {
   HomeStack: NavigatorScreenParams<HomeStackParamList>;
-  Groupes: undefined;
+  GroupesStack: NavigatorScreenParams<TontinesStackParamList>;
   WalletStack: NavigatorScreenParams<WalletStackParamList>;
   Notifications: undefined;
   Profile: undefined;
@@ -40,13 +48,14 @@ export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, "Login
 export type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 export type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, "Home">;
-export type CreateTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "CreateTontine">;
-export type JoinTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "JoinTontine">;
-export type TontineDetailScreenProps = NativeStackScreenProps<HomeStackParamList, "TontineDetail">;
-export type ChatScreenProps = NativeStackScreenProps<HomeStackParamList, "Chat">;
+export type CreateTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "CreateTontine"> | NativeStackScreenProps<TontinesStackParamList, "CreateTontine">;
+export type JoinTontineScreenProps = NativeStackScreenProps<HomeStackParamList, "JoinTontine"> | NativeStackScreenProps<TontinesStackParamList, "JoinTontine">;
+export type TontineDetailScreenProps = NativeStackScreenProps<HomeStackParamList, "TontineDetail"> | NativeStackScreenProps<TontinesStackParamList, "TontineDetail">;
+export type ChatScreenProps = NativeStackScreenProps<HomeStackParamList, "Chat"> | NativeStackScreenProps<TontinesStackParamList, "Chat">;
 export type PaymentScreenProps = NativeStackScreenProps<HomeStackParamList, "Payment">;
 export type NotificationsScreenProps = NativeStackScreenProps<HomeStackParamList, "Notifications">;
 
+export type TontinesScreenProps = NativeStackScreenProps<TontinesStackParamList, "Tontines">;
 export type WalletScreenProps = NativeStackScreenProps<WalletStackParamList, "Wallet">;
 
 export type ProfileScreenProps = CompositeScreenProps<

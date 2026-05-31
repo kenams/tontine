@@ -22,12 +22,14 @@ import type {
   HomeStackParamList,
   MainTabParamList,
   RootStackParamList,
+  TontinesStackParamList,
   WalletStackParamList,
 } from "../types/navigation";
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
+const TontinesStack = createNativeStackNavigator<TontinesStackParamList>();
 const WalletStack = createNativeStackNavigator<WalletStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -54,6 +56,18 @@ function HomeStackNavigator() {
   );
 }
 
+function TontinesStackNavigator() {
+  return (
+    <TontinesStack.Navigator screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+      <TontinesStack.Screen name="Tontines" component={TontinesScreen} />
+      <TontinesStack.Screen name="CreateTontine" component={CreateTontineScreen} />
+      <TontinesStack.Screen name="JoinTontine" component={JoinTontineScreen} />
+      <TontinesStack.Screen name="TontineDetail" component={TontineDetailScreen} />
+      <TontinesStack.Screen name="Chat" component={ChatScreen} />
+    </TontinesStack.Navigator>
+  );
+}
+
 function WalletStackNavigator() {
   return (
     <WalletStack.Navigator screenOptions={{ headerShown: false }}>
@@ -64,11 +78,11 @@ function WalletStackNavigator() {
 
 type TabIconName = React.ComponentProps<typeof Ionicons>["name"];
 const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName }> = {
-  HomeStack:     { active: "home",          inactive: "home-outline" },
-  Groupes:       { active: "people",        inactive: "people-outline" },
-  WalletStack:   { active: "wallet",        inactive: "wallet-outline" },
-  Notifications: { active: "notifications", inactive: "notifications-outline" },
-  Profile:       { active: "person",        inactive: "person-outline" },
+  HomeStack:    { active: "home",          inactive: "home-outline" },
+  GroupesStack: { active: "people",        inactive: "people-outline" },
+  WalletStack:  { active: "wallet",        inactive: "wallet-outline" },
+  Notifications:{ active: "notifications", inactive: "notifications-outline" },
+  Profile:      { active: "person",        inactive: "person-outline" },
 };
 
 function MainTabsNavigator() {
@@ -95,11 +109,11 @@ function MainTabsNavigator() {
         },
       })}
     >
-      <Tab.Screen name="HomeStack"     component={HomeStackNavigator}  options={{ title: "Accueil" }} />
-      <Tab.Screen name="Groupes"       component={TontinesScreen}      options={{ title: "Groupes" }} />
-      <Tab.Screen name="WalletStack"   component={WalletStackNavigator} options={{ title: "Wallet" }} />
-      <Tab.Screen name="Notifications" component={NotificationsScreen}  options={{ title: "Alertes" }} />
-      <Tab.Screen name="Profile"       component={ProfileScreen}        options={{ title: "Profil" }} />
+      <Tab.Screen name="HomeStack"    component={HomeStackNavigator}     options={{ title: "Accueil" }} />
+      <Tab.Screen name="GroupesStack" component={TontinesStackNavigator} options={{ title: "Groupes" }} />
+      <Tab.Screen name="WalletStack"  component={WalletStackNavigator}   options={{ title: "Wallet" }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen}   options={{ title: "Alertes" }} />
+      <Tab.Screen name="Profile"      component={ProfileScreen}           options={{ title: "Profil" }} />
     </Tab.Navigator>
   );
 }

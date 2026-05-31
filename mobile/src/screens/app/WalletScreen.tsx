@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
+import { useStripe } from "@stripe/stripe-react-native";
 
 import { apiCall } from "../../services/api";
 import { colors } from "../../theme/colors";
@@ -358,15 +358,6 @@ export function WalletScreen() {
       />
     </SafeAreaView>
   );
-
-  // StripeProvider requis pour le PaymentSheet natif
-  if (STRIPE_PK) {
-    return (
-      <StripeProvider publishableKey={STRIPE_PK} merchantIdentifier="merchant.app.kotizy">
-        {content}
-      </StripeProvider>
-    );
-  }
 
   return content;
 }

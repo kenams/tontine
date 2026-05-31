@@ -48,6 +48,35 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const trust = dashData?.user?.trustScore?.score ?? 0;
   const level = trustLevel(trust);
   const wallet = dashData?.user?.wallet;
+  const [kycStatus, setKycStatus] = useState<string>("NONE");
+  const [kycLoading, setKycLoading] = useState(false);
+
+  useEffect(() => {
+    apiCall<{ kycStatus: string }>("get", "/api/kyc/status").then((r) => setKycStatus(r.kycStatus)).catch(() => {});
+  }, []);
+
+  async function startKyc() {
+    setKycLoading(true);
+    try {
+      const res = await apiCall<{ url?: string; alreadyVerified?: boolean }>("post", "/api/kyc/create-session");
+      if (res.alreadyVerified) { setKycStatus("VERIFIED"); return; }
+      if (res.url) {
+        await WebBrowser.openBrowserAsync(res.url);
+        const refreshed = await apiCall<{ kycStatus: string }>("get", "/api/kyc/status");
+        setKycStatus(refreshed.kycStatus);
+      }
+    } catch (err) {
+      Alert.alert("Erreur", err instanceof Error ? err.message : "Vérification impossible.");
+    }
+    setKycLoading(false);
+  }
+
+  function kycBadge() {
+    if (kycStatus === "VERIFIED") return { label: "Identité vérifiée ✓", color: "#22c55e", bg: "rgba(34,197,94,0.12)" };
+    if (kycStatus === "PENDING")  return { label: "Vérification en cours…", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
+    if (kycStatus === "REJECTED") return { label: "Vérification refusée", color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
+    return { label: "Identité non vérifiée", color: "#6b7a69", bg: "rgba(107,122,105,0.12)" };
+  }
 
   async function saveProfile() {
     if (!fullName.trim()) return;
@@ -162,6 +191,23 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
           </View>
         ) : null}
 
+        {/* KYC */}
+        <View style={s.card}>
+          <View style={s.cardRow}>
+            <Ionicons name="shield-checkmark-outline" size={20} color={kycBadge().color} />
+            <Text style={s.cardTitle}>Vérification d'identité</Text>
+            <View style={[s.kycBadge, { backgroundColor: kycBadge().bg }]}>
+              <Text style={[s.kycBadgeTxt, { color: kycBadge().color }]}>{kycBadge().label}</Text>
+            </View>
+          </View>
+          {kycStatus !== "VERIFIED" && (
+            <Pressable style={s.kycBtn} onPress={() => void startKyc()} disabled={kycLoading || kycStatus === "PENDING"}>
+              {kycLoading ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.kycBtnTxt}>{kycStatus === "PENDING" ? "En cours de traitement…" : "Vérifier mon identité"}</Text>}
+            </Pressable>
+          )}
+          <Text style={s.cardSub}>Requis pour les retraits supérieurs à 500€. Traité par Stripe.</Text>
+        </View>
+
         {/* Actions */}
         <View style={s.actions}>
           {[
@@ -220,6 +266,11 @@ const s = StyleSheet.create({
   btnSaveTxt: { color: colors.dark, fontWeight: "900", fontSize: 14 },
   btnCancel: { flex: 1, backgroundColor: colors.surfaceCard, borderRadius: 14, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: colors.border },
   btnCancelTxt: { color: colors.textMuted, fontWeight: "700", fontSize: 14 },
+
+  kycBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  kycBadgeTxt: { fontSize: 11, fontWeight: "700" },
+  kycBtn: { backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 12, alignItems: "center" },
+  kycBtnTxt: { color: colors.dark, fontWeight: "900", fontSize: 14 },
 
   actions: { marginHorizontal: 20, gap: 8, marginBottom: 8 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border },

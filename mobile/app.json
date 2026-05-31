@@ -2,6 +2,7 @@
   "expo": {
     "name": "Kotizy",
     "slug": "kotizy",
+    "owner": "kenams",
     "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -22,14 +23,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#080b07"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "edgeToEdgeEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "projectName": "Kotizy"
+      "projectName": "Kotizy",
+      "eas": {
+        "projectId": "5e1b5c7a-7b38-4f86-97ff-2e23614f0f95"
+      }
     },
     "plugins": [
       [
