@@ -16,6 +16,7 @@ import { WalletScreen } from "../screens/app/WalletScreen";
 import { TontinesScreen } from "../screens/app/TontinesScreen";
 import { ChatScreen } from "../screens/tontine/ChatScreen";
 import { TontineDetailScreen } from "../screens/tontine/TontineDetailScreen";
+import { PaymentScreen } from "../screens/payment/PaymentScreen";
 import { colors } from "../theme/colors";
 import type {
   AuthStackParamList,
@@ -64,6 +65,7 @@ function TontinesStackNavigator() {
       <TontinesStack.Screen name="JoinTontine" component={JoinTontineScreen} />
       <TontinesStack.Screen name="TontineDetail" component={TontineDetailScreen} />
       <TontinesStack.Screen name="Chat" component={ChatScreen} />
+      <TontinesStack.Screen name="Payment" component={PaymentScreen} />
     </TontinesStack.Navigator>
   );
 }

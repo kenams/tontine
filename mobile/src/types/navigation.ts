@@ -24,6 +24,7 @@ export type TontinesStackParamList = {
   JoinTontine: undefined;
   TontineDetail: { tontineId: string };
   Chat: { tontineId: string };
+  Payment: { tontineId: string; amount: number; tontineName: string };
 };
 
 export type WalletStackParamList = {

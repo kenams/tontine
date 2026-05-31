@@ -1,7 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { apiCall } from "../../services/api";
@@ -50,6 +51,19 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const wallet = dashData?.user?.wallet;
   const [kycStatus, setKycStatus] = useState<string>("NONE");
   const [kycLoading, setKycLoading] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem("push_enabled").then((v) => setPushEnabled(v === "1"));
+  }, []);
+
+  async function togglePush(val: boolean) {
+    setPushEnabled(val);
+    await AsyncStorage.setItem("push_enabled", val ? "1" : "0");
+    if (!val) {
+      apiCall("delete", "/api/push").catch(() => {});
+    }
+  }
 
   useEffect(() => {
     apiCall<{ kycStatus: string }>("get", "/api/kyc/status").then((r) => setKycStatus(r.kycStatus)).catch(() => {});
@@ -206,6 +220,21 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
             </Pressable>
           )}
           <Text style={s.cardSub}>Requis pour les retraits supérieurs à 500€. Traité par Stripe.</Text>
+        </View>
+
+        {/* Notifications push */}
+        <View style={s.card}>
+          <View style={s.cardRow}>
+            <Ionicons name="notifications-outline" size={20} color={colors.primary} />
+            <Text style={s.cardTitle}>Notifications push</Text>
+            <Switch
+              value={pushEnabled}
+              onValueChange={(v) => void togglePush(v)}
+              trackColor={{ false: colors.surfaceCard, true: `${colors.primary}66` }}
+              thumbColor={pushEnabled ? colors.primary : colors.textMuted}
+            />
+          </View>
+          <Text style={s.cardSub}>Rappels de cotisation, payout reçu, messages de groupe.</Text>
         </View>
 
         {/* Actions */}

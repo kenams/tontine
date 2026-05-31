@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTontineStore } from "../../store/tontineStore";
@@ -67,6 +67,15 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     setPaying(false);
   }
 
+  async function handleShare() {
+    const joinLink = `https://tontineapp-web.vercel.app/g/${tontine.joinCode}`;
+    await Share.share({
+      message: `Rejoins mon groupe de tontine "${tontine.name}" sur Kotizy 🤝\nCode : ${tontine.joinCode}\n${joinLink}`,
+      url: joinLink,
+      title: `Invitation — ${tontine.name}`,
+    });
+  }
+
   async function handleToggleAutoPay(val: boolean) {
     setAutoPayLoading(true);
     try {
@@ -85,9 +94,9 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
             <Ionicons name="arrow-back" size={20} color={colors.text} />
           </Pressable>
           <Text style={s.headerTitle} numberOfLines={1}>{tontine.name}</Text>
-          <View style={s.statusBadge}>
-            <Text style={s.statusTxt}>{tontine.status === "active" ? "Actif" : tontine.status}</Text>
-          </View>
+          <Pressable style={s.shareBtn} onPress={() => void handleShare()}>
+            <Ionicons name="share-social-outline" size={20} color={colors.primary} />
+          </Pressable>
         </View>
 
         {/* Carte principale */}
@@ -188,6 +197,7 @@ const s = StyleSheet.create({
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
   headerTitle: { flex: 1, fontSize: 18, color: colors.text, fontWeight: "900" },
   statusBadge: { backgroundColor: `${colors.primary}22`, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  shareBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: `${colors.primary}15`, justifyContent: "center", alignItems: "center" },
   statusTxt: { color: colors.primary, fontSize: 12, fontWeight: "700" },
 
   mainCard: { marginHorizontal: 20, marginBottom: 12, backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border, gap: 8 },
