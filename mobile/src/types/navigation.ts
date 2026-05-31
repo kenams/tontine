@@ -14,6 +14,7 @@ export type HomeStackParamList = {
   JoinTontine: undefined;
   TontineDetail: { tontineId: string };
   Chat: { tontineId: string };
+  ChatList: undefined;
   Payment: { tontineId: string; amount: number; tontineName: string };
   Notifications: undefined;
 };
@@ -24,6 +25,7 @@ export type TontinesStackParamList = {
   JoinTontine: undefined;
   TontineDetail: { tontineId: string };
   Chat: { tontineId: string };
+  ChatList: undefined;
   Payment: { tontineId: string; amount: number; tontineName: string };
 };
 

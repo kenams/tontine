@@ -8,7 +8,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non authentifie." }, { status: 401 });
   const notifications = await prisma.notification.findMany({
     where: { userId: session.userId },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
+    take: 100,
   });
   return NextResponse.json({ notifications });
 }

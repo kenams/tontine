@@ -15,6 +15,7 @@ import { NotificationsScreen } from "../screens/app/NotificationsScreen";
 import { WalletScreen } from "../screens/app/WalletScreen";
 import { TontinesScreen } from "../screens/app/TontinesScreen";
 import { ChatScreen } from "../screens/tontine/ChatScreen";
+import { ChatListScreen } from "../screens/chat/ChatListScreen";
 import { TontineDetailScreen } from "../screens/tontine/TontineDetailScreen";
 import { PaymentScreen } from "../screens/payment/PaymentScreen";
 import { colors } from "../theme/colors";
@@ -52,6 +53,8 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="JoinTontine" component={JoinTontineScreen} />
       <HomeStack.Screen name="TontineDetail" component={TontineDetailScreen} />
       <HomeStack.Screen name="Chat" component={ChatScreen} />
+      <HomeStack.Screen name="ChatList" component={ChatListScreen} />
+      <HomeStack.Screen name="Payment" component={PaymentScreen} />
       <HomeStack.Screen name="Notifications" component={NotificationsScreen} />
     </HomeStack.Navigator>
   );
@@ -65,6 +68,7 @@ function TontinesStackNavigator() {
       <TontinesStack.Screen name="JoinTontine" component={JoinTontineScreen} />
       <TontinesStack.Screen name="TontineDetail" component={TontineDetailScreen} />
       <TontinesStack.Screen name="Chat" component={ChatScreen} />
+      <TontinesStack.Screen name="ChatList" component={ChatListScreen} />
       <TontinesStack.Screen name="Payment" component={PaymentScreen} />
     </TontinesStack.Navigator>
   );

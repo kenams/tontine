@@ -92,6 +92,10 @@ model TontineGroup {
   fraudAlerts        FraudAlert[]
   disputes           Dispute[]
   votes              Vote[]
+
+  @@index([status])
+  @@index([nextDueAt])
+  @@index([createdById])
 }
 
 model Membership {
@@ -197,6 +201,9 @@ model Message {
   tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
   content         String
   createdAt       DateTime     @default(now())
+
+  @@index([tontineGroupId, createdAt])
+  @@index([userId])
 }
 
 model Badge {

@@ -12,14 +12,15 @@ export async function GET(request: NextRequest) {
     where: search
       ? {
           OR: [
-            { email: { contains: search } },
-            { fullName: { contains: search } },
+            { email: { contains: search, mode: "insensitive" } },
+            { fullName: { contains: search, mode: "insensitive" } },
             { phone: { contains: search } }
           ]
         }
       : undefined,
-    include: { wallet: true, trustScore: true, memberships: true },
-    orderBy: { createdAt: "desc" }
+    include: { wallet: { select: { balanceCents: true, currency: true, status: true } }, trustScore: true, memberships: { select: { id: true, status: true, tontineGroupId: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 500,
   });
   return NextResponse.json({ users });
 }

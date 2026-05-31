@@ -9,15 +9,21 @@ export async function GET() {
     prisma.transaction.findFirst({
       where: { status: "PAID" },
       orderBy: { createdAt: "desc" },
-      include: { user: { select: { fullName: true } }, tontineGroup: { select: { name: true } } }
+      include: { user: { select: { fullName: true } }, tontineGroup: { select: { name: true } } },
     })
   ]);
+
+  // Anonymise le nom : "Kévin D." → "K*** D."
+  function anonymize(name: string) {
+    const parts = name.trim().split(" ");
+    return parts.map((p, i) => (i === 0 ? p[0] + "***" : p[0] + ".")).join(" ");
+  }
 
   const event = recentTransaction
     ? {
         id: `db_${recentTransaction.id}`,
         type: "payment",
-        title: `${recentTransaction.user.fullName} a cotisé — ${recentTransaction.tontineGroup?.name ?? "Groupe"}`,
+        title: `${anonymize(recentTransaction.user.fullName)} a cotisé — ${recentTransaction.tontineGroup?.name ?? "Groupe"}`,
         region: "Live",
         currency: recentTransaction.currency,
         amount: recentTransaction.amountCents,

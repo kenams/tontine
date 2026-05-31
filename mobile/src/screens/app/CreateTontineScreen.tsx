@@ -92,7 +92,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
     }
 
     Alert.alert("Tontine créée", "Votre groupe est prêt à accueillir ses premiers membres.");
-    navigation.navigate("Home");
+    navigation.goBack();
   }
 
   return (

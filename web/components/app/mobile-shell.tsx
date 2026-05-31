@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Home, Plus, ReceiptText, User, WalletCards } from "lucide-react";
+import { Bell, Home, MessageCircle, Plus, User, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -16,11 +16,11 @@ type Props = {
 };
 
 const nav = [
-  { href: "/dashboard",    label: "Accueil",  icon: Home },
-  { href: "/wallet",       label: "Wallet",   icon: WalletCards },
-  { href: "/tontines",     label: "Groupes",  icon: Plus },
-  { href: "/transactions", label: "Flux",     icon: ReceiptText },
-  { href: "/profile",      label: "Profil",   icon: User },
+  { href: "/dashboard", label: "Accueil",   icon: Home },
+  { href: "/wallet",    label: "Wallet",    icon: WalletCards },
+  { href: "/tontines",  label: "Groupes",   icon: Plus },
+  { href: "/chat",      label: "Chat",      icon: MessageCircle },
+  { href: "/profile",   label: "Profil",    icon: User },
 ];
 
 export function MobileShell({ children, user, title }: Props) {
@@ -59,6 +59,7 @@ export function MobileShell({ children, user, title }: Props) {
           <Link href="/legal/cgu" className="hover:text-[var(--text)]">CGU</Link>
           <Link href="/legal/confidentialite" className="hover:text-[var(--text)]">Confidentialité</Link>
           <Link href="/legal/mentions-legales" className="hover:text-[var(--text)]">Mentions légales</Link>
+          <Link href="/legal/cookies" className="hover:text-[var(--text)]">Cookies</Link>
         </div>
       </main>
 

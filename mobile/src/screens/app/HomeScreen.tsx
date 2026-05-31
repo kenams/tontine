@@ -40,7 +40,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={s.greeting}>Bonjour,</Text>
             <Text style={s.name}>{user?.fullName?.split(" ")[0] ?? "—"}</Text>
           </View>
-          <Pressable style={s.notifBtn} onPress={() => navigation.navigate("Notifications" as never)}>
+          <Pressable style={s.notifBtn} onPress={() => navigation.navigate("Notifications")}>
             <Ionicons name="notifications-outline" size={22} color={colors.text} />
           </Pressable>
         </View>
@@ -90,7 +90,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={s.empty}>
               <Ionicons name="people-outline" size={40} color={colors.textMuted} />
               <Text style={s.emptyText}>Aucune tontine. Créez ou rejoignez un groupe.</Text>
-              <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("CreateTontine" as never)}>
+              <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("CreateTontine")}>
                 <Text style={s.emptyBtnText}>Créer un groupe</Text>
               </Pressable>
             </View>

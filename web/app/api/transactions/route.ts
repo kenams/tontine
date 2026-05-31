@@ -8,8 +8,9 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non authentifie." }, { status: 401 });
   const transactions = await prisma.transaction.findMany({
     where: { userId: session.userId },
-    include: { tontineGroup: true },
-    orderBy: { createdAt: "desc" }
+    include: { tontineGroup: { select: { id: true, name: true, currency: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
   });
   return NextResponse.json({ transactions });
 }

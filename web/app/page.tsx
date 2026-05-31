@@ -144,11 +144,19 @@ export default async function LandingPage() {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="flex items-center justify-between border-t border-[var(--surface-strong)] py-8 text-xs text-[var(--muted)]">
-          <span>© {new Date().getFullYear()} Kotizy</span>
-          <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--text)]">
-            Un produit KAH Digital
-          </a>
+        <footer className="border-t border-[var(--surface-strong)] py-8 text-xs text-[var(--muted)]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <span>© {new Date().getFullYear()} Kotizy</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/legal/mentions-legales" className="transition hover:text-[var(--text)]">Mentions légales</Link>
+              <Link href="/legal/cgu" className="transition hover:text-[var(--text)]">CGU</Link>
+              <Link href="/legal/confidentialite" className="transition hover:text-[var(--text)]">Confidentialité</Link>
+              <Link href="/legal/cookies" className="transition hover:text-[var(--text)]">Cookies</Link>
+              <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--text)]">
+                Un produit KAH Digital
+              </a>
+            </div>
+          </div>
         </footer>
       </main>
     </MotionPage>
