@@ -1,164 +1,302 @@
 import { ArrowRight, BadgeCheck, Globe, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
-import React from "react";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { MotionPage } from "@/components/ui/motion";
 import { getSession } from "@/lib/auth";
 
+/* ── SVG continent africain (silhouette simplifiée) ── */
+function AfricaBackground() {
+  return (
+    <svg
+      viewBox="0 0 400 520"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    >
+      {/* Contour continent */}
+      <path
+        d="M 160 18
+           C 185 14, 215 16, 238 28
+           C 262 42, 278 60, 285 82
+           C 292 106, 288 132, 295 155
+           C 305 185, 318 210, 320 238
+           C 322 268, 308 295, 290 318
+           C 268 346, 240 368, 218 392
+           C 200 412, 192 432, 185 450
+           C 178 465, 172 475, 165 480
+           C 158 475, 150 462, 143 445
+           C 135 425, 128 405, 110 385
+           C 88 362, 60 345, 42 318
+           C 22 290, 12 260, 15 228
+           C 18 198, 32 172, 38 145
+           C 44 116, 38 88, 48 64
+           C 58 40, 80 22, 105 16
+           C 128 11, 145 20, 160 18 Z"
+        stroke="rgba(34, 197, 94, 0.07)"
+        strokeWidth="1.5"
+        fill="rgba(34, 197, 94, 0.025)"
+      />
+      {/* Corne de l'Afrique */}
+      <path
+        d="M 288 155 C 295 150, 312 145, 322 155 C 332 165, 325 178, 318 185"
+        stroke="rgba(34, 197, 94, 0.05)"
+        strokeWidth="1"
+        fill="none"
+      />
+      {/* Lignes de connexion diaspora */}
+      <g opacity="0.15">
+        {/* Paris → Abidjan */}
+        <line x1="178" y1="-40" x2="148" y2="280" stroke="rgba(34,197,94,0.4)" strokeWidth="0.5" strokeDasharray="4 6" />
+        {/* London → Lagos */}
+        <line x1="155" y1="-60" x2="200" y2="310" stroke="rgba(34,197,94,0.3)" strokeWidth="0.5" strokeDasharray="4 6" />
+        {/* Lyon → Dakar */}
+        <line x1="185" y1="-30" x2="75" y2="245" stroke="rgba(34,197,94,0.25)" strokeWidth="0.5" strokeDasharray="4 6" />
+        {/* Brussels → Kinshasa */}
+        <line x1="170" y1="-50" x2="210" y2="370" stroke="rgba(34,197,94,0.2)" strokeWidth="0.5" strokeDasharray="4 6" />
+      </g>
+      {/* Points de villes */}
+      <circle cx="148" cy="280" r="3" fill="rgba(34,197,94,0.35)" />
+      <circle cx="200" cy="310" r="3" fill="rgba(34,197,94,0.3)" />
+      <circle cx="75" cy="245" r="3" fill="rgba(34,197,94,0.25)" />
+      <circle cx="210" cy="370" r="3" fill="rgba(34,197,94,0.2)" />
+    </svg>
+  );
+}
+
+/* ── Pill de ville avec ligne de connexion ── */
+function DiasporaRoute({ from, to }: { from: string; to: string }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-[var(--muted)]">
+      <span className="font-bold text-[var(--text)]">{from}</span>
+      <span className="text-emerald-400/60">→</span>
+      <span>{to}</span>
+    </div>
+  );
+}
+
 export default async function LandingPage() {
   const session = await getSession();
 
   return (
     <MotionPage>
-      <main className="mx-auto min-h-dvh max-w-6xl px-5 py-5">
+      <div className="relative min-h-dvh overflow-hidden bg-[#080b07]">
 
-        {/* ── NAV ── */}
-        <nav className="flex items-center justify-between py-2">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-ink shadow-glow">K</span>
-            <span className="text-sm font-black tracking-tight">Kotizy</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link
-              href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
-              className="rounded-2xl bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]"
-            >
-              {session ? "Mon espace" : "Connexion"}
+        {/* ── FOND AFRIQUE ── */}
+        <div className="absolute right-[-8%] top-[-4%] h-[680px] w-[500px] opacity-100 lg:right-[2%]">
+          <AfricaBackground />
+        </div>
+
+        <main className="relative mx-auto max-w-6xl px-5 py-5">
+
+          {/* ── NAV ── */}
+          <nav className="flex items-center justify-between py-2">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)]">K</span>
+              <span className="text-sm font-black tracking-tight text-white">Kotizy</span>
             </Link>
-          </div>
-        </nav>
-
-        {/* ── HERO ── */}
-        <section className="grid min-h-[calc(100dvh-6rem)] items-center gap-12 py-12 lg:grid-cols-[1fr_440px]">
-          <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 text-xs font-bold text-emerald-400">
-              <Sparkles size={13} />
-              La tontine de votre génération
-            </div>
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.92] tracking-[-0.03em] md:text-[72px]">
-              L'épargne<br />
-              <span className="text-emerald-400">collective,</span><br />
-              réinventée.
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-[var(--muted)] md:text-lg">
-              Tontines digitales multi-devises, wallet sécurisé, score de confiance et paiements mobiles.
-              Pour la diaspora africaine et au-delà.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Link
-                href={session ? "/dashboard" : "/register"}
-                className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400"
+                href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
+                className="rounded-2xl bg-white/8 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/12"
               >
-                {session ? "Mon dashboard" : "Commencer gratuitement"}
-                <ArrowRight size={16} />
-              </Link>
-              <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--surface)] px-6 text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]">
-                Se connecter
+                {session ? "Mon espace" : "Connexion"}
               </Link>
             </div>
+          </nav>
 
-            {/* Chiffres */}
-            <div className="mt-10 flex flex-wrap gap-8">
-              {[["16", "devises"], ["100%", "chiffré"], ["0€", "frais cachés"]].map(([v, l]) => (
-                <div key={l}>
-                  <p className="text-2xl font-black text-[var(--text)]">{v}</p>
-                  <p className="text-xs text-[var(--muted)]">{l}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card preview */}
-          <div className="mx-auto w-full max-w-sm">
-            <div className="glass rounded-[2rem] p-5 shadow-premium">
-              {/* Mini wallet card */}
-              <div className="kotizy-card mb-4 rounded-[1.5rem] p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Kotizy Wallet</p>
-                    <p className="mt-1 text-3xl font-black text-ivory">0 XOF</p>
-                  </div>
-                  <BadgeCheck className="text-gold" size={24} />
-                </div>
-                <div className="mt-6 flex items-end justify-between">
-                  <p className="font-bold tracking-[0.15em] text-smoke">•••• 2026</p>
-                  <p className="text-xs text-smoke">XOF · EUR · USD</p>
-                </div>
+          {/* ── HERO ── */}
+          <section className="grid min-h-[calc(100dvh-6rem)] items-center gap-12 py-12 lg:grid-cols-[1fr_420px]">
+            <div>
+              {/* Badge */}
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 text-xs font-bold text-emerald-400">
+                <Sparkles size={13} />
+                La tontine de la diaspora
               </div>
 
-              {/* Feed live */}
-              <div className="space-y-2">
+              {/* Titre */}
+              <h1 className="max-w-2xl text-5xl font-black leading-[0.92] tracking-[-0.03em] text-white md:text-[68px]">
+                Épargnez<br />
+                ensemble.<br />
+                <span className="text-emerald-400">En euros.</span>
+              </h1>
+
+              <p className="mt-6 max-w-lg text-base leading-7 text-white/55 md:text-lg">
+                La tontine digitale pour la diaspora africaine. Cotisez en euros depuis Paris, London ou Lyon. Votre famille reçoit en XOF, NGN, GHS.
+              </p>
+
+              {/* Routes diaspora */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                <DiasporaRoute from="Paris" to="Abidjan" />
+                <DiasporaRoute from="London" to="Lagos" />
+                <DiasporaRoute from="Lyon" to="Dakar" />
+                <DiasporaRoute from="Bruxelles" to="Kinshasa" />
+              </div>
+
+              {/* CTA */}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href={session ? "/dashboard" : "/register"}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-[#080b07] shadow-[0_0_24px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400"
+                >
+                  {session ? "Mon dashboard" : "Commencer gratuitement"}
+                  <ArrowRight size={16} />
+                </Link>
+                <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
+                  Se connecter
+                </Link>
+              </div>
+
+              {/* Stats */}
+              <div className="mt-10 flex flex-wrap gap-8">
                 {[
-                  { label: "Cotisation validée", sub: "Cercle Émeraude", val: "+50 000", color: "text-emerald-400" },
-                  { label: "Badge Ponctuel", sub: "Récompense obtenue", val: "★", color: "text-gold" },
-                  { label: "Prochaine échéance", sub: "dans 4 jours", val: "J-4", color: "text-rose-300" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[var(--surface)] px-3 py-2.5">
-                    <div>
-                      <p className="text-xs font-bold">{item.label}</p>
-                      <p className="text-[10px] text-[var(--muted)]">{item.sub}</p>
-                    </div>
-                    <span className={`text-xs font-black ${item.color}`}>{item.val}</span>
+                  ["50€", "cotisation min."],
+                  ["100%", "chiffré"],
+                  ["0€", "frais cachés"],
+                ].map(([v, l]) => (
+                  <div key={l}>
+                    <p className="text-2xl font-black text-white">{v}</p>
+                    <p className="text-xs text-white/40">{l}</p>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* ── FEATURES ── */}
-        <section className="border-t border-[var(--surface-strong)] py-20">
-          <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Pourquoi Kotizy</div>
-          <h2 className="mb-14 text-center text-3xl font-black tracking-tight md:text-4xl">
-            Tout ce dont votre<br />cercle a besoin.
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: TrendingUp, title: "Cotisations automatiques", desc: "Planifiez, cotisez et suivez les paiements de votre groupe en temps réel. Score de confiance calculé automatiquement.", accent: true },
-              { icon: Shield, title: "Score de confiance", desc: "Chaque paiement à l'heure renforce votre réputation. Débutant → Bronze → Avancé → Gold → Élite.", accent: false },
-              { icon: Globe, title: "16 devises natives", desc: "XOF, EUR, USD, NGN, GHS, KES et 10 autres. Votre diaspora, toutes devises, sans conversion.", accent: false },
-              { icon: Zap, title: "Paiements mobiles", desc: "Wallet intégré, Stripe, Wave, Orange Money, MTN MoMo, Flutterwave. Payer en 1 clic.", accent: false },
-              { icon: Users, title: "Partage viral", desc: "Chaque groupe a une page publique. Partagez le lien, les membres rejoignent sans compte au préalable.", accent: false },
-              { icon: Smartphone, title: "PWA installable", desc: "Fonctionne comme une app native sur Android et iOS. Aucun App Store requis.", accent: false },
-            ].map(({ icon: Icon, title, desc, accent }) => (
-              <div key={title} className={`glass rounded-3xl p-6 transition hover:bg-[var(--surface-strong)] ${accent ? "ring-1 ring-emerald-400/20" : ""}`}>
-                <div className={`mb-4 grid h-11 w-11 place-items-center rounded-2xl ${accent ? "bg-emerald-500 text-ink shadow-glow" : "bg-[var(--surface-strong)] text-emerald-400"}`}>
-                  <Icon size={20} />
+            {/* ── CARD PREVIEW ── */}
+            <div className="mx-auto w-full max-w-sm">
+              <div className="rounded-[2rem] bg-white/5 p-5 ring-1 ring-white/8 backdrop-blur-sm">
+
+                {/* Wallet card */}
+                <div className="mb-4 rounded-[1.5rem] bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 p-5 ring-1 ring-emerald-500/20">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Kotizy Wallet</p>
+                      <p className="mt-1 text-3xl font-black text-white">240,00 €</p>
+                      <p className="mt-0.5 text-xs text-white/40">≈ 157 440 XOF</p>
+                    </div>
+                    <BadgeCheck className="text-emerald-400" size={24} />
+                  </div>
+                  <div className="mt-6 flex items-end justify-between">
+                    <p className="font-bold tracking-[0.15em] text-white/40">•••• 2026</p>
+                    <p className="text-xs text-white/40">EUR · XOF · GBP</p>
+                  </div>
                 </div>
-                <p className="mb-2 font-black">{title}</p>
-                <p className="text-sm leading-6 text-[var(--muted)]">{desc}</p>
+
+                {/* Activité live */}
+                <div className="space-y-2">
+                  {[
+                    { label: "Cotisation validée", sub: "Cercle Émeraude · Paris", val: "+50€", color: "text-emerald-400" },
+                    { label: "Badge Ponctuel", sub: "Récompense obtenue", val: "★", color: "text-yellow-400" },
+                    { label: "Pot du mois", sub: "K*** D. a reçu", val: "400€", color: "text-white" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2.5 ring-1 ring-white/5">
+                      <div>
+                        <p className="text-xs font-bold text-white">{item.label}</p>
+                        <p className="text-[10px] text-white/40">{item.sub}</p>
+                      </div>
+                      <span className={`text-xs font-black ${item.color}`}>{item.val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Exemple de groupe */}
+                <div className="mt-3 rounded-2xl bg-emerald-500/8 p-3 ring-1 ring-emerald-500/15">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black text-white">Cercle Émeraude</p>
+                      <p className="text-[10px] text-white/40">8 membres · 50€/mois</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-emerald-400">400€</p>
+                      <p className="text-[10px] text-white/40">pot mensuel</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full w-[75%] rounded-full bg-emerald-500" />
+                  </div>
+                  <p className="mt-1 text-[10px] text-white/30">6/8 membres ont cotisé ce mois</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── CTA FINAL ── */}
-        <section className="py-20 text-center">
-          <h2 className="mb-3 text-4xl font-black tracking-tight md:text-5xl">Prêt à kotiser ?</h2>
-          <p className="mb-8 text-[var(--muted)]">Créez votre groupe en 2 minutes. C'est gratuit.</p>
-          <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-ink shadow-glow transition hover:bg-emerald-400">
-            Créer mon compte <ArrowRight size={20} />
-          </Link>
-        </section>
-
-        {/* ── FOOTER ── */}
-        <footer className="border-t border-[var(--surface-strong)] py-8 text-xs text-[var(--muted)]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <span>© {new Date().getFullYear()} Kotizy</span>
-            <div className="flex flex-wrap items-center gap-4">
-              <Link href="/legal/mentions-legales" className="transition hover:text-[var(--text)]">Mentions légales</Link>
-              <Link href="/legal/cgu" className="transition hover:text-[var(--text)]">CGU</Link>
-              <Link href="/legal/confidentialite" className="transition hover:text-[var(--text)]">Confidentialité</Link>
-              <Link href="/legal/cookies" className="transition hover:text-[var(--text)]">Cookies</Link>
-              <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--text)]">
-                Un produit KAH Digital
-              </a>
             </div>
-          </div>
-        </footer>
-      </main>
+          </section>
+
+          {/* ── FEATURES ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Pourquoi Kotizy</div>
+            <h2 className="mb-14 text-center text-3xl font-black tracking-tight text-white md:text-4xl">
+              Tout ce dont votre<br />cercle a besoin.
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { icon: TrendingUp, title: "Cotisations automatiques", desc: "Planifiez, cotisez et suivez les paiements de votre groupe en temps réel. Score de confiance calculé automatiquement.", accent: true },
+                { icon: Shield, title: "Score de confiance", desc: "Chaque paiement à l'heure renforce votre réputation. Débutant → Bronze → Avancé → Gold → Élite.", accent: false },
+                { icon: Globe, title: "Multi-devises diaspora", desc: "EUR, GBP, XOF, NGN, GHS, KES et plus. Cotisez depuis l'Europe, recevez en Afrique.", accent: false },
+                { icon: Zap, title: "Paiements mobiles", desc: "Wallet intégré, Stripe, Wave, Orange Money, MTN MoMo. Payer en 1 clic depuis votre banque européenne.", accent: false },
+                { icon: Users, title: "Invitez votre cercle", desc: "Partagez un lien. Les membres rejoignent en 30 secondes. Kotizy, c'est votre communauté digitale.", accent: false },
+                { icon: Smartphone, title: "App native Android", desc: "Téléchargez l'APK ou installez la PWA. Notifications push, accès offline, expérience native.", accent: false },
+              ].map(({ icon: Icon, title, desc, accent }) => (
+                <div key={title} className={`rounded-3xl p-6 ring-1 transition hover:bg-white/5 ${accent ? "bg-emerald-500/6 ring-emerald-500/20" : "bg-white/3 ring-white/6"}`}>
+                  <div className={`mb-4 grid h-11 w-11 place-items-center rounded-2xl ${accent ? "bg-emerald-500 text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.4)]" : "bg-white/8 text-emerald-400"}`}>
+                    <Icon size={20} />
+                  </div>
+                  <p className="mb-2 font-black text-white">{title}</p>
+                  <p className="text-sm leading-6 text-white/45">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── SOCIAL PROOF ── */}
+          <section className="py-16">
+            <div className="rounded-3xl bg-emerald-500/6 p-8 ring-1 ring-emerald-500/15 md:p-12">
+              <div className="grid gap-8 md:grid-cols-3">
+                {[
+                  { val: "50€", label: "cotisation min.", sub: "par mois" },
+                  { val: "8", label: "membres max.", sub: "par groupe" },
+                  { val: "1.25%", label: "frais plateforme", sub: "seulement sur le payout" },
+                ].map(({ val, label, sub }) => (
+                  <div key={label} className="text-center">
+                    <p className="text-4xl font-black text-emerald-400">{val}</p>
+                    <p className="mt-1 font-bold text-white">{label}</p>
+                    <p className="text-sm text-white/40">{sub}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── CTA FINAL ── */}
+          <section className="py-20 text-center">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400/60">Gratuit · Sans engagement</p>
+            <h2 className="mb-3 text-4xl font-black tracking-tight text-white md:text-5xl">
+              Prêt à kotiser ?
+            </h2>
+            <p className="mb-8 text-white/40">Créez votre groupe en 2 minutes.</p>
+            <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-[#080b07] shadow-[0_0_32px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400 hover:shadow-[0_0_48px_rgba(34,197,94,0.5)]">
+              Créer mon compte <ArrowRight size={20} />
+            </Link>
+          </section>
+
+          {/* ── FOOTER ── */}
+          <footer className="border-t border-white/6 py-8 text-xs text-white/30">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <span>© {new Date().getFullYear()} Kotizy</span>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/legal/mentions-legales" className="transition hover:text-white">Mentions légales</Link>
+                <Link href="/legal/cgu" className="transition hover:text-white">CGU</Link>
+                <Link href="/legal/confidentialite" className="transition hover:text-white">Confidentialité</Link>
+                <Link href="/legal/cookies" className="transition hover:text-white">Cookies</Link>
+                <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
+                  Un produit KAH Digital
+                </a>
+              </div>
+            </div>
+          </footer>
+
+        </main>
+      </div>
     </MotionPage>
   );
 }
