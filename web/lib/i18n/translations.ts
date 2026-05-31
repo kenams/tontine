@@ -1,0 +1,197 @@
+export type Lang = "fr" | "en";
+
+export const translations = {
+  // Navigation
+  nav: {
+    home:    { fr: "Accueil",  en: "Home" },
+    wallet:  { fr: "Wallet",   en: "Wallet" },
+    groups:  { fr: "Groupes",  en: "Groups" },
+    chat:    { fr: "Chat",     en: "Chat" },
+    profile: { fr: "Profil",   en: "Profile" },
+    alerts:  { fr: "Alertes",  en: "Alerts" },
+  },
+
+  // Dashboard
+  dashboard: {
+    greeting:     { fr: "Bonjour",           en: "Hello" },
+    nextDeadline: { fr: "Prochaine échéance", en: "Next deadline" },
+    createFirst:  { fr: "Créez votre première tontine Kotizy.", en: "Create your first Kotizy tontine." },
+    walletBalance:{ fr: "Solde wallet",       en: "Wallet balance" },
+    trust:        { fr: "Confiance",          en: "Trust" },
+    savings:      { fr: "Épargne",            en: "Savings" },
+    groups:       { fr: "Groupes",            en: "Groups" },
+    alerts:       { fr: "Alertes",            en: "Alerts" },
+    myGroups:     { fr: "Mes groupes",        en: "My groups" },
+    joinGroup:    { fr: "Rejoindre un groupe", en: "Join a group" },
+    seeAll:       { fr: "Voir tout",          en: "See all" },
+    noGroup:      { fr: "Aucun groupe actif", en: "No active groups" },
+    nextPayout:   { fr: "Prochain payout",    en: "Next payout" },
+    round:        { fr: "Tour",               en: "Round" },
+    on:           { fr: "le",                 en: "on" },
+  },
+
+  // Wallet
+  wallet: {
+    title:       { fr: "Wallet",              en: "Wallet" },
+    deposit:     { fr: "Déposer",             en: "Deposit" },
+    withdraw:    { fr: "Retirer",             en: "Withdraw" },
+    balance:     { fr: "Solde disponible",    en: "Available balance" },
+    totalPaid:   { fr: "Total cotisé",        en: "Total contributed" },
+    deposited:   { fr: "Total déposé",        en: "Total deposited" },
+    transactions:{ fr: "Transactions",        en: "Transactions" },
+    noTx:        { fr: "Aucune transaction",  en: "No transactions" },
+    bankCard:    { fr: "Carte bancaire",      en: "Bank card" },
+    sepa:        { fr: "Virement SEPA",       en: "SEPA transfer" },
+    mobileMoney: { fr: "Mobile Money",        en: "Mobile Money" },
+    instant:     { fr: "Instantané",          en: "Instant" },
+    days1to3:    { fr: "1–3 jours",           en: "1–3 days" },
+    soon:        { fr: "Bientôt",             en: "Soon" },
+    depositMethods: { fr: "Méthodes de dépôt", en: "Deposit methods" },
+    depositSuccess: { fr: "Dépôt confirmé !",  en: "Deposit confirmed!" },
+  },
+
+  // Groups / Tontines
+  groups: {
+    title:       { fr: "Groupes",             en: "Groups" },
+    myGroups:    { fr: "Mes tontines",        en: "My tontines" },
+    create:      { fr: "Nouveau",             en: "New" },
+    createFirst: { fr: "Créer mon premier groupe", en: "Create my first group" },
+    join:        { fr: "Rejoindre",           en: "Join" },
+    joinCode:    { fr: "Code d'invitation",   en: "Invite code" },
+    noGroup:     { fr: "Aucun groupe pour l'instant", en: "No groups yet" },
+    noGroupSub:  { fr: "Créez un cercle ou rejoignez-en un avec un code d'invitation.", en: "Create a circle or join one with an invite code." },
+    members:     { fr: "membres",             en: "members" },
+    nextDue:     { fr: "Prochaine échéance",  en: "Next due date" },
+    contribution:{ fr: "Cotisation",          en: "Contribution" },
+    progress:    { fr: "Progression",         en: "Progress" },
+    round:       { fr: "Tour",               en: "Round" },
+    status:      { fr: "Statut",              en: "Status" },
+  },
+
+  // Profile
+  profile: {
+    title:        { fr: "Profil",             en: "Profile" },
+    eyebrow:      { fr: "Identité",           en: "Identity" },
+    subtitle:     { fr: "Réputation, badges et sécurité de compte.", en: "Reputation, badges and account security." },
+    trustScore:   { fr: "Score de confiance", en: "Trust score" },
+    badges:       { fr: "Badges",             en: "Badges" },
+    noBadge:      { fr: "Payez à l'heure pour débloquer vos premiers badges.", en: "Pay on time to unlock your first badges." },
+    streak:       { fr: "Série en cours",     en: "Current streak" },
+    noStreak:     { fr: "Faites votre premier paiement pour lancer votre série.", en: "Make your first payment to start your streak." },
+    stats:        { fr: "Statistiques",       en: "Statistics" },
+    paid:         { fr: "Cotisations",        en: "Contributions" },
+    late:         { fr: "Retards",            en: "Late payments" },
+    groups:       { fr: "Groupes actifs",     en: "Active groups" },
+    totalPaid:    { fr: "Total cotisé",       en: "Total paid" },
+    publicProfile:{ fr: "Voir mon profil public", en: "View my public profile" },
+    editProfile:  { fr: "Modifier",           en: "Edit" },
+    security:     { fr: "Sécurité",           en: "Security" },
+    changePassword:{ fr: "Changer le mot de passe", en: "Change password" },
+    kyc:          { fr: "Vérification d'identité", en: "Identity verification" },
+    kycVerified:  { fr: "Identité vérifiée",  en: "Identity verified" },
+    kycPending:   { fr: "Vérification en cours", en: "Verification in progress" },
+    kycNone:      { fr: "Non vérifié",        en: "Not verified" },
+    kycStart:     { fr: "Vérifier mon identité", en: "Verify my identity" },
+    logout:       { fr: "Se déconnecter",     en: "Log out" },
+    rgpd:         { fr: "Données & RGPD",     en: "Data & Privacy" },
+    exportData:   { fr: "Exporter mes données", en: "Export my data" },
+    deleteAccount:{ fr: "Supprimer mon compte", en: "Delete my account" },
+    levelNext:    { fr: "pts pour atteindre", en: "pts to reach" },
+    level:        { fr: "Niveau",             en: "Level" },
+  },
+
+  // Public profile
+  publicProfile: {
+    trustScore:   { fr: "Score de confiance", en: "Trust score" },
+    badges:       { fr: "Badges",             en: "Badges" },
+    stats:        { fr: "Statistiques",       en: "Statistics" },
+    contributions:{ fr: "Cotisations payées", en: "Paid contributions" },
+    onTimeRate:   { fr: "Ponctualité",        en: "On-time rate" },
+    groups:       { fr: "Groupes actifs",     en: "Active groups" },
+    kotizySeal:   { fr: "Sceau Kotizy",       en: "Kotizy Seal" },
+    kotizySealSub:{ fr: "Membre vérifié de la communauté Kotizy", en: "Verified member of the Kotizy community" },
+    streak:       { fr: "Série active",       en: "Active streak" },
+    publicLabel:  { fr: "Profil public",      en: "Public profile" },
+  },
+
+  // Auth
+  auth: {
+    login:        { fr: "Se connecter",       en: "Sign in" },
+    register:     { fr: "Créer un compte",    en: "Create account" },
+    email:        { fr: "Email",              en: "Email" },
+    password:     { fr: "Mot de passe",       en: "Password" },
+    fullName:     { fr: "Nom complet",        en: "Full name" },
+    phone:        { fr: "Téléphone (optionnel)", en: "Phone (optional)" },
+    forgotPassword:{ fr: "Mot de passe oublié ?", en: "Forgot password?" },
+    noAccount:    { fr: "Pas encore de compte ?", en: "No account yet?" },
+    hasAccount:   { fr: "Déjà un compte ?",   en: "Already have an account?" },
+    signUp:       { fr: "S'inscrire",         en: "Sign up" },
+    signIn:       { fr: "Connexion",          en: "Sign in" },
+    or:           { fr: "ou",                 en: "or" },
+    tagline:      { fr: "La tontine de la diaspora", en: "The diaspora's tontine" },
+    loginTitle:   { fr: "Connexion",          en: "Sign in" },
+    registerTitle:{ fr: "Créer votre compte", en: "Create your account" },
+  },
+
+  // Notifications
+  notifications: {
+    title:  { fr: "Notifications",   en: "Notifications" },
+    markAll:{ fr: "Tout lire",       en: "Mark all read" },
+    empty:  { fr: "Aucune notification", en: "No notifications" },
+  },
+
+  // Settings
+  settings: {
+    title:        { fr: "Paramètres",         en: "Settings" },
+    notifications:{ fr: "Notifications",      en: "Notifications" },
+    pushNotifs:   { fr: "Notifications push", en: "Push notifications" },
+    theme:        { fr: "Thème",              en: "Theme" },
+    language:     { fr: "Langue",             en: "Language" },
+    autoPay:      { fr: "Paiement automatique", en: "Auto pay" },
+  },
+
+  // Common
+  common: {
+    loading:  { fr: "Chargement…",  en: "Loading…" },
+    error:    { fr: "Erreur",       en: "Error" },
+    success:  { fr: "Succès",       en: "Success" },
+    cancel:   { fr: "Annuler",      en: "Cancel" },
+    confirm:  { fr: "Confirmer",    en: "Confirm" },
+    save:     { fr: "Enregistrer",  en: "Save" },
+    edit:     { fr: "Modifier",     en: "Edit" },
+    delete:   { fr: "Supprimer",    en: "Delete" },
+    back:     { fr: "Retour",       en: "Back" },
+    next:     { fr: "Suivant",      en: "Next" },
+    close:    { fr: "Fermer",       en: "Close" },
+    search:   { fr: "Rechercher",   en: "Search" },
+    submit:   { fr: "Envoyer",      en: "Submit" },
+    active:   { fr: "Actif",        en: "Active" },
+    inactive: { fr: "Inactif",      en: "Inactive" },
+    pending:  { fr: "En attente",   en: "Pending" },
+    paid:     { fr: "Payé",         en: "Paid" },
+    failed:   { fr: "Échoué",       en: "Failed" },
+    or:       { fr: "ou",           en: "or" },
+    cgu:      { fr: "CGU",          en: "Terms" },
+    privacy:  { fr: "Confidentialité", en: "Privacy" },
+    legal:    { fr: "Mentions légales", en: "Legal" },
+    cookies:  { fr: "Cookies",      en: "Cookies" },
+    of:       { fr: "sur",          en: "of" },
+    perMonth: { fr: "/mois",        en: "/month" },
+    months:   { fr: "mois",         en: "months" },
+    lang_fr:  { fr: "Français",     en: "French" },
+    lang_en:  { fr: "Anglais",      en: "English" },
+  },
+
+  // Trust levels
+  trust: {
+    beginner:     { fr: "Débutant",        en: "Beginner" },
+    bronze:       { fr: "Bronze",          en: "Bronze" },
+    intermediate: { fr: "Intermédiaire",   en: "Intermediate" },
+    advanced:     { fr: "Avancé",          en: "Advanced" },
+    gold:         { fr: "Gold",            en: "Gold" },
+    elite:        { fr: "Élite",           en: "Elite" },
+    ptsto:        { fr: "pts pour",        en: "pts to reach" },
+  },
+} as const;
+
+export type TranslationKey = keyof typeof translations;

@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LanguageProvider } from "@/lib/i18n/context";
+import type { Lang } from "@/lib/i18n/translations";
 import "./globals.css";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app";
@@ -25,14 +28,7 @@ export const metadata: Metadata = {
     siteName: "Kotizy",
     title: "Kotizy — La tontine de la diaspora",
     description: "Épargnez ensemble en euros. Tontines digitales pour la diaspora africaine. Wave, Orange Money, Stripe.",
-    images: [
-      {
-        url: `${APP_URL}/og`,
-        width: 1200,
-        height: 630,
-        alt: "Kotizy — La tontine de la diaspora",
-      },
-    ],
+    images: [{ url: `${APP_URL}/og`, width: 1200, height: 630, alt: "Kotizy — La tontine de la diaspora" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -60,13 +56,18 @@ export const viewport: Viewport = {
   themeColor: "#050706",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const store = await cookies();
+  const initialLang: Lang = store.get("kl")?.value === "en" ? "en" : "fr";
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={initialLang} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ThemeProvider>
-          <PwaRegister />
-          {children}
+          <LanguageProvider initialLang={initialLang}>
+            <PwaRegister />
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

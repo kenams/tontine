@@ -237,14 +237,16 @@ model UserBadge {
 }
 
 model TrustScore {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  score             Int      @default(0)
-  paymentReliability Int     @default(0)
-  communityRating   Int      @default(0)
-  fraudRisk         Int      @default(100)
-  updatedAt         DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score              Int       @default(0)
+  paymentReliability Int       @default(0)
+  communityRating    Int       @default(0)
+  fraudRisk          Int       @default(100)
+  paymentStreak      Int       @default(0)
+  streakUpdatedAt    DateTime?
+  updatedAt          DateTime  @updatedAt
 }
 
 model AdminLog {

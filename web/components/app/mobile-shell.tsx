@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { LangToggle } from "@/components/app/lang-toggle";
 import { ThemeToggle } from "@/components/app/theme-toggle";
+import { useLanguage } from "@/lib/i18n/context";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
 
@@ -15,16 +17,17 @@ type Props = {
   user: { fullName: string; email: string };
 };
 
-const nav = [
-  { href: "/dashboard", label: "Accueil",   icon: Home },
-  { href: "/wallet",    label: "Wallet",    icon: WalletCards },
-  { href: "/tontines",  label: "Groupes",   icon: Plus },
-  { href: "/chat",      label: "Chat",      icon: MessageCircle },
-  { href: "/profile",   label: "Profil",    icon: User },
-];
-
 export function MobileShell({ children, user, title }: Props) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const nav = [
+    { href: "/dashboard", label: t("nav", "home"),    icon: Home },
+    { href: "/wallet",    label: t("nav", "wallet"),  icon: WalletCards },
+    { href: "/tontines",  label: t("nav", "groups"),  icon: Plus },
+    { href: "/chat",      label: t("nav", "chat"),    icon: MessageCircle },
+    { href: "/profile",   label: t("nav", "profile"), icon: User },
+  ];
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-transparent">
@@ -44,10 +47,11 @@ export function MobileShell({ children, user, title }: Props) {
             <Link
               href="/notifications"
               className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--surface)] text-[var(--muted)] transition hover:text-[var(--text)]"
-              aria-label="Notifications"
+              aria-label={t("notifications", "title")}
             >
               <Bell size={16} />
             </Link>
+            <LangToggle />
             <ThemeToggle />
           </div>
         </div>
@@ -56,10 +60,10 @@ export function MobileShell({ children, user, title }: Props) {
       <main className="flex-1 px-4 pb-28 pt-4">
         {children}
         <div className="mt-8 flex flex-wrap justify-center gap-3 pb-2 text-[10px] text-[var(--muted)]">
-          <Link href="/legal/cgu" className="hover:text-[var(--text)]">CGU</Link>
-          <Link href="/legal/confidentialite" className="hover:text-[var(--text)]">Confidentialité</Link>
-          <Link href="/legal/mentions-legales" className="hover:text-[var(--text)]">Mentions légales</Link>
-          <Link href="/legal/cookies" className="hover:text-[var(--text)]">Cookies</Link>
+          <Link href="/legal/cgu" className="hover:text-[var(--text)]">{t("common", "cgu")}</Link>
+          <Link href="/legal/confidentialite" className="hover:text-[var(--text)]">{t("common", "privacy")}</Link>
+          <Link href="/legal/mentions-legales" className="hover:text-[var(--text)]">{t("common", "legal")}</Link>
+          <Link href="/legal/cookies" className="hover:text-[var(--text)]">{t("common", "cookies")}</Link>
         </div>
       </main>
 

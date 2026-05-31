@@ -1,4 +1,4 @@
-import { Award, ShieldCheck, TrendingUp, Users, Zap } from "lucide-react";
+import { Award, Flame, ShieldCheck, TrendingUp, Users, Zap } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -6,7 +6,9 @@ import { ProgressBar } from "@/components/app/progress-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { prisma } from "@/lib/db";
 import { trustLevel } from "@/lib/trust";
-import { initials, money } from "@/lib/format";
+import { badgeMeta } from "@/lib/badges";
+import { getServerT } from "@/lib/i18n/server";
+import { initials } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -19,8 +21,8 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
+  const { lang, t } = await getServerT();
 
-  // Chercher par slug email (partie avant @) ou par fullName slug
   const user = await prisma.user.findFirst({
     where: {
       OR: [
@@ -30,7 +32,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     },
     include: {
       trustScore: true,
-      badges: { include: { badge: true }, take: 6 },
+      badges: { include: { badge: true }, take: 8 },
       memberships: {
         where: { status: "ACTIVE" },
         include: { tontineGroup: { select: { name: true, currency: true } } },
@@ -43,7 +45,9 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   if (!user) notFound();
 
   const trust = user.trustScore?.score ?? 0;
+  const streak = user.trustScore?.paymentStreak ?? 0;
   const level = trustLevel(trust);
+  const levelLabel = lang === "en" ? level.labelEn : level.label;
   const paidCount = user._count.contributions;
   const onTimeRate = paidCount > 0
     ? Math.min(100, Math.round((trust + paidCount * 2) / (paidCount * 2 + 10) * 100))
@@ -65,7 +69,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500 text-xs font-black text-ink">K</span>
             <span className="text-sm font-black">Kotizy</span>
           </Link>
-          <span className="text-xs text-[var(--muted)]">Profil public</span>
+          <span className="text-xs text-[var(--muted)]">{t("publicProfile", "publicLabel")}</span>
         </div>
 
         {/* Carte identité */}
@@ -74,11 +78,16 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             {initials(user.fullName)}
           </div>
           <h1 className="text-2xl font-black">{user.fullName}</h1>
-          <div className="mt-3 flex justify-center gap-2">
+          <div className="mt-3 flex justify-center gap-2 flex-wrap">
             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase ${trust >= 85 ? badgeColors.gold : badgeColors.emerald}`}>
-              {level.label}
+              {levelLabel}
             </span>
             <StatusBadge value={user.status} />
+            {streak >= 3 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-bold text-orange-400 ring-1 ring-orange-400/25">
+                <Flame size={10} /> {streak}
+              </span>
+            )}
           </div>
         </div>
 
@@ -87,23 +96,47 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldCheck size={18} className="text-emerald-400" />
-              <span className="text-sm font-black">Score de confiance</span>
+              <span className="text-sm font-black">{t("publicProfile", "trustScore")}</span>
             </div>
             <span className={`text-2xl font-black ${level.color}`}>{trust}/100</span>
           </div>
           <ProgressBar value={trust} />
           <p className="mt-2 text-xs text-[var(--muted)]">
-            Niveau <strong className="text-[var(--text)]">{level.label}</strong>
-            {level.next !== null && ` · ${level.next - trust} pts pour ${trustLevel(level.next).label}`}
+            {lang === "en" ? "Level" : "Niveau"} <strong className="text-[var(--text)]">{levelLabel}</strong>
+            {level.next !== null && ` · ${level.next - trust} ${lang === "en" ? "pts to" : "pts pour"} ${lang === "en" ? trustLevel(level.next).labelEn : trustLevel(level.next).label}`}
           </p>
         </div>
+
+        {/* Streak */}
+        {streak > 0 && (
+          <div className="glass mb-4 rounded-3xl p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Flame size={16} className="text-orange-400" />
+              <span className="text-sm font-black">{t("publicProfile", "streak")}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-3xl font-black text-orange-400">{streak}</p>
+              <p className="text-sm text-[var(--muted)]">
+                {lang === "en" ? `consecutive month${streak > 1 ? "s" : ""}` : `mois consécutif${streak > 1 ? "s" : ""}`}
+              </p>
+            </div>
+            <div className="mt-3 flex gap-1.5">
+              {Array.from({ length: Math.min(streak, 12) }).map((_, i) => (
+                <div key={i} className="h-2 flex-1 rounded-full bg-orange-400/80" />
+              ))}
+              {Array.from({ length: Math.max(0, 12 - streak) }).map((_, i) => (
+                <div key={i} className="h-2 flex-1 rounded-full bg-[var(--surface)]" />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="mb-4 grid grid-cols-3 gap-3">
           {[
-            { icon: TrendingUp, label: "Cotisations", value: String(paidCount), color: "text-emerald-400" },
-            { icon: Users, label: "Groupes actifs", value: String(user.memberships.length), color: "text-[var(--text)]" },
-            { icon: Zap, label: "Ponctualité", value: `${onTimeRate}%`, color: trust >= 70 ? "text-emerald-400" : "text-gold" },
+            { icon: TrendingUp, label: t("publicProfile", "contributions"), value: String(paidCount), color: "text-emerald-400" },
+            { icon: Users, label: t("publicProfile", "groups"), value: String(user.memberships.length), color: "text-[var(--text)]" },
+            { icon: Zap, label: t("publicProfile", "onTimeRate"), value: `${onTimeRate}%`, color: trust >= 70 ? "text-emerald-400" : "text-gold" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="glass rounded-3xl p-3 text-center">
               <Icon size={16} className={`mx-auto mb-1 ${color}`} />
@@ -118,17 +151,21 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div className="glass mb-4 rounded-3xl p-4">
             <div className="mb-3 flex items-center gap-2">
               <Award size={16} className="text-gold" />
-              <span className="text-sm font-black">Badges</span>
+              <span className="text-sm font-black">{t("publicProfile", "badges")}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {user.badges.map(({ badge }) => (
-                <span
-                  key={badge.id}
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${badgeColors[badge.color] ?? badgeColors.emerald}`}
-                >
-                  {badge.name}
-                </span>
-              ))}
+              {user.badges.map(({ badge }) => {
+                const meta = badgeMeta(badge.code, lang);
+                return (
+                  <span
+                    key={badge.id}
+                    title={meta.description}
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${badgeColors[badge.color] ?? badgeColors.emerald}`}
+                  >
+                    {meta.name}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}
@@ -136,7 +173,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         {/* Groupes actifs */}
         {user.memberships.length > 0 && (
           <div className="glass mb-4 rounded-3xl p-4">
-            <p className="mb-3 text-sm font-black">Groupes actifs</p>
+            <p className="mb-3 text-sm font-black">{t("publicProfile", "groups")}</p>
             <div className="space-y-2">
               {user.memberships.map((m) => (
                 <div key={m.id} className="flex items-center justify-between text-sm">
@@ -148,14 +185,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           </div>
         )}
 
-        {/* Sceau de confiance */}
+        {/* Sceau Kotizy */}
         <div className="glass rounded-3xl p-4 text-center">
           <ShieldCheck size={20} className="mx-auto mb-2 text-emerald-400" />
-          <p className="text-xs text-[var(--muted)]">
-            Score vérifié par Kotizy · Basé sur l'historique réel de paiements
-          </p>
+          <p className="text-xs font-bold mb-1">{t("publicProfile", "kotizySeal")}</p>
+          <p className="text-xs text-[var(--muted)]">{t("publicProfile", "kotizySealSub")}</p>
           <Link href="/register" className="mt-3 inline-block rounded-full bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/25 transition">
-            Rejoindre Kotizy →
+            {lang === "en" ? "Join Kotizy →" : "Rejoindre Kotizy →"}
           </Link>
         </div>
 
