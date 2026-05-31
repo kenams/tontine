@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n/context";
 
 export function LogoutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <Button
@@ -23,7 +25,7 @@ export function LogoutButton() {
       }}
     >
       <LogOut size={17} />
-      Deconnexion
+      {t("profile", "logout")}
     </Button>
   );
 }

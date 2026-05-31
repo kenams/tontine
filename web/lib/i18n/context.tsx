@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { translations, type Lang } from "./translations";
 
 type LanguageCtx = {
@@ -20,11 +21,13 @@ const Ctx = createContext<LanguageCtx>({
 
 export function LanguageProvider({ initialLang, children }: { initialLang: Lang; children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
+  const router = useRouter();
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     document.cookie = `kl=${l};path=/;max-age=31536000;samesite=lax`;
-  }, []);
+    router.refresh(); // re-fetch server components avec la nouvelle langue
+  }, [router]);
 
   const t = useCallback(
     (section: string, key: string): string => {
