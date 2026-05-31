@@ -28,11 +28,11 @@ export default async function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage: "url('/world-map.png')",
-            backgroundSize: "110%",
-            backgroundPosition: "center 40%",
+            backgroundSize: "115%",
+            backgroundPosition: "center -2%",
             backgroundRepeat: "no-repeat",
-            opacity: 0.06,
-            filter: "brightness(1.4) saturate(0.8)",
+            opacity: 0.13,
+            filter: "brightness(1.6) saturate(1.4) hue-rotate(-10deg)",
           }}
         />
 
