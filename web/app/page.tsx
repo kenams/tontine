@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { MotionPage } from "@/components/ui/motion";
-import { WorldMapBackground } from "@/components/ui/world-map";
 import { getSession } from "@/lib/auth";
 
 /* ── Pill de ville avec ligne de connexion ── */
@@ -25,9 +24,17 @@ export default async function LandingPage() {
       <div className="relative min-h-dvh overflow-hidden bg-[#080b07]">
 
         {/* ── FOND MONDE ── */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <WorldMapBackground className="absolute left-1/2 top-1/2 h-auto w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-100" />
-        </div>
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "url('/world-map.png')",
+            backgroundSize: "110%",
+            backgroundPosition: "center 40%",
+            backgroundRepeat: "no-repeat",
+            opacity: 0.06,
+            filter: "brightness(1.4) saturate(0.8)",
+          }}
+        />
 
         <main className="relative mx-auto max-w-6xl px-5 py-5">
 
