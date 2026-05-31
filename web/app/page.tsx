@@ -3,67 +3,8 @@ import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { MotionPage } from "@/components/ui/motion";
+import { WorldMapBackground } from "@/components/ui/world-map";
 import { getSession } from "@/lib/auth";
-
-/* ── SVG continent africain (silhouette simplifiée) ── */
-function AfricaBackground() {
-  return (
-    <svg
-      viewBox="0 0 400 520"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      aria-hidden="true"
-    >
-      {/* Contour continent */}
-      <path
-        d="M 160 18
-           C 185 14, 215 16, 238 28
-           C 262 42, 278 60, 285 82
-           C 292 106, 288 132, 295 155
-           C 305 185, 318 210, 320 238
-           C 322 268, 308 295, 290 318
-           C 268 346, 240 368, 218 392
-           C 200 412, 192 432, 185 450
-           C 178 465, 172 475, 165 480
-           C 158 475, 150 462, 143 445
-           C 135 425, 128 405, 110 385
-           C 88 362, 60 345, 42 318
-           C 22 290, 12 260, 15 228
-           C 18 198, 32 172, 38 145
-           C 44 116, 38 88, 48 64
-           C 58 40, 80 22, 105 16
-           C 128 11, 145 20, 160 18 Z"
-        stroke="rgba(34, 197, 94, 0.07)"
-        strokeWidth="1.5"
-        fill="rgba(34, 197, 94, 0.025)"
-      />
-      {/* Corne de l'Afrique */}
-      <path
-        d="M 288 155 C 295 150, 312 145, 322 155 C 332 165, 325 178, 318 185"
-        stroke="rgba(34, 197, 94, 0.05)"
-        strokeWidth="1"
-        fill="none"
-      />
-      {/* Lignes de connexion diaspora */}
-      <g opacity="0.15">
-        {/* Paris → Abidjan */}
-        <line x1="178" y1="-40" x2="148" y2="280" stroke="rgba(34,197,94,0.4)" strokeWidth="0.5" strokeDasharray="4 6" />
-        {/* London → Lagos */}
-        <line x1="155" y1="-60" x2="200" y2="310" stroke="rgba(34,197,94,0.3)" strokeWidth="0.5" strokeDasharray="4 6" />
-        {/* Lyon → Dakar */}
-        <line x1="185" y1="-30" x2="75" y2="245" stroke="rgba(34,197,94,0.25)" strokeWidth="0.5" strokeDasharray="4 6" />
-        {/* Brussels → Kinshasa */}
-        <line x1="170" y1="-50" x2="210" y2="370" stroke="rgba(34,197,94,0.2)" strokeWidth="0.5" strokeDasharray="4 6" />
-      </g>
-      {/* Points de villes */}
-      <circle cx="148" cy="280" r="3" fill="rgba(34,197,94,0.35)" />
-      <circle cx="200" cy="310" r="3" fill="rgba(34,197,94,0.3)" />
-      <circle cx="75" cy="245" r="3" fill="rgba(34,197,94,0.25)" />
-      <circle cx="210" cy="370" r="3" fill="rgba(34,197,94,0.2)" />
-    </svg>
-  );
-}
 
 /* ── Pill de ville avec ligne de connexion ── */
 function DiasporaRoute({ from, to }: { from: string; to: string }) {
@@ -83,9 +24,9 @@ export default async function LandingPage() {
     <MotionPage>
       <div className="relative min-h-dvh overflow-hidden bg-[#080b07]">
 
-        {/* ── FOND AFRIQUE ── */}
-        <div className="absolute right-[-8%] top-[-4%] h-[680px] w-[500px] opacity-100 lg:right-[2%]">
-          <AfricaBackground />
+        {/* ── FOND MONDE ── */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <WorldMapBackground className="absolute left-1/2 top-1/2 h-auto w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-100" />
         </div>
 
         <main className="relative mx-auto max-w-6xl px-5 py-5">
@@ -255,7 +196,7 @@ export default async function LandingPage() {
                 {[
                   { val: "50€", label: "cotisation min.", sub: "par mois" },
                   { val: "8", label: "membres max.", sub: "par groupe" },
-                  { val: "1.25%", label: "frais plateforme", sub: "seulement sur le payout" },
+                  { val: "0€", label: "frais d'entrée", sub: "gratuit pour toujours" },
                 ].map(({ val, label, sub }) => (
                   <div key={label} className="text-center">
                     <p className="text-4xl font-black text-emerald-400">{val}</p>
