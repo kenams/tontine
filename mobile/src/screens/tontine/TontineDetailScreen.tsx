@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTontineStore } from "../../store/tontineStore";
@@ -67,13 +67,27 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     setPaying(false);
   }
 
+  const joinLink = `https://tontineapp-web.vercel.app/g/${tontine.joinCode}`;
+
   async function handleShare() {
-    const joinLink = `https://tontineapp-web.vercel.app/g/${tontine.joinCode}`;
     await Share.share({
-      message: `Rejoins mon groupe de tontine "${tontine.name}" sur Kotizy 🤝\nCode : ${tontine.joinCode}\n${joinLink}`,
+      message: `🤝 Rejoins *${tontine.name}* sur Kotizy !\nCode : ${tontine.joinCode}\n${joinLink}`,
       url: joinLink,
       title: `Invitation — ${tontine.name}`,
     });
+  }
+
+  async function handleWhatsApp() {
+    const msg = encodeURIComponent(
+      `🤝 Rejoins *${tontine.name}* sur Kotizy, l'app de tontine pour la diaspora 🌍\n\nCode : *${tontine.joinCode}*\n→ ${joinLink}`
+    );
+    const url = `whatsapp://send?text=${msg}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      await handleShare();
+    }
   }
 
   async function handleToggleAutoPay(val: boolean) {
@@ -94,9 +108,14 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
             <Ionicons name="arrow-back" size={20} color={colors.text} />
           </Pressable>
           <Text style={s.headerTitle} numberOfLines={1}>{tontine.name}</Text>
-          <Pressable style={s.shareBtn} onPress={() => void handleShare()}>
-            <Ionicons name="share-social-outline" size={20} color={colors.primary} />
-          </Pressable>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable style={s.shareBtn} onPress={() => void handleWhatsApp()}>
+              <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+            </Pressable>
+            <Pressable style={s.shareBtn} onPress={() => void handleShare()}>
+              <Ionicons name="share-social-outline" size={20} color={colors.primary} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Carte principale */}

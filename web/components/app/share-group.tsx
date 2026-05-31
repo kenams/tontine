@@ -1,13 +1,18 @@
 "use client";
 
-import { Check, Copy, Share2 } from "lucide-react";
+import { Check, Copy, MessageCircle, Share2 } from "lucide-react";
 import { useState } from "react";
 
-export function ShareGroupButton({ joinCode }: { joinCode: string }) {
+const APP_URL = "https://tontineapp-web.vercel.app";
+
+export function ShareGroupButton({ joinCode, groupName = "ma tontine" }: { joinCode: string; groupName?: string }) {
   const [copied, setCopied] = useState(false);
 
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const link = `${appUrl}/g/${joinCode}`;
+  const link = `${APP_URL}/g/${joinCode}`;
+  const whatsappMsg = encodeURIComponent(
+    `🤝 Rejoins *${groupName}* sur Kotizy !\nL'app de tontine pour la diaspora 🌍\n\n→ ${link}\nCode : *${joinCode}*`
+  );
+  const whatsappUrl = `https://wa.me/?text=${whatsappMsg}`;
 
   async function copy() {
     await navigator.clipboard.writeText(link);
@@ -17,7 +22,11 @@ export function ShareGroupButton({ joinCode }: { joinCode: string }) {
 
   async function share() {
     if (navigator.share) {
-      await navigator.share({ title: "Rejoignez ma tontine sur Kotizy", url: link });
+      await navigator.share({
+        title: `Rejoins ${groupName} sur Kotizy`,
+        text: `🤝 Rejoins ${groupName} sur Kotizy, l'app de tontine pour la diaspora !`,
+        url: link,
+      });
     } else {
       await copy();
     }
@@ -26,26 +35,39 @@ export function ShareGroupButton({ joinCode }: { joinCode: string }) {
   return (
     <div className="glass rounded-3xl p-4">
       <p className="mb-2 text-xs font-bold uppercase text-gold">Inviter des membres</p>
+
+      {/* Lien cliquable */}
       <div className="mb-3 flex items-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-2">
         <code className="flex-1 truncate text-xs font-bold text-emerald-400">
-          /g/{joinCode}
+          Code : {joinCode}
         </code>
-        <button
-          type="button"
-          onClick={copy}
-          className="shrink-0 text-[var(--muted)] hover:text-[var(--text)] transition"
-        >
+        <button type="button" onClick={copy} className="shrink-0 text-[var(--muted)] hover:text-[var(--text)] transition">
           {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
         </button>
       </div>
-      <button
-        type="button"
-        onClick={share}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500/10 py-3 text-sm font-bold text-emerald-400 transition hover:bg-emerald-500/20"
-      >
-        <Share2 size={16} />
-        Partager le lien d'invitation
-      </button>
+
+      <div className="flex gap-2">
+        {/* WhatsApp */}
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 text-sm font-bold text-[#25D366] transition hover:bg-[#25D366]/20"
+        >
+          <MessageCircle size={16} />
+          WhatsApp
+        </a>
+
+        {/* Partage natif / copie */}
+        <button
+          type="button"
+          onClick={share}
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-500/10 py-3 text-sm font-bold text-emerald-400 transition hover:bg-emerald-500/20"
+        >
+          <Share2 size={16} />
+          Partager
+        </button>
+      </div>
     </div>
   );
 }

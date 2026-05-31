@@ -3,6 +3,7 @@
 import {
   Activity,
   AlertTriangle,
+  ArrowDownToLine,
   BarChart3,
   Database,
   Home,
@@ -24,6 +25,7 @@ const nav = [
   { href: "/admin", label: "Dashboard", icon: Home },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/transactions", label: "Transactions", icon: Database },
+  { href: "/admin/withdrawals", label: "Retraits", icon: ArrowDownToLine },
   { href: "/admin/tontines", label: "Tontines", icon: ListChecks },
   { href: "/admin/alerts", label: "Alertes", icon: AlertTriangle },
   { href: "/admin/monitoring", label: "Monitoring", icon: RadioTower },
