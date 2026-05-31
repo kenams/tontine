@@ -1,11 +1,9 @@
 name: Deploy to Vercel
 
+# STANDBY — deploy manuel via `vercel --prod` dans le terminal
+# Réactiver quand VERCEL_TOKEN sera régénéré sur Vercel dashboard → Settings → Tokens
 on:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
 
 jobs:
   deploy:
