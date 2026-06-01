@@ -3,6 +3,9 @@ import { getTierFromCents } from "@/lib/tiers";
 import { notFound } from "next/navigation";
 
 import { AutoPayToggle } from "@/components/app/autopay-toggle";
+import { DebtAlert } from "@/components/app/debt-alert";
+import { ExcludeMemberButton } from "@/components/app/exclude-member-button";
+import { LeaveGroupButton } from "@/components/app/leave-group-button";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MobileShell } from "@/components/app/mobile-shell";
 import { ShareGroupButton } from "@/components/app/share-group";
@@ -15,6 +18,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTontineDetail } from "@/lib/data";
+import { calcMemberDebt } from "@/lib/defaults";
 import { dateShort, dateTime, initials, money, pct } from "@/lib/format";
 
 export default async function TontineDetailPage({
@@ -27,16 +31,19 @@ export default async function TontineDetailPage({
   const session = await requireUser();
   const { id } = await params;
   const query = searchParams ? await searchParams : {};
-  const [detail, wallet, myMembership] = await Promise.all([
+  const [detail, wallet, myMembership, myDebt] = await Promise.all([
     getTontineDetail(id, session.userId).catch(() => null),
     prisma.wallet.findUnique({ where: { userId: session.userId }, select: { balanceCents: true, currency: true } }),
-    prisma.membership.findFirst({ where: { userId: session.userId, tontineGroupId: id }, select: { autoPayEnabled: true } }),
+    prisma.membership.findFirst({ where: { userId: session.userId, tontineGroupId: id } }),
+    calcMemberDebt(session.userId, id),
   ]);
   if (!detail || (!detail.isMember && session.role !== "ADMIN")) notFound();
   const { group } = detail;
   const paid = group.contributions.filter((item) => item.status === "PAID").length;
   const progress = pct(paid, group.memberships.length || group.maxMembers);
   const late = group.memberships.filter((item) => item.status === "LATE").length;
+  const isGroupAdmin = group.createdById === session.userId || session.role === "ADMIN";
+  const activeMembers = group.memberships.filter((m) => !["LEFT", "EXCLUDED"].includes(m.status));
 
   return (
     <MobileShell user={session} title={group.name}>
@@ -90,6 +97,11 @@ export default async function TontineDetailPage({
         <StatCard label="Penalite" value={money(group.latePenaltyCents, group.currency)} icon={<CalendarClock size={18} />} />
       </div>
 
+      {/* Alerte dette si applicable */}
+      {myDebt > 0 && (
+        <DebtAlert groupId={group.id} debtCents={myDebt} currency={group.currency} />
+      )}
+
       <div className="mb-4 grid gap-3">
         <ContributionButton
           groupId={group.id}
@@ -100,7 +112,7 @@ export default async function TontineDetailPage({
         {myMembership && (
           <AutoPayToggle
             groupId={group.id}
-            initialEnabled={myMembership.autoPayEnabled}
+            initialEnabled={(myMembership as unknown as { autoPayEnabled: boolean }).autoPayEnabled}
             walletBalance={wallet?.balanceCents ?? 0}
             contributionCents={group.contributionCents}
             currency={group.currency}
@@ -111,36 +123,75 @@ export default async function TontineDetailPage({
       </div>
 
       <div className="mb-4 glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Ordre de passage</p>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-black">Ordre de passage</p>
+          <p className="text-xs text-[var(--muted)]">{activeMembers.length} actif{activeMembers.length > 1 ? "s" : ""}</p>
+        </div>
         <div className="space-y-3">
-          {group.memberships.map((membership) => (
-            <div key={membership.id} className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-xs font-black">
-                  {initials(membership.user.fullName)}
+          {group.memberships.map((membership) => {
+            const mDebt = (membership as unknown as { debtCents?: number }).debtCents ?? 0;
+            const hasLeft = ["LEFT", "EXCLUDED"].includes(membership.status);
+            return (
+              <div key={membership.id} className={`flex flex-wrap items-center justify-between gap-2 ${hasLeft ? "opacity-40" : ""}`}>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-xs font-black overflow-hidden">
+                    {(membership.user as unknown as { avatarUrl?: string | null }).avatarUrl
+                      ? <img src={(membership.user as unknown as { avatarUrl: string }).avatarUrl} alt="" className="h-full w-full object-cover" />
+                      : initials(membership.user.fullName)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{membership.payoutOrder}. {membership.user.fullName}</p>
+                    <p className="text-xs text-smoke">
+                      Score {membership.user.trustScore?.score ?? 0}/100
+                      {mDebt > 0 && <span className="ml-1 text-gold">· Dette {money(mDebt, group.currency)}</span>}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold">{membership.payoutOrder}. {membership.user.fullName}</p>
-                  <p className="text-xs text-smoke">Score {membership.user.trustScore?.score ?? 70}/100</p>
+                <div className="flex items-center gap-2">
+                  <StatusBadge value={membership.status} />
+                  {isGroupAdmin && !hasLeft && membership.userId !== session.userId && (
+                    <ExcludeMemberButton
+                      groupId={group.id}
+                      membershipId={membership.id}
+                      memberName={membership.user.fullName}
+                    />
+                  )}
                 </div>
               </div>
-              <StatusBadge value={membership.status} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div className="mb-4 glass rounded-3xl p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-black">
           <ShieldCheck size={18} className="text-gold" />
-          Regles et fonds commun
+          Règles &amp; Fonds de solidarité
         </div>
         <p className="text-sm leading-6 text-smoke">{group.rules}</p>
-        <div className="mt-4 rounded-2xl bg-white/[0.08] p-3">
-          <p className="text-xs text-smoke">Pret communautaire simule</p>
-          <p className="text-lg font-black">{money(group.emergencyFund?.loanPoolCents ?? 0, group.currency)}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-emerald-500/8 p-3 ring-1 ring-emerald-500/15">
+            <p className="text-[10px] font-bold uppercase text-emerald-400/60">Fonds urgence</p>
+            <p className="text-lg font-black text-emerald-400">{money(group.emergencyFund?.balanceCents ?? 0, group.currency)}</p>
+            <p className="text-[10px] text-[var(--muted)]">Couvre les retards</p>
+          </div>
+          <div className="rounded-2xl bg-white/[0.05] p-3 ring-1 ring-white/8">
+            <p className="text-[10px] font-bold uppercase text-[var(--muted)]">Exclusion auto</p>
+            <p className="text-lg font-black">{(group as unknown as { autoExcludeDays?: number }).autoExcludeDays ?? 30}j</p>
+            <p className="text-[10px] text-[var(--muted)]">Sans paiement</p>
+          </div>
         </div>
+        <p className="mt-3 text-[11px] text-[var(--muted)]">
+          5% de chaque cotisation alimente le fonds. En cas de retard, le fonds avance la mise. Le membre doit rembourser sous 30 jours, sinon exclusion automatique.
+        </p>
       </div>
+
+      {/* Bouton quitter le groupe — visible pour les membres non-admin */}
+      {detail.isMember && !isGroupAdmin && myMembership && !["LEFT", "EXCLUDED"].includes(myMembership.status) && (
+        <div className="mb-4">
+          <LeaveGroupButton groupId={group.id} groupName={group.name} />
+        </div>
+      )}
 
       <div className="mb-4 glass rounded-3xl p-4">
         <p className="mb-3 text-sm font-black">Timeline activite</p>

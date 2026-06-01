@@ -7,6 +7,7 @@ import { sendPushToUser } from "@/lib/push";
 import { emitEvent } from "@/lib/realtime-server";
 import { checkBadgesAfterPayment } from "@/lib/badges";
 import { penalizeLate, rewardPayment } from "@/lib/trust";
+import { coverByEmergencyFund, excludeMember, feedEmergencyFund } from "@/lib/defaults";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-  const report = { advanced: 0, autopaid: 0, autofailed: 0, payouts: 0, reminders: 0, late: 0 };
+  const report = { advanced: 0, autopaid: 0, autofailed: 0, payouts: 0, reminders: 0, late: 0, covered: 0, excluded: 0, debtAlerts: 0 };
 
   // ── 1. RAPPELS 3 jours avant échéance ────────────────────────────────────────
   const upcomingMembershipsRaw = await prisma.membership.findMany({
@@ -203,6 +204,11 @@ export async function GET(request: NextRequest) {
             type: "PAYOUT",
           },
         });
+        // Marquer le pot reçu sur le membership (pour calcul dette si départ)
+        await tx.membership.update({
+          where: { id: payoutMembership.id },
+          data: { potReceivedAt: now, potReceivedCents: potCents } as never,
+        });
       });
       void sendPayoutEmail(
         payoutMembership.user.email,
@@ -247,25 +253,153 @@ export async function GET(request: NextRequest) {
     report.advanced++;
   }
 
-  // ── 4. PÉNALISER LES RETARDATAIRES ──────────────────────────────────────────
-  const lateMembers = await prisma.membership.findMany({
-    where: { status: "ACTIVE", paidThisRound: false, tontineGroup: { nextDueAt: { lt: now } } },
+  // ── 4. PÉNALISER LES RETARDATAIRES (J+0) ────────────────────────────────────
+  const newLateMembers = await prisma.membership.findMany({
+    where: { status: "ACTIVE", paidThisRound: false, tontineGroup: { status: "ACTIVE", nextDueAt: { lt: now } } },
     select: { userId: true, id: true },
   });
-  if (lateMembers.length > 0) {
+  if (newLateMembers.length > 0) {
     await prisma.membership.updateMany({
-      where: { id: { in: lateMembers.map((m) => m.id) } },
-      data: { status: "LATE" },
+      where: { id: { in: newLateMembers.map((m) => m.id) } },
+      data: { status: "LATE", lateStreak: 1 } as never,
     });
-    for (const { userId } of lateMembers) {
+    for (const { userId } of newLateMembers) {
       void penalizeLate(userId);
       void sendPushToUser(userId, {
         title: "⚠️ Cotisation en retard",
-        body: "Votre cotisation n'a pas été payée à temps. Votre score de confiance est impacté.",
+        body: "Votre cotisation n'a pas été payée. Votre score de confiance est impacté. Payez dès que possible.",
         url: "/tontines",
       });
     }
-    report.late = lateMembers.length;
+    report.late = newLateMembers.length;
+  }
+
+  // ── 5. ESCALADE RETARDS PERSISTANTS ─────────────────────────────────────────
+  // J+7 → fonds urgence couvre + alerte admin
+  // J+14 → alerte finale avant exclusion
+  // J+30 (ou autoExcludeDays) → exclusion automatique
+
+  const in7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const in14Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  const lateMembers = (await prisma.membership.findMany({
+    where: { status: "LATE" },
+    include: {
+      tontineGroup: {
+        select: { id: true, name: true, currency: true, contributionCents: true, createdById: true, autoExcludeDays: true },
+      },
+      user: { select: { email: true, fullName: true } },
+    },
+  } as never)) as unknown as Array<{
+    id: string; userId: string; lateStreak: number; lateAlertSentAt: Date | null;
+    tontineGroup: { id: string; name: string; currency: string; contributionCents: number; createdById: string; autoExcludeDays: number };
+    user: { email: string; fullName: string };
+  }>;
+
+  for (const m of lateMembers) {
+    const lateStreak = m.lateStreak ?? 1;
+    const alertSent = m.lateAlertSentAt;
+    const group = m.tontineGroup;
+    const autoExcludeDays = group.autoExcludeDays ?? 30;
+
+    // J+7 : tenter couverture fonds urgence
+    if (lateStreak >= 7 && !alertSent) {
+      const coverResult = await coverByEmergencyFund(m.id, group.id, m.userId);
+      if (coverResult.covered) {
+        report.covered++;
+        // Notifier l'admin
+        await prisma.notification.create({
+          data: {
+            userId: group.createdById,
+            tontineGroupId: group.id,
+            title: `🛟 Fonds urgence utilisé — ${group.name}`,
+            body: `${m.user.fullName} est en retard. Le fonds commun a couvert ${money(coverResult.amountCents, group.currency)}. Remboursement attendu sous 30 jours.`,
+            type: "EMERGENCY",
+          },
+        });
+      } else {
+        // Fonds insuffisant → alerte admin
+        await prisma.notification.create({
+          data: {
+            userId: group.createdById,
+            tontineGroupId: group.id,
+            title: `⚠️ Retard non couvert — ${group.name}`,
+            body: `${m.user.fullName} n'a pas payé depuis 7 jours. Fonds insuffisant. Intervenez ou attendez l'exclusion automatique sous ${autoExcludeDays - 7}j.`,
+            type: "LATE_ALERT",
+          },
+        });
+      }
+      await prisma.membership.update({
+        where: { id: m.id },
+        data: { lateAlertSentAt: now, lateStreak: 7 } as never,
+      });
+      report.debtAlerts++;
+    }
+
+    // J+14 : rappel final avant exclusion
+    if (lateStreak >= 14 && alertSent && new Date(alertSent).getTime() < in7Days.getTime()) {
+      void sendPushToUser(m.userId, {
+        title: "🚨 Dernier avertissement",
+        body: `Vous avez ${autoExcludeDays - 14} jours avant exclusion automatique du groupe "${group.name}". Payez maintenant.`,
+        url: `/tontines/${group.id}`,
+      });
+      await prisma.notification.create({
+        data: {
+          userId: m.userId,
+          tontineGroupId: group.id,
+          title: "🚨 Dernier avertissement avant exclusion",
+          body: `Votre cotisation est en retard depuis 14 jours. Sans paiement sous ${autoExcludeDays - 14} jours, vous serez automatiquement exclu(e) du groupe.`,
+          type: "EXCLUSION_WARNING",
+        },
+      });
+    }
+
+    // J+autoExcludeDays → exclusion automatique
+    if (lateStreak >= autoExcludeDays) {
+      const result = await excludeMember(group.createdById, m.id, `Exclusion automatique — ${autoExcludeDays} jours sans paiement`);
+      if (result.ok) report.excluded++;
+    } else {
+      // Incrémenter le streak de retard
+      await prisma.membership.update({
+        where: { id: m.id },
+        data: { lateStreak: { increment: 1 } } as never,
+      }).catch(() => {});
+    }
+  }
+
+  // ── 6. ALIMENTATION DU FONDS D'URGENCE (5% de chaque cotisation) ────────────
+  const recentPaidContributions = await prisma.contribution.findMany({
+    where: {
+      status: "PAID",
+      paidAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) }, // dernière heure
+    },
+    select: { tontineGroupId: true, amountCents: true, currency: true },
+  });
+  for (const c of recentPaidContributions) {
+    void feedEmergencyFund(c.tontineGroupId, c.amountCents, c.currency);
+  }
+
+  // ── 7. ALERTES PRÊTS D'URGENCE EN RETARD ────────────────────────────────────
+  const overdueLoans = (await prisma.emergencyLoan.findMany({
+    where: { status: "PENDING", dueAt: { lt: now } },
+    include: { membership: { include: { user: true } } },
+  } as never)) as unknown as Array<{ id: string; userId: string; tontineGroupId: string; amountCents: number; currency: string; membership: { user: { email: string; fullName: string } } }>;
+
+  for (const loan of overdueLoans) {
+    void sendPushToUser(loan.userId, {
+      title: "⚠️ Remboursement fonds urgence en retard",
+      body: `Vous devez ${money(loan.amountCents, loan.currency)} au fonds commun. Réglez depuis votre wallet.`,
+      url: `/tontines/${loan.tontineGroupId}`,
+    });
+    await prisma.notification.create({
+      data: {
+        userId: loan.userId,
+        tontineGroupId: loan.tontineGroupId,
+        title: "⚠️ Remboursement en retard",
+        body: `Le remboursement de votre avance (${money(loan.amountCents, loan.currency)}) au fonds commun est en retard.`,
+        type: "DEBT_OVERDUE",
+      },
+    });
   }
 
   return NextResponse.json({ ok: true, ...report });

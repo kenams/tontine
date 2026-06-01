@@ -80,6 +80,10 @@ model TontineGroup {
   currentRound       Int             @default(1)
   platformFeeBps     Int             @default(125)
   latePenaltyCents   Int             @default(1000)
+  minTrustScore      Int             @default(0)
+  requireFullPayment Boolean         @default(false)
+  autoExcludeDays    Int             @default(30)
+  emergencyFundBps   Int             @default(500)
   createdById        String
   createdBy          User            @relation("CreatedTontines", fields: [createdById], references: [id])
   createdAt          DateTime        @default(now())
@@ -113,6 +117,14 @@ model Membership {
   paidThisRound    Boolean      @default(false)
   autoPayEnabled   Boolean      @default(false)
   reminderSentAt   DateTime?
+  potReceivedAt    DateTime?
+  potReceivedCents Int          @default(0)
+  debtCents        Int          @default(0)
+  leftAt           DateTime?
+  leaveReason      String?
+  lateStreak       Int          @default(0)
+  lateAlertSentAt  DateTime?
+  emergencyLoans   EmergencyLoan[]
 
   @@unique([userId, tontineGroupId])
   @@unique([tontineGroupId, payoutOrder])
@@ -326,14 +338,37 @@ model RateLimitBucket {
 }
 
 model EmergencyFund {
-  id              String       @id @default(cuid())
-  tontineGroupId  String       @unique
-  tontineGroup    TontineGroup @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
-  balanceCents    Int          @default(0)
-  targetCents     Int          @default(0)
-  loanPoolCents   Int          @default(0)
-  currency        String       @default("XOF")
-  status          String       @default("ACTIVE")
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id              String          @id @default(cuid())
+  tontineGroupId  String          @unique
+  tontineGroup    TontineGroup    @relation(fields: [tontineGroupId], references: [id], onDelete: Cascade)
+  balanceCents    Int             @default(0)
+  targetCents     Int             @default(0)
+  loanPoolCents   Int             @default(0)
+  currency        String          @default("XOF")
+  status          String          @default("ACTIVE")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  loans           EmergencyLoan[]
+}
+
+model EmergencyLoan {
+  id               String       @id @default(cuid())
+  emergencyFundId  String
+  emergencyFund    EmergencyFund @relation(fields: [emergencyFundId], references: [id], onDelete: Cascade)
+  membershipId     String
+  membership       Membership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  userId           String
+  tontineGroupId   String
+  amountCents      Int
+  currency         String
+  reason           String       @default("MISSED_PAYMENT")
+  status           String       @default("PENDING")
+  dueAt            DateTime
+  repaidAt         DateTime?
+  repaidCents      Int          @default(0)
+  createdAt        DateTime     @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([tontineGroupId])
 }
