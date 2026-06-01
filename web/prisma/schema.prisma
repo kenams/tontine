@@ -395,6 +395,51 @@ model Referral {
   @@index([status])
 }
 
+// ── B2B Organisation (associations, églises, entreprises) ────────────────────
+model Organization {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String              @unique
+  type              String              @default("ASSOCIATION")
+  ownerId           String
+  revenueShareBps   Int                 @default(25)
+  status            String              @default("ACTIVE")
+  logoUrl           String?
+  website           String?
+  description       String?
+  totalVolumeCents  Int                 @default(0)
+  totalEarnedCents  Int                 @default(0)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  members           OrgMember[]
+  tontines          OrgTontine[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model OrgMember {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId         String
+  role           String       @default("MEMBER")
+  joinedAt       DateTime     @default(now())
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+model OrgTontine {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tontineGroupId String       @unique
+  createdAt      DateTime     @default(now())
+
+  @@index([orgId])
+}
+
 // ── Abonnement premium ────────────────────────────────────────────────────────
 model Subscription {
   id                   String    @id @default(cuid())
