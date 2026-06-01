@@ -1,9 +1,8 @@
 name: Deploy to Vercel
 
-# STANDBY — deploy manuel via `vercel --prod` dans le terminal
-# Réactiver quand VERCEL_TOKEN sera régénéré sur Vercel dashboard → Settings → Tokens
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   deploy:
@@ -21,6 +20,13 @@ jobs:
         run: npm ci
         working-directory: web
 
+      - name: Build
+        run: npx prisma generate --schema=prisma/schema.prisma && npx next build
+        working-directory: web
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
@@ -28,4 +34,4 @@ jobs:
           vercel-org-id: team_YWUq9bz3WHBgcl41XpyK8OUv
           vercel-project-id: prj_oM19AoeYhTxargcpfNmi2MGehXFM
           working-directory: ./web
-          vercel-args: '--prod'
+          vercel-args: '--prod --prebuilt'
