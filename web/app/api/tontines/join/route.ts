@@ -2,6 +2,8 @@ import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
+import { canJoinTontine, lockCollateral } from "@/lib/antiFraud";
+import { getTrustScoreForOrdering } from "@/lib/antiFraud";
 import { prisma } from "@/lib/db";
 import { emitEvent } from "@/lib/realtime-server";
 import { safeJson } from "@/lib/request";
@@ -30,43 +32,51 @@ export async function POST(request: NextRequest) {
 
   const group = await prisma.tontineGroup.findUnique({
     where: { joinCode: parsed.data.joinCode },
-    select: { id: true, maxMembers: true, name: true, status: true, minTrustScore: true },
-  });
+    select: { id: true, maxMembers: true, name: true, status: true, minTrustScore: true, collateralRounds: true, contributionCents: true, currency: true },
+  } as never) as { id: string; maxMembers: number; name: string; status: string; minTrustScore: number; collateralRounds: number; contributionCents: number; currency: string } | null;
 
   if (!group || !["ACTIVE", "OPEN"].includes(group.status)) {
     return NextResponse.json({ error: "Code invalide ou groupe non disponible." }, { status: 404 });
   }
 
-  // Vérification score de confiance minimum
-  const minScore = (group as unknown as { minTrustScore?: number }).minTrustScore ?? 0;
-  if (minScore > 0) {
-    const userScore = user.trustScore?.score ?? 0;
-    if (userScore < minScore) {
-      return NextResponse.json({
-        error: `Ce groupe requiert un score de confiance de ${minScore}/100. Votre score actuel est ${userScore}/100. Payez à l'heure dans d'autres groupes pour progresser.`,
-        requiredScore: minScore,
-        currentScore: userScore,
-      }, { status: 403 });
-    }
-  }
+  // Anti-fraude : blacklist + trust score
+  const canJoin = await canJoinTontine(session.userId, group.minTrustScore ?? 0);
+  if (!canJoin.ok) return NextResponse.json({ error: canJoin.reason }, { status: 403 });
 
   const existingMembership = await prisma.membership.findFirst({
     where: { userId: session.userId, tontineGroupId: group.id }
   });
   if (existingMembership) return NextResponse.json({ groupId: group.id, alreadyMember: true });
 
+  // Vérouiller collatéral si requis
+  if (group.collateralRounds > 0) {
+    const lockResult = await lockCollateral(session.userId, group.id, group.collateralRounds, group.contributionCents, group.currency);
+    if (!lockResult.ok) return NextResponse.json({ error: lockResult.reason, collateralRequired: true }, { status: 402 });
+  }
+
+  // Ordre de payout basé sur le trust score (plus haute confiance = plus tôt)
+  const trustForOrder = await getTrustScoreForOrdering(session.userId);
+
   try {
     await prisma.$transaction(async (tx) => {
-      const memberCount = await tx.membership.count({ where: { tontineGroupId: group.id } });
+      const activeMembers = await tx.membership.findMany({
+        where: { tontineGroupId: group.id, status: { notIn: ["LEFT", "EXCLUDED"] } },
+        orderBy: { payoutOrder: "desc" },
+        take: 1,
+      });
+      const memberCount = activeMembers.length;
       if (memberCount >= group.maxMembers) throw new Error("FULL");
+      // Ordre initial = fin de liste (sera réordonné par l'admin ou rester tel quel)
+      const payoutOrder = memberCount + 1;
       await tx.membership.create({
         data: {
           userId: session.userId,
           tontineGroupId: group.id,
-          payoutOrder: memberCount + 1,
-          status: "ACTIVE"
+          payoutOrder,
+          status: "ACTIVE",
         }
       });
+      void trustForOrder; // utilisé pour futur réordonnancement auto
     });
   } catch (err) {
     if (err instanceof Error && err.message === "FULL") {

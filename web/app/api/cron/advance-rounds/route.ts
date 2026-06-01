@@ -8,6 +8,7 @@ import { emitEvent } from "@/lib/realtime-server";
 import { checkBadgesAfterPayment } from "@/lib/badges";
 import { penalizeLate, rewardPayment } from "@/lib/trust";
 import { coverByEmergencyFund, excludeMember } from "@/lib/defaults";
+import { blacklistIfDebt, releaseCollateral, seizeCollateral } from "@/lib/antiFraud";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -276,6 +277,13 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    // Si tontine terminée → libérer tous les collatéraux
+    if (nextRound > totalMembers) {
+      for (const m of activeMs) {
+        void releaseCollateral(m.userId, group.id);
+      }
+    }
+
     void emitEvent({
       type: "activity:new",
       title: `Nouveau round — ${group.name}`,
@@ -389,10 +397,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // J+autoExcludeDays → exclusion automatique
+    // J+autoExcludeDays → exclusion automatique + saisie collatéral + blacklist si dette
     if (lateStreak >= autoExcludeDays) {
       const result = await excludeMember(group.createdById, m.id, `Exclusion automatique — ${autoExcludeDays} jours sans paiement`);
-      if (result.ok) report.excluded++;
+      if (result.ok) {
+        report.excluded++;
+        // Saisir le collatéral si existant
+        await seizeCollateral(m.userId, group.id);
+        // Blacklister si dette restante
+        void blacklistIfDebt(m.userId);
+      }
     } else {
       // Incrémenter le streak de retard
       await prisma.membership.update({

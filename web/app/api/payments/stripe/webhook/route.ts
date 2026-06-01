@@ -278,5 +278,46 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Abonnement Premium activé
+  if (event.type === "checkout.session.completed" && (event.data.object as { mode?: string }).mode === "subscription") {
+    const session = event.data.object as { metadata?: { userId?: string; plan?: string }; subscription?: string };
+    const userId = session.metadata?.userId;
+    const stripeSubId = typeof session.subscription === "string" ? session.subscription : undefined;
+    if (userId && stripeSubId) {
+      const stripeSub = await (await import("@/lib/stripe")).getStripe()?.subscriptions.retrieve(stripeSubId);
+      await prisma.$transaction([
+        prisma.user.update({ where: { id: userId }, data: { plan: "PREMIUM" } as never }),
+        (prisma.subscription as never).upsert({
+          where: { userId },
+          create: { id: `sub-${Date.now()}`, userId, plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, currentPeriodEnd: stripeSub ? new Date((stripeSub as { current_period_end: number }).current_period_end * 1000) : null },
+          update: { plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, cancelAtPeriodEnd: false, currentPeriodEnd: stripeSub ? new Date((stripeSub as { current_period_end: number }).current_period_end * 1000) : null },
+        }),
+        prisma.notification.create({ data: { userId, title: "⭐ Kotizy Premium activé !", body: "Tontines illimitées, stats avancées et badge vérifié. Bienvenue dans le club !", type: "PREMIUM" } }),
+      ]);
+      revalidateTag(`user-${userId}`);
+    }
+    return NextResponse.json({ received: true, premium: "activated" });
+  }
+
+  // Abonnement Premium annulé / expiré
+  if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
+    const sub = event.data.object as { id: string; status: string; cancel_at_period_end: boolean; current_period_end: number; metadata?: { userId?: string } };
+    const dbSub = await (prisma.subscription as never).findFirst({ where: { stripeSubscriptionId: sub.id } }) as { userId: string } | null;
+    if (dbSub) {
+      const isCancelled = event.type === "customer.subscription.deleted" || sub.status === "canceled";
+      await prisma.$transaction([
+        (prisma.subscription as never).update({
+          where: { userId: dbSub.userId },
+          data: { status: isCancelled ? "CANCELLED" : "ACTIVE", cancelAtPeriodEnd: sub.cancel_at_period_end, currentPeriodEnd: new Date(sub.current_period_end * 1000) },
+        }),
+        ...(isCancelled ? [
+          prisma.user.update({ where: { id: dbSub.userId }, data: { plan: "FREE" } as never }),
+          prisma.notification.create({ data: { userId: dbSub.userId, title: "Abonnement Premium terminé", body: "Votre compte est repassé en version gratuite. Vos tontines existantes restent actives.", type: "PREMIUM" } }),
+        ] : []),
+      ]);
+    }
+    return NextResponse.json({ received: true });
+  }
+
   return NextResponse.json({ received: true, ignored: event.type });
 }

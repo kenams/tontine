@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
   const parsed = createTontineSchema.safeParse(await safeJson(request));
   if (!parsed.success) return NextResponse.json({ error: "Donnees de tontine invalides." }, { status: 400 });
 
+  // Limite plan FREE : 1 tontine créée
+  const userPlan = await prisma.user.findUnique({ where: { id: session.userId }, select: { plan: true } as never }) as { plan: string } | null;
+  if (userPlan?.plan !== "PREMIUM") {
+    const existing = await prisma.tontineGroup.count({ where: { createdById: session.userId, status: { not: "COMPLETED" } } });
+    if (existing >= 1) {
+      return NextResponse.json({ error: "Plan gratuit limité à 1 tontine active. Passez Premium pour en créer plus.", premiumRequired: true }, { status: 403 });
+    }
+  }
+
   const baseSlug = slugify(parsed.data.name);
   const group = await prisma.tontineGroup.create({
     data: {
