@@ -33,12 +33,12 @@ const DEPOSIT_METHODS = [
     active: true,
   },
   {
-    href: null,
+    href: "/wallet/deposit/mobile-money/initiate",
     icon: Smartphone,
     label: "Mobile Money",
-    sub: "Wave · Orange Money · MTN MoMo",
-    badge: "Bientôt",
-    active: false,
+    sub: "Wave · Orange Money · MTN MoMo · M-Pesa",
+    badge: "Instantané",
+    active: true,
   },
 ];
 
@@ -119,7 +119,6 @@ export default async function WalletPage({
             return (
               <Wrapper
                 key={m.label}
-                // @ts-expect-error href optional
                 href={m.href ?? undefined}
                 className={`flex items-center gap-3 rounded-2xl p-3 transition ${
                   m.active

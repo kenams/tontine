@@ -6,10 +6,7 @@ const FROM = process.env.EMAIL_FROM ?? "Kotizy <noreply@kotizy.app>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3021";
 
 async function send(to: string, subject: string, html: string) {
-  if (!resend) {
-    console.log(`[email] ${subject} → ${to}\n${html}`);
-    return;
-  }
+  if (!resend) return; // Resend non configuré — email ignoré silencieusement
   await resend.emails.send({ from: FROM, to, subject, html });
 }
 
