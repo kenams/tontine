@@ -9,6 +9,7 @@ import { Input } from "../../components/Input";
 import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 import type { TontineFrequency } from "../../types/entities";
 import type { CreateTontineScreenProps } from "../../types/navigation";
 
@@ -19,16 +20,18 @@ type FormErrors = {
   startDate?: string;
 };
 
-const FREQUENCIES: Array<{ label: string; hint: string; value: TontineFrequency }> = [
-  { label: "Mensuelle", hint: "1 fois / mois", value: "monthly" },
-  { label: "Bimensuelle", hint: "Tous les 15 jours", value: "biweekly" },
-  { label: "Hebdomadaire", hint: "1 fois / semaine", value: "weekly" }
-];
-
 /**
  * Ecran de creation d'une tontine pense d'abord pour le mobile.
  */
 export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
+  const { t } = useLang();
+
+  const FREQUENCIES: Array<{ label: string; hint: string; value: TontineFrequency }> = [
+    { label: t("create.freqMonthly"), hint: t("create.freqMonthlyHint"), value: "monthly" },
+    { label: t("create.freqBiweekly"), hint: t("create.freqBiweeklyHint"), value: "biweekly" },
+    { label: t("create.freqWeekly"), hint: t("create.freqWeeklyHint"), value: "weekly" },
+  ];
+
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("200");
   const [frequency, setFrequency] = useState<TontineFrequency>("monthly");
@@ -51,19 +54,19 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
     const parsedDate = parseFrenchDate(startDate);
 
     if (!name.trim()) {
-      nextErrors.name = "Le nom de la tontine est obligatoire.";
+      nextErrors.name = t("create.err.name");
     }
 
     if (!Number.isFinite(parsedAmount) || parsedAmount < 10 || parsedAmount > 10000) {
-      nextErrors.amount = "Le montant doit etre compris entre 10€ et 10 000€.";
+      nextErrors.amount = t("create.err.amount");
     }
 
     if (members < 2 || members > 50) {
-      nextErrors.members = "Le nombre de membres doit etre compris entre 2 et 50.";
+      nextErrors.members = t("create.err.members");
     }
 
     if (!parsedDate || parsedDate.getTime() <= Date.now()) {
-      nextErrors.startDate = "Choisissez une date valide et future.";
+      nextErrors.startDate = t("create.err.date");
     }
 
     return nextErrors;
@@ -91,14 +94,14 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
       return;
     }
 
-    Alert.alert("Tontine créée", "Votre groupe est prêt à accueillir ses premiers membres.");
+    Alert.alert(t("create.successTitle"), t("create.successMsg"));
     navigation.goBack();
   }
 
   return (
     <ScreenContainer tone="dark" scrollable={false}>
       <View style={styles.wrapper}>
-        <AppHeader title="Créer une tontine" showBack onBack={() => navigation.goBack()} />
+        <AppHeader title={t("create.title")} showBack onBack={() => navigation.goBack()} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -106,20 +109,17 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.heroCard}>
-            <Text style={styles.heroEyebrow}>Nouveau cercle</Text>
-            <Text style={styles.heroTitle}>Configurez un groupe clair, simple et rassurant.</Text>
-            <Text style={styles.heroText}>
-              Définissez le rythme, le montant et la date de départ. L’aperçu se met à jour à
-              mesure de votre saisie.
-            </Text>
+            <Text style={styles.heroEyebrow}>{t("create.eyebrow")}</Text>
+            <Text style={styles.heroTitle}>{t("create.heroTitle")}</Text>
+            <Text style={styles.heroText}>{t("create.heroText")}</Text>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Informations essentielles</Text>
+            <Text style={styles.sectionTitle}>{t("create.sectionTitle")}</Text>
 
             <Input
-              label="Nom de la tontine"
-              placeholder="Ex: Tontine Famille Avril"
+              label={t("create.nameLabel")}
+              placeholder={t("create.namePh")}
               value={name}
               onChangeText={setName}
               maxLength={50}
@@ -127,7 +127,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
             />
 
             <Input
-              label="Montant par personne"
+              label={t("create.amountLabel")}
               placeholder="200"
               value={amount}
               onChangeText={setAmount}
@@ -136,7 +136,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
             />
 
             <View style={styles.block}>
-              <Text style={styles.blockLabel}>Fréquence</Text>
+              <Text style={styles.blockLabel}>{t("create.freqLabel")}</Text>
               <View style={styles.frequencyList}>
                 {FREQUENCIES.map((option) => {
                   const isActive = frequency === option.value;
@@ -175,7 +175,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
             </View>
 
             <View style={styles.block}>
-              <Text style={styles.blockLabel}>Nombre de membres</Text>
+              <Text style={styles.blockLabel}>{t("create.membersLabel")}</Text>
               <View style={styles.membersShell}>
                 <Pressable
                   style={styles.membersButton}
@@ -185,7 +185,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
                 </Pressable>
                 <View style={styles.membersCenter}>
                   <Text style={styles.membersValue}>{members}</Text>
-                  <Text style={styles.membersHint}>participants maximum</Text>
+                  <Text style={styles.membersHint}>{t("create.membersHint")}</Text>
                 </View>
                 <Pressable
                   style={styles.membersButton}
@@ -198,8 +198,8 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
             </View>
 
             <Input
-              label="Date de début"
-              placeholder="JJ/MM/AAAA"
+              label={t("create.startLabel")}
+              placeholder={t("create.startPh")}
               value={startDate}
               onChangeText={setStartDate}
               autoCapitalize="none"
@@ -207,8 +207,8 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
             />
 
             <Input
-              label="Description"
-              placeholder="Règles du groupe, contexte, objectifs..."
+              label={t("create.descLabel")}
+              placeholder={t("create.descPh")}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -217,29 +217,27 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
           </View>
 
           <View style={styles.previewCard}>
-            <Text style={styles.previewEyebrow}>Aperçu</Text>
-            <Text style={styles.previewName}>{name.trim() || "Votre future tontine"}</Text>
+            <Text style={styles.previewEyebrow}>{t("create.previewLabel")}</Text>
+            <Text style={styles.previewName}>{name.trim() || t("create.previewDefault")}</Text>
 
             <View style={styles.previewGrid}>
               <View style={styles.previewMetric}>
-                <Text style={styles.previewMetricLabel}>Cagnotte</Text>
+                <Text style={styles.previewMetricLabel}>{t("create.previewPot")}</Text>
                 <Text style={styles.previewMetricValue}>{totalPot.toLocaleString("fr-FR")}€</Text>
               </View>
               <View style={styles.previewMetric}>
-                <Text style={styles.previewMetricLabel}>Fréquence</Text>
+                <Text style={styles.previewMetricLabel}>{t("create.previewFreq")}</Text>
                 <Text style={styles.previewMetricValue}>
-                  {FREQUENCIES.find((item) => item.value === frequency)?.label ?? "Mensuelle"}
+                  {FREQUENCIES.find((item) => item.value === frequency)?.label ?? t("create.freqMonthly")}
                 </Text>
               </View>
             </View>
 
             <Text style={styles.previewText}>
-              {members} membres x {Number.isFinite(parsedAmount) ? parsedAmount : 0}€ versés à
-              chaque tour.
+              {members} {t("create.previewBody")} {Number.isFinite(parsedAmount) ? parsedAmount : 0}€ {t("create.previewBodyEnd")}
             </Text>
             <Text style={styles.previewDescription}>
-              {description.trim() ||
-                "Ajoutez quelques lignes pour expliquer le cadre de participation et le ton du groupe."}
+              {description.trim() || t("create.previewDescDefault")}
             </Text>
           </View>
 
@@ -248,7 +246,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
 
         <View style={styles.footer}>
           <Button onPress={() => void handleCreate()} loading={isLoading}>
-            Créer la tontine
+            {t("create.btn")}
           </Button>
         </View>
       </View>

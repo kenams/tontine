@@ -7,6 +7,7 @@ import { Input } from "../../components/Input";
 import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { useAuthStore } from "../../store/authStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 import type { RegisterScreenProps } from "../../types/navigation";
 
 export function RegisterScreen({ navigation }: RegisterScreenProps) {
@@ -18,6 +19,7 @@ export function RegisterScreen({ navigation }: RegisterScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLang();
 
   const register = useAuthStore((state) => state.register);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -25,30 +27,30 @@ export function RegisterScreen({ navigation }: RegisterScreenProps) {
 
   const fullNameError = useMemo(() => {
     if (!fullName.length) return null;
-    return fullName.trim().length >= 3 ? null : "Au moins 3 caractères.";
-  }, [fullName]);
+    return fullName.trim().length >= 3 ? null : t("auth.err.nameShort");
+  }, [fullName, t]);
 
   const emailError = useMemo(() => {
     if (!email.length) return null;
-    return /^\S+@\S+\.\S+$/.test(email.trim()) ? null : "Email invalide.";
-  }, [email]);
+    return /^\S+@\S+\.\S+$/.test(email.trim()) ? null : t("auth.err.emailInvalid");
+  }, [email, t]);
 
   const phoneError = useMemo(() => {
     if (!phone.length) return null;
     const digits = phone.replace(/\D/g, "");
     return (phone.startsWith("+") || phone.startsWith("0")) && digits.length >= 10
-      ? null : "Numéro invalide (ex: +33 6 12 34 56 78).";
-  }, [phone]);
+      ? null : t("auth.err.phoneInvalid");
+  }, [phone, t]);
 
   const passwordError = useMemo(() => {
     if (!password.length) return null;
-    return password.trim().length >= 8 ? null : "8 caractères minimum.";
-  }, [password]);
+    return password.trim().length >= 8 ? null : t("auth.err.pwdShort");
+  }, [password, t]);
 
   const confirmPasswordError = useMemo(() => {
     if (!confirmPassword.length) return null;
-    return confirmPassword === password ? null : "Les mots de passe ne correspondent pas.";
-  }, [confirmPassword, password]);
+    return confirmPassword === password ? null : t("auth.err.pwdMismatch");
+  }, [confirmPassword, password, t]);
 
   const isFormDisabled =
     !fullName.trim() || !email.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim() ||
@@ -60,7 +62,7 @@ export function RegisterScreen({ navigation }: RegisterScreenProps) {
     if (err) { setError(err); return; }
     setError(null);
     const success = await register(email.trim(), password, fullName.trim(), phone.trim());
-    if (!success) setError(useAuthStore.getState().errorMessage ?? "Impossible de créer le compte.");
+    if (!success) setError(useAuthStore.getState().errorMessage ?? t("auth.register.errCreate"));
   }
 
   return (
@@ -71,29 +73,29 @@ export function RegisterScreen({ navigation }: RegisterScreenProps) {
             <Text style={s.brandBadgeText}>K</Text>
           </View>
           <Text style={s.brand}>Kotizy</Text>
-          <Text style={s.brandSub}>Créez votre compte en quelques secondes.</Text>
+          <Text style={s.brandSub}>{t("auth.register.subtitle")}</Text>
         </View>
 
         <View style={s.card}>
-          <Text style={s.cardTitle}>Inscription</Text>
+          <Text style={s.cardTitle}>{t("auth.register.title")}</Text>
 
-          <Input label="Prénom + Nom" placeholder="Kenams Diarra" value={fullName}
+          <Input label={t("auth.label.name")} placeholder={t("auth.ph.name")} value={fullName}
             onChangeText={(v) => { setFullName(v); setError(null); }} error={fullNameError} />
 
-          <Input label="Email" placeholder="votre@email.com" value={email}
+          <Input label={t("auth.label.email")} placeholder="votre@email.com" value={email}
             onChangeText={(v) => { setEmail(v); setError(null); }}
             keyboardType="email-address" autoCapitalize="none" error={emailError} />
 
-          <Input label="Téléphone" placeholder="+33 6 12 34 56 78" value={phone}
+          <Input label={t("auth.label.phone")} placeholder={t("auth.ph.phone")} value={phone}
             onChangeText={(v) => { setPhone(v); setError(null); }}
             keyboardType="phone-pad" autoCapitalize="none" error={phoneError} />
 
-          <Input label="Mot de passe" placeholder="8 caractères minimum" value={password}
+          <Input label={t("auth.label.pwd")} placeholder={t("auth.ph.pwd")} value={password}
             onChangeText={(v) => { setPassword(v); setError(null); }}
             secureTextEntry={!showPassword} onToggleSecure={() => setShowPassword((c) => !c)}
             autoCapitalize="none" error={passwordError} />
 
-          <Input label="Confirmer le mot de passe" placeholder="Retapez votre mot de passe" value={confirmPassword}
+          <Input label={t("auth.label.confirmPwd")} placeholder={t("auth.ph.confirmPwd")} value={confirmPassword}
             onChangeText={(v) => { setConfirmPassword(v); setError(null); }}
             secureTextEntry={!showConfirmPassword} onToggleSecure={() => setShowConfirmPassword((c) => !c)}
             autoCapitalize="none" error={confirmPasswordError} />
@@ -101,11 +103,11 @@ export function RegisterScreen({ navigation }: RegisterScreenProps) {
           {(error ?? storeError) ? <ErrorMessage message={error ?? storeError ?? ""} /> : null}
 
           <Button onPress={() => void handleSubmit()} loading={isLoading} disabled={isFormDisabled}>
-            Créer mon compte
+            {t("auth.register.btn")}
           </Button>
 
           <Pressable onPress={() => navigation.navigate("Login")} style={s.linkWrapper}>
-            <Text style={s.link}>Déjà un compte ? <Text style={s.linkBold}>Se connecter</Text></Text>
+            <Text style={s.link}>{t("auth.register.hasAccount")} <Text style={s.linkBold}>{t("auth.register.signIn")}</Text></Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

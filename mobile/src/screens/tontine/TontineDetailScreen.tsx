@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 import type { TontineDetailScreenProps } from "../../types/navigation";
 
 function fmtMoney(amount: number, currency: string) {
@@ -22,6 +23,7 @@ function initials(name: string) {
 }
 
 export function TontineDetailScreen({ navigation, route }: TontineDetailScreenProps) {
+  const { t } = useLang();
   const { tontineId } = route.params;
   const tontine = useTontineStore((s) => s.currentTontine);
   const fetchTontineById = useTontineStore((s) => s.fetchTontineById);
@@ -55,15 +57,15 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     try {
       const res = await contribute(tontineId, "WALLET");
       if (res.status === "PAID") {
-        Alert.alert("✅ Payé", "Cotisation enregistrée depuis votre wallet.");
+        Alert.alert(t("detail.paySuccess"), t("detail.paySuccessMsg"));
       } else if (res.checkoutUrl) {
-        Alert.alert("Stripe", "Paiement Stripe initié. Ouvrez le lien depuis votre navigateur.");
+        Alert.alert(t("common.stripe"), t("detail.payStripeMsg"));
       } else {
-        Alert.alert("En attente", "Paiement en attente de confirmation.");
+        Alert.alert(t("detail.payPendingMsg"), t("detail.payPending"));
       }
       void fetchTontineById(tontineId);
     } catch (err) {
-      Alert.alert("Erreur", err instanceof Error ? err.message : "Paiement impossible.");
+      Alert.alert(t("common.error"), err instanceof Error ? err.message : t("detail.payErr"));
     }
     setPaying(false);
   }
@@ -74,7 +76,7 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     await Share.share({
       message: `🤝 Rejoins *${tontine.name}* sur Kotizy !\nCode : ${tontine.joinCode}\n${joinLink}`,
       url: joinLink,
-      title: `Invitation — ${tontine.name}`,
+      title: `${t("detail.invite")} — ${tontine.name}`,
     });
   }
 
@@ -126,7 +128,7 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
             <View style={{ marginHorizontal: 20, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
               <View style={{ borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: tier.bg, flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={{ fontSize: 14 }}>{tier.emoji}</Text>
-                <Text style={{ fontSize: 12, fontWeight: "900", color: tier.color }}>Cercle {tier.name}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "900", color: tier.color }}>{t("detail.circle")} {tier.name}</Text>
               </View>
               <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{tier.tagline}</Text>
             </View>
@@ -137,17 +139,17 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
         <View style={s.mainCard}>
           <Text style={s.mainCode}>{tontine.joinCode}</Text>
           <Text style={s.mainAmt}>{fmtMoney(tontine.contributionAmount, tontine.currency)}</Text>
-          <Text style={s.mainSub}>Prochaine échéance : {fmtDate(tontine.nextPayoutDate)}</Text>
+          <Text style={s.mainSub}>{t("detail.nextPayment")} {fmtDate(tontine.nextPayoutDate)}</Text>
           <View style={s.pb}><View style={[s.pbFill, { width: `${Math.min(progress, 100)}%` as `${number}%` }]} /></View>
-          <Text style={s.pbTxt}>{progress.toFixed(0)}% du cycle · Round {tontine.currentRound}/{tontine.totalRounds}</Text>
+          <Text style={s.pbTxt}>{progress.toFixed(0)}% {t("detail.round")} {tontine.currentRound}/{tontine.totalRounds}</Text>
         </View>
 
         {/* Stats */}
         <View style={s.statsRow}>
           {[
-            { label: "Membres", val: `${tontine.membersCount}/${tontine.maxMembers ?? tontine.membersCount}` },
-            { label: "Payés", val: String(tontine.progression?.paidMembers ?? 0) },
-            { label: "Pot total", val: fmtMoney(tontine.totalPot ?? 0, tontine.currency) },
+            { label: t("detail.members"), val: `${tontine.membersCount}/${tontine.maxMembers ?? tontine.membersCount}` },
+            { label: t("detail.paid"), val: String(tontine.progression?.paidMembers ?? 0) },
+            { label: t("detail.totalPot"), val: fmtMoney(tontine.totalPot ?? 0, tontine.currency) },
           ].map(({ label, val }) => (
             <View key={label} style={s.statCard}>
               <Text style={s.statVal}>{val}</Text>
@@ -162,7 +164,7 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
           <Pressable style={[s.payBtn, paying && s.payBtnDisabled]} onPress={() => void handlePay()} disabled={paying}>
             {paying
               ? <ActivityIndicator color={colors.dark} size="small" />
-              : <><Ionicons name="card" size={20} color={colors.dark} /><Text style={s.payBtnTxt}>Payer ma cotisation</Text></>
+              : <><Ionicons name="card" size={20} color={colors.dark} /><Text style={s.payBtnTxt}>{t("detail.payNow")}</Text></>
             }
           </Pressable>
 
@@ -171,8 +173,8 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
             <View style={s.autoPayLeft}>
               <Ionicons name="flash" size={20} color={autoPayOn ? colors.primary : colors.textMuted} />
               <View>
-                <Text style={s.autoPayTitle}>Auto-paiement</Text>
-                <Text style={s.autoPaySub}>{autoPayOn ? "Prélevé automatiquement à l'échéance" : "Paiement manuel requis"}</Text>
+                <Text style={s.autoPayTitle}>{t("detail.autoPay")}</Text>
+                <Text style={s.autoPaySub}>{autoPayOn ? t("detail.autoPaySub") : "Paiement manuel requis"}</Text>
               </View>
             </View>
             {autoPayLoading

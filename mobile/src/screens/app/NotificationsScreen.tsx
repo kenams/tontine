@@ -5,23 +5,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { apiCall } from "../../services/api";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 
 type Notif = {
-  id: string;
-  title: string;
-  body: string;
-  type: string;
-  readAt: string | null;
-  createdAt: string;
+  id: string; title: string; body: string; type: string;
+  readAt: string | null; createdAt: string;
 };
 
 const TYPE_ICONS: Record<string, { icon: React.ComponentProps<typeof Ionicons>["name"]; color: string }> = {
-  PAYMENT: { icon: "card", color: colors.primary },
-  PAYOUT: { icon: "gift", color: colors.gold },
-  WELCOME: { icon: "hand-right", color: colors.primary },
-  DUE_REMINDER: { icon: "alarm", color: colors.warning },
-  FRAUD_ALERT: { icon: "shield", color: colors.danger },
-  INVITE: { icon: "people", color: colors.primary },
+  PAYMENT:      { icon: "card",           color: colors.primary },
+  PAYOUT:       { icon: "gift",           color: colors.gold },
+  WELCOME:      { icon: "hand-right",     color: colors.primary },
+  DUE_REMINDER: { icon: "alarm",          color: colors.warning },
+  FRAUD_ALERT:  { icon: "shield",         color: colors.danger },
+  INVITE:       { icon: "people",         color: colors.primary },
 };
 
 function fmtDate(d: string) {
@@ -32,6 +29,7 @@ export function NotificationsScreen() {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useLang();
 
   async function load() {
     try {
@@ -63,16 +61,20 @@ export function NotificationsScreen() {
     );
   }
 
+  const unreadLabel = unread > 0
+    ? `${unread} ${unread > 1 ? t("notifs.unreadPlural") : t("notifs.unread")}`
+    : t("notifs.allRead");
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
         <View>
-          <Text style={s.title}>Notifications</Text>
-          <Text style={s.subtitle}>{unread > 0 ? `${unread} non lue${unread > 1 ? "s" : ""}` : "Tout est à jour"}</Text>
+          <Text style={s.title}>{t("notifs.title")}</Text>
+          <Text style={s.subtitle}>{unreadLabel}</Text>
         </View>
         {unread > 0 && (
           <Pressable style={s.markBtn} onPress={() => void markAll()}>
-            <Text style={s.markTxt}>Tout lire</Text>
+            <Text style={s.markTxt}>{t("notifs.markAll")}</Text>
           </Pressable>
         )}
       </View>
@@ -85,7 +87,7 @@ export function NotificationsScreen() {
         ListEmptyComponent={
           <View style={s.empty}>
             <Ionicons name="notifications-outline" size={48} color={colors.textMuted} />
-            <Text style={s.emptyTxt}>Aucune notification pour l'instant.</Text>
+            <Text style={s.emptyTxt}>{t("notifs.empty")}</Text>
           </View>
         }
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 80 }}

@@ -19,6 +19,7 @@ import { useStripe } from "@stripe/stripe-react-native";
 
 import { apiCall } from "../../services/api";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 
 // Clé publishable Stripe live — à renseigner dans .env : EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
@@ -34,9 +35,6 @@ type DashboardResponse = {
   transactions: Transaction[];
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  CONTRIBUTION: "Cotisation", WALLET_DEPOSIT: "Dépôt", WALLET_WITHDRAWAL: "Retrait", PAYOUT: "Payout reçu",
-};
 const PRESETS = [
   { label: "10 €", cents: 1000 },
   { label: "25 €", cents: 2500 },
@@ -59,6 +57,7 @@ function DepositModal({
   visible, onClose, onSuccess, walletCurrency,
 }: { visible: boolean; onClose: () => void; onSuccess: () => void; walletCurrency: string }) {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { t } = useLang();
   const [method, setMethod] = useState<DepositMethod>("stripe");
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
@@ -71,7 +70,7 @@ function DepositModal({
   function reset() { setSelected(null); setCustom(""); setPhone(""); setError(null); }
 
   async function handleStripeDeposit() {
-    if (!amountCents || amountCents < 100) { setError("Minimum : 1 €"); return; }
+    if (!amountCents || amountCents < 100) { setError(t("wallet.deposit.minError")); return; }
     setLoading(true); setError(null);
     try {
       const res = await apiCall<{ clientSecret: string; amountCents: number; currency: string }>(
@@ -103,7 +102,7 @@ function DepositModal({
   }
 
   async function handleMobileMoneyDeposit() {
-    if (!amountCents || amountCents < 100) { setError("Minimum : 1 unité"); return; }
+    if (!amountCents || amountCents < 100) { setError(t("wallet.deposit.minError")); return; }
     setLoading(true); setError(null);
     try {
       const res = await apiCall<{ ok: boolean; paymentUrl?: string; error?: string; setup?: string }>(
@@ -122,8 +121,8 @@ function DepositModal({
       });
       setLoading(false);
       if (result.type === "opened" || result.type === "dismiss") {
-        Alert.alert("Paiement Mobile Money", "Si vous avez confirmé le paiement, votre wallet sera crédité sous quelques secondes.", [
-          { text: "Vérifier mon solde", onPress: () => { onClose(); reset(); onSuccess(); } },
+        Alert.alert(t("wallet.mobilePay.title"), t("wallet.mobilePay.success"), [
+          { text: t("wallet.mobilePay.check"), onPress: () => { onClose(); reset(); onSuccess(); } },
           { text: "Fermer", style: "cancel" },
         ]);
       }
@@ -138,7 +137,7 @@ function DepositModal({
       <View style={m.modal}>
         <View style={m.handle} />
         <View style={m.modalHeader}>
-          <Text style={m.modalTitle}>Déposer des fonds</Text>
+          <Text style={m.modalTitle}>{t("wallet.deposit.title")}</Text>
           <Pressable style={m.closeBtn} onPress={() => { reset(); onClose(); }}>
             <Ionicons name="close" size={20} color={colors.textMuted} />
           </Pressable>
@@ -147,8 +146,8 @@ function DepositModal({
         {/* Sélecteur de méthode */}
         <View style={m.methodRow}>
           {([
-            { id: "stripe" as DepositMethod, label: "Carte / Apple / Google Pay", icon: "card-outline" },
-            { id: "mobile_money" as DepositMethod, label: "Mobile Money (Wave, Orange, MTN...)", icon: "phone-portrait-outline" },
+            { id: "stripe" as DepositMethod, label: t("wallet.deposit.stripe"), icon: "card-outline" },
+            { id: "mobile_money" as DepositMethod, label: t("wallet.deposit.mobileMoney"), icon: "phone-portrait-outline" },
           ] as { id: DepositMethod; label: string; icon: string }[]).map((opt) => (
             <Pressable
               key={opt.id}
@@ -162,7 +161,7 @@ function DepositModal({
         </View>
 
         {/* Montant */}
-        <Text style={m.label}>Choisir un montant</Text>
+        <Text style={m.label}>{t("wallet.deposit.amountLabel")}</Text>
         <View style={m.presets}>
           {PRESETS.map((p) => (
             <Pressable key={p.cents} style={[m.preset, selected === p.cents && !custom && m.presetActive]}
@@ -173,20 +172,20 @@ function DepositModal({
         </View>
         <TextInput style={m.input} value={custom}
           onChangeText={(v) => { setCustom(v); setSelected(null); setError(null); }}
-          placeholder="Montant personnalisé" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" />
+          placeholder={t("wallet.deposit.customPh")} placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" />
 
         {/* Téléphone pour Mobile Money */}
         {method === "mobile_money" && (
           <TextInput style={m.input} value={phone}
             onChangeText={setPhone}
-            placeholder="Numéro de téléphone (ex: +2250700000000)"
+            placeholder={t("wallet.deposit.phonePh")}
             placeholderTextColor={colors.textMuted} keyboardType="phone-pad" />
         )}
 
         {amountCents && amountCents >= 100 ? (
           <View style={m.summary}>
             <Ionicons name="flash" size={14} color={colors.primary} />
-            <Text style={m.summaryTxt}>{fmt(amountCents, walletCurrency)} · crédit sur votre wallet</Text>
+            <Text style={m.summaryTxt}>{fmt(amountCents, walletCurrency)} · {t("wallet.deposit.creditSub")}</Text>
           </View>
         ) : null}
 
@@ -205,13 +204,13 @@ function DepositModal({
           {loading
             ? <ActivityIndicator color={colors.dark} size="small" />
             : method === "stripe"
-              ? <><Ionicons name="card" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>Payer avec Stripe</Text></>
-              : <><Ionicons name="phone-portrait" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>Payer via Mobile Money</Text></>
+              ? <><Ionicons name="card" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>{t("wallet.deposit.payStripe")}</Text></>
+              : <><Ionicons name="phone-portrait" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>{t("wallet.deposit.payMobile")}</Text></>
           }
         </Pressable>
 
         <Text style={m.secureNote}>
-          {method === "stripe" ? "🔒 Stripe PCI-DSS · Aucune donnée bancaire stockée" : "🔒 CinetPay · Wave · Orange Money · MTN MoMo"}
+          {method === "stripe" ? t("wallet.deposit.secureStripe") : t("wallet.deposit.secureMobile")}
         </Text>
       </View>
     </Modal>
@@ -219,10 +218,18 @@ function DepositModal({
 }
 
 export function WalletScreen() {
+  const { t } = useLang();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
+
+  const TYPE_LABELS: Record<string, string> = {
+    CONTRIBUTION: t("wallet.txContrib"),
+    WALLET_DEPOSIT: t("wallet.txDeposit"),
+    WALLET_WITHDRAWAL: t("wallet.txWithdraw"),
+    PAYOUT: t("wallet.txPayout"),
+  };
 
   async function load() {
     try {
@@ -239,8 +246,8 @@ export function WalletScreen() {
   const balance = wallet?.balanceCents ?? 0;
   const currency = wallet?.currency ?? "EUR";
   const txs = data?.transactions ?? [];
-  const deposited = txs.filter((t) => t.type === "WALLET_DEPOSIT" && t.status === "PAID").reduce((s, t) => s + t.amountCents, 0);
-  const paid = txs.filter((t) => t.type === "CONTRIBUTION" && t.status === "PAID").reduce((s, t) => s + t.amountCents, 0);
+  const deposited = txs.filter((tx) => tx.type === "WALLET_DEPOSIT" && tx.status === "PAID").reduce((s, tx) => s + tx.amountCents, 0);
+  const paid = txs.filter((tx) => tx.type === "CONTRIBUTION" && tx.status === "PAID").reduce((s, tx) => s + tx.amountCents, 0);
 
   if (loading) {
     return (
@@ -259,24 +266,24 @@ export function WalletScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
       >
         <View style={s.header}>
-          <Text style={s.title}>Wallet</Text>
-          <Text style={s.subtitle}>Kotizy Black</Text>
+          <Text style={s.title}>{t("wallet.title")}</Text>
+          <Text style={s.subtitle}>{t("wallet.subtitle")}</Text>
         </View>
 
         {/* Carte wallet */}
         <LinearGradient colors={["#1a2419" as const, "#243322" as const]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
           <View style={s.cardTop}>
             <View>
-              <Text style={s.cardLabel}>SOLDE DISPONIBLE</Text>
+              <Text style={s.cardLabel}>{t("wallet.balanceLabel").toUpperCase()}</Text>
               <Text style={s.cardBal}>{fmt(balance, currency)}</Text>
-              <Text style={s.cardSub}>Payer vos cotisations en 1 clic</Text>
+              <Text style={s.cardSub}>{t("wallet.balanceSub")}</Text>
             </View>
             <View style={s.cardIcon}><Ionicons name="wallet" size={26} color={colors.gold} /></View>
           </View>
           <View style={s.cardStats}>
-            <View style={s.stat}><Text style={s.statVal}>{fmt(deposited, currency)}</Text><Text style={s.statLbl}>Déposé</Text></View>
+            <View style={s.stat}><Text style={s.statVal}>{fmt(deposited, currency)}</Text><Text style={s.statLbl}>{t("wallet.deposited")}</Text></View>
             <View style={s.div} />
-            <View style={s.stat}><Text style={s.statVal}>{fmt(paid, currency)}</Text><Text style={s.statLbl}>Cotisé</Text></View>
+            <View style={s.stat}><Text style={s.statVal}>{fmt(paid, currency)}</Text><Text style={s.statLbl}>{t("wallet.contributed")}</Text></View>
           </View>
         </LinearGradient>
 
@@ -286,8 +293,8 @@ export function WalletScreen() {
             <View style={[s.actionIcon, { backgroundColor: `${colors.primary}22` }]}>
               <Ionicons name="arrow-down-circle" size={28} color={colors.primary} />
             </View>
-            <Text style={s.actionLbl}>Déposer</Text>
-            <Text style={s.actionSub}>Natif · Instantané</Text>
+            <Text style={s.actionLbl}>{t("wallet.deposit")}</Text>
+            <Text style={s.actionSub}>{t("wallet.depositSub")}</Text>
           </Pressable>
 
           <Pressable
@@ -297,8 +304,8 @@ export function WalletScreen() {
             <View style={[s.actionIcon, { backgroundColor: `${colors.gold}22` }]}>
               <Ionicons name="arrow-up-circle" size={28} color={colors.gold} />
             </View>
-            <Text style={s.actionLbl}>Retirer</Text>
-            <Text style={s.actionSub}>SEPA · 1–3 jours</Text>
+            <Text style={s.actionLbl}>{t("wallet.withdraw")}</Text>
+            <Text style={s.actionSub}>{t("wallet.withdrawSub")}</Text>
           </Pressable>
         </View>
 
@@ -306,19 +313,17 @@ export function WalletScreen() {
         {!STRIPE_PK && (
           <View style={s.warnBox}>
             <Ionicons name="warning" size={16} color={colors.warning} />
-            <Text style={s.warnTxt}>
-              Clé Stripe publishable manquante. Ajoutez EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY dans le fichier .env mobile.
-            </Text>
+            <Text style={s.warnTxt}>{t("wallet.stripeWarning")}</Text>
           </View>
         )}
 
         {/* Historique */}
         <View style={s.section}>
-          <Text style={s.sectionTitle}>Transactions récentes</Text>
+          <Text style={s.sectionTitle}>{t("wallet.recentTx")}</Text>
           {txs.length === 0 ? (
             <View style={s.empty}>
               <Ionicons name="receipt-outline" size={36} color={colors.textMuted} />
-              <Text style={s.emptyTxt}>Aucune transaction.</Text>
+              <Text style={s.emptyTxt}>{t("wallet.noTx")}</Text>
             </View>
           ) : (
             txs.slice(0, 15).map((tx) => {

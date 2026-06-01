@@ -12,6 +12,8 @@ import { apiCall } from "../../services/api";
 import { useAuthStore } from "../../store/authStore";
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
+import type { Lang } from "../../i18n/translations";
 import type { ProfileScreenProps } from "../../types/navigation";
 
 type DashboardData = {
@@ -21,13 +23,13 @@ type DashboardData = {
   };
 };
 
-function trustLevel(score: number) {
-  if (score >= 95) return { label: "Élite", color: colors.gold };
-  if (score >= 85) return { label: "Gold", color: colors.gold };
-  if (score >= 70) return { label: "Avancé", color: colors.primary };
-  if (score >= 50) return { label: "Intermédiaire", color: colors.textMuted };
-  if (score >= 30) return { label: "Bronze", color: colors.warning };
-  return { label: "Débutant", color: colors.textMuted };
+function getTrustLevel(score: number, t: (k: string) => string) {
+  if (score >= 95) return { label: t("trust.elite"), color: colors.gold };
+  if (score >= 85) return { label: t("trust.gold"), color: colors.gold };
+  if (score >= 70) return { label: t("trust.advanced"), color: colors.primary };
+  if (score >= 50) return { label: t("trust.intermediate"), color: colors.textMuted };
+  if (score >= 30) return { label: t("trust.bronze"), color: colors.warning };
+  return { label: t("trust.beginner"), color: colors.textMuted };
 }
 
 function initials(name: string) {
@@ -35,6 +37,7 @@ function initials(name: string) {
 }
 
 export function ProfileScreen({ navigation }: ProfileScreenProps) {
+  const { t, lang, setLang } = useLang();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const tontines = useTontineStore((s) => s.tontines);
@@ -50,7 +53,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   }, []);
 
   const trust = dashData?.user?.trustScore?.score ?? 0;
-  const level = trustLevel(trust);
+  const level = getTrustLevel(trust, t);
   const wallet = dashData?.user?.wallet;
   const [kycStatus, setKycStatus] = useState<string>("NONE");
   const [kycLoading, setKycLoading] = useState(false);
@@ -89,7 +92,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
       if (val) {
         const token = await registerPushToken();
         if (!token) {
-          Alert.alert("Notifications", "Autorisez les notifications dans les paramètres de votre téléphone.");
+          Alert.alert(t("profile.notifications"), t("profile.push.denied"));
           setPushLoading(false);
           return;
         }
@@ -102,7 +105,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         await AsyncStorage.setItem("push_enabled", "0");
       }
     } catch {
-      Alert.alert("Erreur", "Impossible de configurer les notifications.");
+      Alert.alert(t("common.error"), t("profile.push.err"));
     }
     setPushLoading(false);
   }
@@ -122,16 +125,16 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         setKycStatus(refreshed.kycStatus);
       }
     } catch (err) {
-      Alert.alert("Erreur", err instanceof Error ? err.message : "Vérification impossible.");
+      Alert.alert(t("common.error"), err instanceof Error ? err.message : "Vérification impossible.");
     }
     setKycLoading(false);
   }
 
   function kycBadge() {
-    if (kycStatus === "VERIFIED") return { label: "Identité vérifiée ✓", color: "#22c55e", bg: "rgba(34,197,94,0.12)" };
-    if (kycStatus === "PENDING")  return { label: "Vérification en cours…", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
-    if (kycStatus === "REJECTED") return { label: "Vérification refusée", color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
-    return { label: "Identité non vérifiée", color: "#6b7a69", bg: "rgba(107,122,105,0.12)" };
+    if (kycStatus === "VERIFIED") return { label: t("profile.kyc.verified"), color: "#22c55e", bg: "rgba(34,197,94,0.12)" };
+    if (kycStatus === "PENDING")  return { label: t("profile.kyc.pending"), color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
+    if (kycStatus === "REJECTED") return { label: t("profile.kyc.rejected"), color: "#ef4444", bg: "rgba(239,68,68,0.12)" };
+    return { label: t("profile.kyc.none"), color: "#6b7a69", bg: "rgba(107,122,105,0.12)" };
   }
 
   async function saveProfile() {
@@ -141,15 +144,15 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
       await apiCall("patch", "/api/user/profile", { fullName: fullName.trim(), phone: phone.trim() });
       setEditing(false);
     } catch (err) {
-      Alert.alert("Erreur", err instanceof Error ? err.message : "Impossible de sauvegarder");
+      Alert.alert(t("common.error"), err instanceof Error ? err.message : t("profile.save.err"));
     }
     setSaving(false);
   }
 
   function confirmLogout() {
-    Alert.alert("Déconnexion", "Voulez-vous vous déconnecter ?", [
-      { text: "Annuler", style: "cancel" },
-      { text: "Déconnexion", style: "destructive", onPress: () => void logout() },
+    Alert.alert(t("profile.logout.title"), t("profile.logout.msg"), [
+      { text: t("profile.logout.cancel"), style: "cancel" },
+      { text: t("profile.logout.confirm"), style: "destructive", onPress: () => void logout() },
     ]);
   }
 
@@ -157,7 +160,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     <SafeAreaView style={s.safe}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={s.header}>
-          <Text style={s.title}>Profil</Text>
+          <Text style={s.title}>{t("profile.title")}</Text>
         </View>
 
         {/* Avatar + identité */}
@@ -176,7 +179,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={s.card}>
           <View style={s.cardRow}>
             <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
-            <Text style={s.cardTitle}>Score de confiance</Text>
+            <Text style={s.cardTitle}>{t("profile.trust")}</Text>
             <Text style={[s.cardVal, { color: level.color }]}>{trust}/100</Text>
           </View>
           <View style={s.progressTrack}>
@@ -184,8 +187,8 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
           </View>
           <Text style={s.cardSub}>
             {trust === 0
-              ? "Payez votre première cotisation pour commencer à construire votre réputation."
-              : `Niveau ${level.label} · Chaque paiement à temps +2 pts`}
+              ? t("profile.trustSub.zero")
+              : `${t("profile.trustSub")} ${level.label} · ${t("profile.trustPts")}`}
           </Text>
         </View>
 
@@ -194,7 +197,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
           <View style={s.card}>
             <View style={s.cardRow}>
               <Ionicons name="wallet" size={18} color={colors.gold} />
-              <Text style={s.cardTitle}>Wallet Kotizy</Text>
+              <Text style={s.cardTitle}>{t("profile.wallet")}</Text>
               <Text style={[s.cardVal, { color: colors.primary }]}>
                 {(wallet.balanceCents / 100).toLocaleString("fr-FR", { style: "currency", currency: wallet.currency })}
               </Text>
@@ -205,8 +208,8 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         {/* Stats */}
         <View style={s.statsRow}>
           {[
-            { label: "Groupes", val: tontines.length },
-            { label: "Actifs", val: tontines.filter((t) => t.status === "active").length },
+            { label: t("profile.groups"), val: tontines.length },
+            { label: t("profile.active"), val: tontines.filter((t) => t.status === "active").length },
           ].map(({ label, val }) => (
             <View key={label} style={s.statCard}>
               <Text style={s.statVal}>{val}</Text>
@@ -218,30 +221,30 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         {/* Édition profil */}
         {editing ? (
           <View style={s.card}>
-            <Text style={s.cardTitle}>Modifier le profil</Text>
-            <Text style={s.inputLbl}>Nom complet</Text>
+            <Text style={s.cardTitle}>{t("profile.editProfile")}</Text>
+            <Text style={s.inputLbl}>{t("profile.fullName")}</Text>
             <TextInput
               style={s.input}
               value={fullName}
               onChangeText={setFullName}
-              placeholder="Prénom Nom"
+              placeholder={t("profile.ph.name")}
               placeholderTextColor={colors.textMuted}
             />
-            <Text style={s.inputLbl}>Téléphone</Text>
+            <Text style={s.inputLbl}>{t("profile.phone")}</Text>
             <TextInput
               style={s.input}
               value={phone}
               onChangeText={setPhone}
-              placeholder="+33 6 00 00 00 00"
+              placeholder={t("profile.ph.phone")}
               placeholderTextColor={colors.textMuted}
               keyboardType="phone-pad"
             />
             <View style={s.editBtns}>
               <Pressable style={s.btnSave} onPress={() => void saveProfile()} disabled={saving}>
-                {saving ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.btnSaveTxt}>Enregistrer</Text>}
+                {saving ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.btnSaveTxt}>{t("profile.save")}</Text>}
               </Pressable>
               <Pressable style={s.btnCancel} onPress={() => { setEditing(false); setFullName(user?.fullName ?? ""); setPhone(user?.phone ?? ""); }}>
-                <Text style={s.btnCancelTxt}>Annuler</Text>
+                <Text style={s.btnCancelTxt}>{t("profile.cancel")}</Text>
               </Pressable>
             </View>
           </View>
@@ -251,24 +254,24 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={s.card}>
           <View style={s.cardRow}>
             <Ionicons name="shield-checkmark-outline" size={20} color={kycBadge().color} />
-            <Text style={s.cardTitle}>Vérification d'identité</Text>
+            <Text style={s.cardTitle}>{t("profile.kyc")}</Text>
             <View style={[s.kycBadge, { backgroundColor: kycBadge().bg }]}>
               <Text style={[s.kycBadgeTxt, { color: kycBadge().color }]}>{kycBadge().label}</Text>
             </View>
           </View>
           {kycStatus !== "VERIFIED" && (
             <Pressable style={s.kycBtn} onPress={() => void startKyc()} disabled={kycLoading || kycStatus === "PENDING"}>
-              {kycLoading ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.kycBtnTxt}>{kycStatus === "PENDING" ? "En cours de traitement…" : "Vérifier mon identité"}</Text>}
+              {kycLoading ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.kycBtnTxt}>{kycStatus === "PENDING" ? t("profile.kyc.pending.btn") : t("profile.kyc.btn")}</Text>}
             </Pressable>
           )}
-          <Text style={s.cardSub}>Requis pour les retraits supérieurs à 500€. Traité par Stripe.</Text>
+          <Text style={s.cardSub}>{t("profile.kyc.sub")}</Text>
         </View>
 
         {/* Notifications push */}
         <View style={s.card}>
           <View style={s.cardRow}>
             <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-            <Text style={s.cardTitle}>Notifications push</Text>
+            <Text style={s.cardTitle}>{t("profile.notifications")}</Text>
             {pushLoading ? <ActivityIndicator size="small" color={colors.primary} /> : (
               <Switch
                 value={pushEnabled}
@@ -278,17 +281,43 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
               />
             )}
           </View>
-          <Text style={s.cardSub}>{pushEnabled ? "✓ Activées — rappels, payout, messages." : "Activez pour recevoir rappels de cotisation et payouts."}</Text>
+          <Text style={s.cardSub}>{pushEnabled ? t("profile.push.on") : t("profile.push.off")}</Text>
+        </View>
+
+        {/* Langue */}
+        <View style={[s.card, { marginHorizontal: 20, marginBottom: 12 }]}>
+          <View style={s.cardRow}>
+            <Ionicons name="language-outline" size={18} color={colors.primary} />
+            <Text style={s.cardTitle}>{t("settings.language")}</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
+            {(["fr", "en"] as Lang[]).map((l) => (
+              <Pressable
+                key={l}
+                onPress={() => void setLang(l)}
+                style={{
+                  flex: 1, borderRadius: 14, paddingVertical: 10, alignItems: "center",
+                  backgroundColor: lang === l ? colors.primary : colors.surfaceCard,
+                  borderWidth: 1,
+                  borderColor: lang === l ? colors.primary : colors.border,
+                }}
+              >
+                <Text style={{ color: lang === l ? colors.dark : colors.textMuted, fontWeight: "800", fontSize: 14 }}>
+                  {l === "fr" ? t("settings.french") : t("settings.english")}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         {/* Actions */}
         <View style={s.actions}>
           {[
-            { icon: "create-outline" as const, label: "Modifier le profil", onPress: () => setEditing(true), color: colors.text },
-            { icon: "share-outline" as const, label: "Mon profil public", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/u/" + (user?.fullName?.toLowerCase().replace(/\s+/g, "-") ?? "")), color: colors.primary },
-            { icon: "document-text-outline" as const, label: "CGU & Confidentialité", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/legal/confidentialite"), color: colors.textMuted },
-            { icon: "download-outline" as const, label: "Exporter mes données (RGPD)", onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/api/user/delete"), color: colors.textMuted },
-            { icon: "log-out-outline" as const, label: "Déconnexion", onPress: confirmLogout, color: colors.danger },
+            { icon: "create-outline" as const, label: t("profile.action.edit"), onPress: () => setEditing(true), color: colors.text },
+            { icon: "share-outline" as const, label: t("profile.action.public"), onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/u/" + (user?.fullName?.toLowerCase().replace(/\s+/g, "-") ?? "")), color: colors.primary },
+            { icon: "document-text-outline" as const, label: t("profile.action.legal"), onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/legal/confidentialite"), color: colors.textMuted },
+            { icon: "download-outline" as const, label: t("profile.action.rgpd"), onPress: () => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/api/user/delete"), color: colors.textMuted },
+            { icon: "log-out-outline" as const, label: t("profile.action.logout"), onPress: confirmLogout, color: colors.danger },
           ].map((item) => (
             <Pressable key={item.label} style={s.actionRow} onPress={item.onPress}>
               <View style={[s.actionIcon, { backgroundColor: `${item.color}15` }]}>

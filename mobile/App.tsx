@@ -11,6 +11,7 @@ import { AppNavigator } from "./src/navigation/AppNavigator";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { appNavigationTheme } from "./src/theme/theme";
 import { STRIPE_PUBLISHABLE_KEY } from "./src/config/constants";
+import { useLang } from "./src/i18n/useLang";
 import type { RootStackParamList } from "./src/types/navigation";
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -54,10 +55,12 @@ function AppProviders() {
 
 export default function App() {
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const loadLang = useLang((s) => s.loadLang);
 
   useEffect(() => {
+    void loadLang();
     AsyncStorage.getItem("onboarding_done").then((v) => setOnboardingDone(v === "1"));
-  }, []);
+  }, [loadLang]);
 
   if (onboardingDone === null) return null;
 

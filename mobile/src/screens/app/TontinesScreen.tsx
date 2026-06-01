@@ -1,29 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 import type { TontinesScreenProps } from "../../types/navigation";
 
 function fmt(amount: number, currency: string) {
   return amount.toLocaleString("fr-FR", { style: "currency", currency: currency || "EUR" });
-}
-
-function statusLabel(s: string) {
-  if (s === "active") return { label: "Actif", color: colors.primary };
-  if (s === "completed") return { label: "Terminé", color: colors.textMuted };
-  return { label: "En attente", color: colors.warning };
 }
 
 export function TontinesScreen({ navigation }: TontinesScreenProps) {
@@ -31,8 +17,15 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
   const fetchMyTontines = useTontineStore((s) => s.fetchMyTontines);
   const isLoading = useTontineStore((s) => s.isLoading);
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useLang();
 
   useFocusEffect(useCallback(() => { void fetchMyTontines(); }, [fetchMyTontines]));
+
+  function statusLabel(st: string) {
+    if (st === "active") return { label: t("tontines.statusActive"), color: colors.primary };
+    if (st === "completed") return { label: t("tontines.statusDone"), color: colors.textMuted };
+    return { label: t("tontines.statusPending"), color: colors.warning };
+  }
 
   async function onRefresh() {
     setRefreshing(true);
@@ -44,7 +37,7 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
         <View>
-          <Text style={s.title}>Mes Groupes</Text>
+          <Text style={s.title}>{t("tontines.title")}</Text>
           <Text style={s.sub}>{tontines.length} tontine{tontines.length !== 1 ? "s" : ""}</Text>
         </View>
         <View style={s.headerBtns}>
@@ -58,13 +51,11 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
       </View>
 
       {isLoading && tontines.length === 0 ? (
-        <View style={s.center}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
+        <View style={s.center}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (
         <FlatList
           data={tontines}
-          keyExtractor={(t) => t.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={colors.primary} />}
@@ -74,10 +65,7 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
               ? Math.min(100, Math.round((item.progression.paidMembers / Math.max(item.progression.totalMembers, 1)) * 100))
               : 0;
             return (
-              <Pressable
-                style={s.card}
-                onPress={() => navigation.navigate("TontineDetail", { tontineId: item.id })}
-              >
+              <Pressable style={s.card} onPress={() => navigation.navigate("TontineDetail", { tontineId: item.id })}>
                 <View style={s.cardTop}>
                   <View style={s.avatar}>
                     <Text style={s.avatarTxt}>{item.name[0]?.toUpperCase()}</Text>
@@ -85,7 +73,7 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
                   <View style={s.info}>
                     <Text style={s.name} numberOfLines={1}>{item.name}</Text>
                     <Text style={s.meta}>
-                      {fmt(item.contributionAmount, item.currency)} · {item.membersCount}/{item.maxMembers} membres
+                      {fmt(item.contributionAmount, item.currency)} · {item.membersCount}/{item.maxMembers} {t("tontines.members")}
                     </Text>
                   </View>
                   <View style={[s.badge, { backgroundColor: `${color}20` }]}>
@@ -96,8 +84,8 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
                   <View style={[s.progressFill, { width: `${pct}%` as `${number}%` }]} />
                 </View>
                 <View style={s.cardBottom}>
-                  <Text style={s.cardSub}>Round {item.currentRound}/{item.totalRounds}</Text>
-                  <Text style={s.cardSub}>{pct}% financé</Text>
+                  <Text style={s.cardSub}>{t("tontines.round")} {item.currentRound}/{item.totalRounds}</Text>
+                  <Text style={s.cardSub}>{pct}% {t("tontines.funded")}</Text>
                 </View>
               </Pressable>
             );
@@ -105,10 +93,10 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
           ListEmptyComponent={
             <View style={s.empty}>
               <Ionicons name="people-outline" size={48} color={colors.textMuted} />
-              <Text style={s.emptyTitle}>Aucune tontine</Text>
-              <Text style={s.emptyText}>Créez ou rejoignez un groupe pour commencer.</Text>
+              <Text style={s.emptyTitle}>{t("tontines.empty.title")}</Text>
+              <Text style={s.emptyText}>{t("tontines.empty.body")}</Text>
               <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("CreateTontine")}>
-                <Text style={s.emptyBtnTxt}>Créer un groupe</Text>
+                <Text style={s.emptyBtnTxt}>{t("tontines.createGroup")}</Text>
               </Pressable>
             </View>
           }

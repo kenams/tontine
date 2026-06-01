@@ -5,29 +5,31 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
+import { useLang } from "../../i18n/useLang";
 import type { JoinTontineScreenProps } from "../../types/navigation";
 
 export function JoinTontineScreen({ navigation, route }: JoinTontineScreenProps) {
   const params = route.params as { code?: string } | undefined;
   const [code, setCode] = useState(params?.code?.toUpperCase() ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const joinTontine = useTontineStore((s) => s.joinTontine);
+  const { t } = useLang();
 
   useEffect(() => {
     if (params?.code) setCode(params.code.toUpperCase());
   }, [params?.code]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const joinTontine = useTontineStore((s) => s.joinTontine);
 
   async function handleJoin() {
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed || trimmed.length < 4) { setError("Code invalide."); return; }
+    if (!trimmed || trimmed.length < 4) { setError(t("join.err.shortCode")); return; }
     setLoading(true);
     setError(null);
     try {
       await joinTontine(trimmed);
       navigation.goBack();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Code introuvable.");
+      setError(err instanceof Error ? err.message : t("join.err.notFound"));
     }
     setLoading(false);
   }
@@ -43,15 +45,15 @@ export function JoinTontineScreen({ navigation, route }: JoinTontineScreenProps)
           <View style={s.iconWrap}>
             <Ionicons name="enter-outline" size={36} color={colors.primary} />
           </View>
-          <Text style={s.title}>Rejoindre une tontine</Text>
-          <Text style={s.subtitle}>Entrez le code du groupe partagé par l'administrateur.</Text>
+          <Text style={s.title}>{t("join.title")}</Text>
+          <Text style={s.subtitle}>{t("join.subtitle")}</Text>
 
           <View style={s.inputWrap}>
             <TextInput
               style={s.input}
               value={code}
               onChangeText={(v) => { setCode(v.toUpperCase()); setError(null); }}
-              placeholder="ex : KOTIZY-AB12"
+              placeholder={t("join.ph")}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -67,7 +69,7 @@ export function JoinTontineScreen({ navigation, route }: JoinTontineScreenProps)
           ) : null}
 
           <Pressable style={[s.btn, (loading || !code.trim()) && s.btnDisabled]} onPress={() => void handleJoin()} disabled={loading || !code.trim()}>
-            {loading ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.btnTxt}>Rejoindre</Text>}
+            {loading ? <ActivityIndicator color={colors.dark} size="small" /> : <Text style={s.btnTxt}>{t("join.btn")}</Text>}
           </Pressable>
         </View>
       </KeyboardAvoidingView>

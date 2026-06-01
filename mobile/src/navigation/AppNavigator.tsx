@@ -19,6 +19,7 @@ import { ChatListScreen } from "../screens/chat/ChatListScreen";
 import { TontineDetailScreen } from "../screens/tontine/TontineDetailScreen";
 import { PaymentScreen } from "../screens/payment/PaymentScreen";
 import { colors } from "../theme/colors";
+import { useLang } from "../i18n/useLang";
 import type {
   AuthStackParamList,
   HomeStackParamList,
@@ -93,6 +94,7 @@ const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName }> 
 
 function MainTabsNavigator() {
   const insets = useSafeAreaInsets();
+  const { t } = useLang();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -115,11 +117,11 @@ function MainTabsNavigator() {
         },
       })}
     >
-      <Tab.Screen name="HomeStack"    component={HomeStackNavigator}     options={{ title: "Accueil" }} />
-      <Tab.Screen name="GroupesStack" component={TontinesStackNavigator} options={{ title: "Groupes" }} />
-      <Tab.Screen name="WalletStack"  component={WalletStackNavigator}   options={{ title: "Wallet" }} />
-      <Tab.Screen name="Notifications" component={NotificationsScreen}   options={{ title: "Alertes" }} />
-      <Tab.Screen name="Profile"      component={ProfileScreen}           options={{ title: "Profil" }} />
+      <Tab.Screen name="HomeStack"    component={HomeStackNavigator}     options={{ title: t("tabs.home") }} />
+      <Tab.Screen name="GroupesStack" component={TontinesStackNavigator} options={{ title: t("tabs.groups") }} />
+      <Tab.Screen name="WalletStack"  component={WalletStackNavigator}   options={{ title: t("tabs.wallet") }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen}   options={{ title: t("tabs.alerts") }} />
+      <Tab.Screen name="Profile"      component={ProfileScreen}           options={{ title: t("tabs.profile") }} />
     </Tab.Navigator>
   );
 }
