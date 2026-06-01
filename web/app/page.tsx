@@ -2,10 +2,10 @@ import { ArrowRight, BadgeCheck, ChevronDown, Globe, MessageCircle, Shield, Smar
 import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
 
-import { ThemeToggle } from "@/components/app/theme-toggle";
 import { LangToggle } from "@/components/app/lang-toggle";
 import { MotionPage } from "@/components/ui/motion";
 import { getSession } from "@/lib/auth";
+import { getServerT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/db";
 
 /* ── Pill de ville avec ligne de connexion ── */
@@ -36,6 +36,7 @@ const FAQ = [
 
 export default async function LandingPage() {
   const session = await getSession();
+  const { t } = await getServerT();
   const [userCount, groupCount] = await Promise.all([
     prisma.user.count(),
     prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
@@ -61,24 +62,23 @@ export default async function LandingPage() {
         <main className="relative mx-auto max-w-6xl px-5 py-5">
 
           {/* ── NAV ── */}
-          <nav className="sticky top-0 z-50 -mx-5 flex items-center justify-between px-5 py-3 backdrop-blur-xl bg-[#080b07]/70 border-b border-white/5">
+          <nav className="sticky top-0 z-50 -mx-5 flex items-center justify-between px-5 py-4">
             <Link href="/" className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)]">K</span>
               <span className="text-sm font-black tracking-tight text-white">Kotizy</span>
             </Link>
             <div className="flex items-center gap-2">
               <LangToggle />
-              <ThemeToggle />
               {!session && (
                 <Link href="/register" className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-[#080b07] shadow-[0_0_16px_rgba(34,197,94,0.3)] transition hover:bg-emerald-400">
-                  S'inscrire
+                  {t("landing", "register")}
                 </Link>
               )}
               <Link
                 href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
                 className="rounded-2xl bg-white/8 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/12"
               >
-                {session ? "Mon espace" : "Connexion"}
+                {session ? t("landing", "mySpace") : t("landing", "connect")}
               </Link>
             </div>
           </nav>
@@ -89,18 +89,18 @@ export default async function LandingPage() {
               {/* Badge */}
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 text-xs font-bold text-emerald-400">
                 <Sparkles size={13} />
-                La tontine de la diaspora
+                {t("landing", "tagline")}
               </div>
 
               {/* Titre */}
               <h1 className="max-w-2xl text-5xl font-black leading-[0.92] tracking-[-0.03em] text-white md:text-[68px]">
-                Épargnez<br />
-                ensemble.<br />
-                <span className="text-emerald-400">En euros.</span>
+                {t("landing", "h1a")}<br />
+                {t("landing", "h1b")}<br />
+                <span className="text-emerald-400">{t("landing", "h1c")}</span>
               </h1>
 
               <p className="mt-6 max-w-lg text-base leading-7 text-white/55 md:text-lg">
-                La tontine digitale pour la diaspora africaine. Cotisez en euros depuis Paris, London ou Lyon. Votre famille reçoit en XOF, NGN, GHS.
+                {t("landing", "subtitle")}
               </p>
 
               {/* Routes diaspora */}
@@ -117,11 +117,11 @@ export default async function LandingPage() {
                   href={session ? "/dashboard" : "/register"}
                   className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-[#080b07] shadow-[0_0_24px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400"
                 >
-                  {session ? "Mon dashboard" : "Commencer gratuitement"}
+                  {session ? t("landing", "dashboard") : t("landing", "cta")}
                   <ArrowRight size={16} />
                 </Link>
                 <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
-                  Se connecter
+                  {t("landing", "login")}
                 </Link>
               </div>
 

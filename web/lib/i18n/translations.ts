@@ -1,6 +1,21 @@
 export type Lang = "fr" | "en";
 
 export const translations = {
+  // Landing page
+  landing: {
+    tagline:    { fr: "La tontine de la diaspora",        en: "The diaspora tontine" },
+    h1a:        { fr: "Épargnez",                         en: "Save" },
+    h1b:        { fr: "ensemble.",                        en: "together." },
+    h1c:        { fr: "En euros.",                        en: "In euros." },
+    subtitle:   { fr: "La tontine digitale pour la diaspora africaine. Cotisez en euros depuis Paris, London ou Lyon. Votre famille reçoit en XOF, NGN, GHS.", en: "The digital tontine for the African diaspora. Contribute in euros from Paris, London or Lyon. Your family receives in XOF, NGN, GHS." },
+    cta:        { fr: "Commencer gratuitement",           en: "Get started free" },
+    login:      { fr: "Se connecter",                     en: "Log in" },
+    dashboard:  { fr: "Mon dashboard",                    en: "My dashboard" },
+    register:   { fr: "S'inscrire",                       en: "Sign up" },
+    connect:    { fr: "Connexion",                        en: "Login" },
+    mySpace:    { fr: "Mon espace",                       en: "My account" },
+  },
+
   // Navigation
   nav: {
     home:    { fr: "Accueil",  en: "Home" },
