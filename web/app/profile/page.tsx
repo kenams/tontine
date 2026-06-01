@@ -86,7 +86,7 @@ export default async function ProfilePage() {
       {totalDebt > 0 && (
         <div className="mb-4 glass rounded-3xl p-4 ring-1 ring-gold/20">
           <div className="mb-2 flex items-center gap-2 text-sm font-black text-gold">
-            <AlertTriangle size={16} /> {lang === "en" ? "Outstanding debts" : "Dettes en cours"}
+            <AlertTriangle size={16} /> {t("profile", "debts")}
           </div>
           <div className="space-y-2">
             {(debtMemberships as unknown as Array<{ debtCents: number; tontineGroup: { name: string; id: string; currency: string } }>).map((m) => (
@@ -97,9 +97,7 @@ export default async function ProfilePage() {
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[var(--muted)]">
-            {lang === "en" ? "Repay from each group page → wallet debit." : "Remboursez depuis la page de chaque groupe → débit wallet."}
-          </p>
+          <p className="mt-2 text-xs text-[var(--muted)]">{t("profile", "debtsSub")}</p>
         </div>
       )}
 
@@ -132,11 +130,11 @@ export default async function ProfilePage() {
         <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-[var(--muted)]">
           <div className="rounded-2xl bg-[var(--surface)] p-3">
             <p className="font-black text-[var(--text)]">{user.trustScore?.paymentReliability ?? 50}</p>
-            {lang === "en" ? "Payment" : "Paiement"}
+            {t("profile", "payment")}
           </div>
           <div className="rounded-2xl bg-[var(--surface)] p-3">
             <p className="font-black text-[var(--text)]">{user.trustScore?.communityRating ?? 50}</p>
-            {lang === "en" ? "Community" : "Communauté"}
+            {t("profile", "community")}
           </div>
           <div className={`rounded-2xl bg-[var(--surface)] p-3 ${lateCount > 0 ? "ring-1 ring-rose-400/30" : ""}`}>
             <p className={`font-black ${lateCount > 0 ? "text-rose-400" : "text-[var(--text)]"}`}>{lateCount}</p>
@@ -157,15 +155,15 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-between">
             <p className="text-3xl font-black text-orange-400">{streak}</p>
             <div className="text-right">
-              <p className="text-sm font-bold">{lang === "en" ? `consecutive month${streak > 1 ? "s" : ""}` : `mois consécutif${streak > 1 ? "s" : ""}`}</p>
+              <p className="text-sm font-bold">{streak > 1 ? t("profile", "streakMonths") : t("profile", "streakMonth")}</p>
               <p className="text-xs text-[var(--muted)]">
                 {streak >= 12
-                  ? (lang === "en" ? "🏆 Pillar badge unlocked!" : "🏆 Badge Pilier débloqué !")
+                  ? t("profile", "badge12")
                   : streak >= 6
-                  ? (lang === "en" ? "🥇 Reliable badge unlocked!" : "🥇 Badge Fiable débloqué !")
+                  ? t("profile", "badge6")
                   : streak >= 3
-                  ? (lang === "en" ? "⭐ Punctual ×3 badge unlocked!" : "⭐ Badge Ponctuel ×3 débloqué !")
-                  : (lang === "en" ? `${3 - streak} more to unlock Punctual ×3` : `Encore ${3 - streak} pour débloquer Ponctuel ×3`)}
+                  ? t("profile", "badge3")
+                  : t("profile", "badgeNext3").replace("{n}", String(3 - streak))}
               </p>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { MarkAllReadButton } from "@/components/app/mark-all-read-button";
 import { PageHeading } from "@/components/app/page-heading";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerT } from "@/lib/i18n/server";
 import { dateTime } from "@/lib/format";
 
 const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
@@ -19,6 +20,7 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string 
 
 export default async function NotificationsPage() {
   const session = await requireUser();
+  const { t } = await getServerT();
   const notifications = await prisma.notification.findMany({
     where: { userId: session.userId },
     include: { tontineGroup: true },
@@ -27,10 +29,10 @@ export default async function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   return (
-    <MobileShell user={session} title="Notifications">
+    <MobileShell user={session} title={t("notifications", "title")}>
       <div className="mb-4 flex items-start justify-between gap-3">
-        <PageHeading eyebrow="Centre" title="Notifications">
-          {unreadCount > 0 ? `${unreadCount} non lue(s)` : "Tout est à jour."}
+        <PageHeading eyebrow={t("notifications", "eyebrow")} title={t("notifications", "title")}>
+          {unreadCount > 0 ? `${unreadCount} ${t("notifications", "unread")}` : t("notifications", "allRead")}
         </PageHeading>
         {unreadCount > 0 && <MarkAllReadButton />}
       </div>
@@ -38,7 +40,7 @@ export default async function NotificationsPage() {
       {notifications.length === 0 && (
         <div className="glass rounded-3xl p-6 text-center">
           <Bell size={28} className="mx-auto mb-3 text-[var(--muted)]" />
-          <p className="text-sm text-[var(--muted)]">Aucune notification pour le moment.</p>
+          <p className="text-sm text-[var(--muted)]">{t("notifications", "emptySub")}</p>
         </div>
       )}
 

@@ -8,7 +8,6 @@ import { getSession } from "@/lib/auth";
 import { getServerT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/db";
 
-/* ── Pill de ville avec ligne de connexion ── */
 function DiasporaRoute({ from, to }: { from: string; to: string }) {
   return (
     <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-[var(--muted)]">
@@ -19,28 +18,50 @@ function DiasporaRoute({ from, to }: { from: string; to: string }) {
   );
 }
 
-const TESTIMONIALS = [
-  { name: "Aminata S.", city: "Paris → Dakar", quote: "J'organise les tontines de ma famille depuis des années sur WhatsApp. Avec Kotizy, tout est automatique. Même ma maman l'utilise !", avatar: "AS" },
-  { name: "Emmanuel K.", city: "Lyon → Abidjan", quote: "J'ai reçu mon premier pot de 800€ en 8 mois. Simple, transparent, sans risque. Le score de confiance a tout changé.", avatar: "EK" },
-  { name: "Fatou D.", city: "Londres → Bamako", quote: "Notre cercle familial de 10 personnes cotise 100€/mois depuis un an. Personne n'a jamais eu de retard. Fiabilité 100%.", avatar: "FD" },
-];
-
-const FAQ = [
-  { q: "C'est quoi une tontine ?", a: "Une tontine est une épargne collective où chaque membre verse une somme fixe chaque mois. À tour de rôle, un membre reçoit la totalité de la mise collective. Tout le monde donne la même chose, tout le monde reçoit la même chose — mais en une seule fois." },
-  { q: "Est-ce que mon argent est sécurisé ?", a: "Oui. Les paiements sont traités par Stripe (agréé EME, Banque Centrale d'Irlande). Vos données sont chiffrées, les sessions sont signées HMAC-SHA256 et la base de données est protégée par Supabase RLS." },
-  { q: "Combien ça coûte ?", a: "Kotizy est gratuit pour créer un compte et rejoindre des groupes. Une commission de 1,25% s'applique uniquement lors du versement du pot." },
-  { q: "Comment fonctionne le score de confiance ?", a: "Chaque paiement à l'heure vous fait progresser : Débutant → Bronze → Intermédiaire → Avancé → Gold → Élite. Ce score est public, visible sur votre profil, et renforce la confiance dans votre cercle." },
-  { q: "Peut-on cotiser depuis l'Afrique ?", a: "Pour l'instant, le wallet accepte les paiements depuis l'Europe (carte bancaire, virement SEPA). Le Mobile Money (Wave, Orange Money, MTN) est en cours d'intégration." },
-  { q: "Que se passe-t-il si un membre ne paie pas ?", a: "Un rappel automatique est envoyé 3 jours avant l'échéance. En cas de retard, le score de confiance du membre est impacté et une pénalité peut s'appliquer selon les règles du groupe." },
-];
-
 export default async function LandingPage() {
   const session = await getSession();
-  const { t } = await getServerT();
+  const { t, lang } = await getServerT();
   const [userCount, groupCount] = await Promise.all([
     prisma.user.count(),
     prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
   ]).catch(() => [0, 0]);
+
+  const FEATURES = [
+    { icon: TrendingUp, title: t("landing", "feat1Title"), desc: t("landing", "feat1Desc"), accent: true },
+    { icon: Shield,     title: t("landing", "feat2Title"), desc: t("landing", "feat2Desc"), accent: false },
+    { icon: Globe,      title: t("landing", "feat3Title"), desc: t("landing", "feat3Desc"), accent: false },
+    { icon: Zap,        title: t("landing", "feat4Title"), desc: t("landing", "feat4Desc"), accent: false },
+    { icon: Users,      title: t("landing", "feat5Title"), desc: t("landing", "feat5Desc"), accent: false },
+    { icon: Smartphone, title: t("landing", "feat6Title"), desc: t("landing", "feat6Desc"), accent: false },
+  ];
+
+  const HOW_STEPS = [
+    { step: "01", title: t("landing", "step1Title"), desc: t("landing", "step1Desc"), detail: t("landing", "step1Detail") },
+    { step: "02", title: t("landing", "step2Title"), desc: t("landing", "step2Desc"), detail: t("landing", "step2Detail") },
+    { step: "03", title: t("landing", "step3Title"), desc: t("landing", "step3Desc"), detail: t("landing", "step3Detail") },
+  ];
+
+  const TESTIMONIALS = [
+    { name: t("landing", "testi1Name"), city: t("landing", "testi1City"), quote: t("landing", "testi1Quote"), avatar: "AS" },
+    { name: t("landing", "testi2Name"), city: t("landing", "testi2City"), quote: t("landing", "testi2Quote"), avatar: "EK" },
+    { name: t("landing", "testi3Name"), city: t("landing", "testi3City"), quote: t("landing", "testi3Quote"), avatar: "FD" },
+  ];
+
+  const FAQ = [
+    { q: t("landing", "faq1Q"), a: t("landing", "faq1A") },
+    { q: t("landing", "faq2Q"), a: t("landing", "faq2A") },
+    { q: t("landing", "faq3Q"), a: t("landing", "faq3A") },
+    { q: t("landing", "faq4Q"), a: t("landing", "faq4A") },
+    { q: t("landing", "faq5Q"), a: t("landing", "faq5A") },
+    { q: t("landing", "faq6Q"), a: t("landing", "faq6A") },
+  ];
+
+  const STATS = [
+    { value: userCount > 0 ? `${userCount}+` : "100+", label: t("landing", "statMembers") },
+    { value: groupCount > 0 ? `${groupCount}+` : "20+", label: t("landing", "statCircles") },
+    { value: "0€", label: t("landing", "statFees") },
+    { value: "100%", label: t("landing", "statSecure") },
+  ];
 
   return (
     <MotionPage>
@@ -86,13 +107,11 @@ export default async function LandingPage() {
           {/* ── HERO ── */}
           <section className="grid min-h-[calc(100dvh-6rem)] items-center gap-12 py-12 lg:grid-cols-[1fr_420px]">
             <div>
-              {/* Badge */}
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/8 px-4 py-2 text-xs font-bold text-emerald-400">
                 <Sparkles size={13} />
                 {t("landing", "tagline")}
               </div>
 
-              {/* Titre */}
               <h1 className="max-w-2xl text-5xl font-black leading-[0.92] tracking-[-0.03em] text-white md:text-[68px]">
                 {t("landing", "h1a")}<br />
                 {t("landing", "h1b")}<br />
@@ -103,7 +122,6 @@ export default async function LandingPage() {
                 {t("landing", "subtitle")}
               </p>
 
-              {/* Routes diaspora */}
               <div className="mt-5 flex flex-wrap gap-2">
                 <DiasporaRoute from="Paris" to="Abidjan" />
                 <DiasporaRoute from="London" to="Lagos" />
@@ -111,7 +129,6 @@ export default async function LandingPage() {
                 <DiasporaRoute from="Bruxelles" to="Kinshasa" />
               </div>
 
-              {/* CTA */}
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href={session ? "/dashboard" : "/register"}
@@ -125,12 +142,11 @@ export default async function LandingPage() {
                 </Link>
               </div>
 
-              {/* Stats */}
               <div className="mt-10 flex flex-wrap gap-8">
                 {[
-                  ["50€", "cotisation min."],
-                  ["100%", "chiffré"],
-                  ["0€", "frais cachés"],
+                  ["50€", t("landing", "stat1Sub")],
+                  ["100%", t("landing", "stat2Sub")],
+                  ["0€", t("landing", "stat3Sub")],
                 ].map(([v, l]) => (
                   <div key={l}>
                     <p className="text-2xl font-black text-white">{v}</p>
@@ -143,8 +159,6 @@ export default async function LandingPage() {
             {/* ── CARD PREVIEW ── */}
             <div className="mx-auto w-full max-w-sm">
               <div className="rounded-[2rem] bg-white/5 p-5 ring-1 ring-white/8 backdrop-blur-sm">
-
-                {/* Wallet card */}
                 <div className="mb-4 rounded-[1.5rem] bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 p-5 ring-1 ring-emerald-500/20">
                   <div className="flex items-start justify-between">
                     <div>
@@ -160,12 +174,11 @@ export default async function LandingPage() {
                   </div>
                 </div>
 
-                {/* Activité live */}
                 <div className="space-y-2">
                   {[
-                    { label: "Cotisation validée", sub: "Cercle Émeraude · Paris", val: "+50€", color: "text-emerald-400" },
-                    { label: "Badge Ponctuel", sub: "Récompense obtenue", val: "★", color: "text-yellow-400" },
-                    { label: "Pot du mois", sub: "K*** D. a reçu", val: "400€", color: "text-white" },
+                    { label: t("landing", "previewLabel"), sub: t("landing", "previewSub"), val: "+50€", color: "text-emerald-400" },
+                    { label: t("landing", "previewBadge"), sub: t("landing", "previewBadgeSub"), val: "★", color: "text-yellow-400" },
+                    { label: t("landing", "previewPot"), sub: `K*** D. ${t("landing", "previewPotSub")}`, val: "400€", color: "text-white" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2.5 ring-1 ring-white/5">
                       <div>
@@ -177,22 +190,21 @@ export default async function LandingPage() {
                   ))}
                 </div>
 
-                {/* Exemple de groupe */}
                 <div className="mt-3 rounded-2xl bg-emerald-500/8 p-3 ring-1 ring-emerald-500/15">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-black text-white">Cercle Émeraude</p>
-                      <p className="text-[10px] text-white/40">8 membres · 50€/mois</p>
+                      <p className="text-xs font-black text-white">{t("landing", "previewGroup")}</p>
+                      <p className="text-[10px] text-white/40">{t("landing", "previewGroupSub")}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black text-emerald-400">400€</p>
-                      <p className="text-[10px] text-white/40">pot mensuel</p>
+                      <p className="text-[10px] text-white/40">{t("landing", "previewPotLabel")}</p>
                     </div>
                   </div>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full w-[75%] rounded-full bg-emerald-500" />
                   </div>
-                  <p className="mt-1 text-[10px] text-white/30">6/8 membres ont cotisé ce mois</p>
+                  <p className="mt-1 text-[10px] text-white/30">6/8 {t("landing", "previewProgress")}</p>
                 </div>
               </div>
             </div>
@@ -200,19 +212,12 @@ export default async function LandingPage() {
 
           {/* ── FEATURES ── */}
           <section className="border-t border-white/6 py-20">
-            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Pourquoi Kotizy</div>
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "featuresLabel")}</div>
             <h2 className="mb-14 text-center text-3xl font-black tracking-tight text-white md:text-4xl">
-              Tout ce dont votre<br />cercle a besoin.
+              {t("landing", "featuresTitle")}
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                { icon: TrendingUp, title: "Cotisations automatiques", desc: "Planifiez, cotisez et suivez les paiements de votre groupe en temps réel. Score de confiance calculé automatiquement.", accent: true },
-                { icon: Shield, title: "Score de confiance", desc: "Chaque paiement à l'heure renforce votre réputation. Débutant → Bronze → Avancé → Gold → Élite.", accent: false },
-                { icon: Globe, title: "Multi-devises diaspora", desc: "EUR, GBP, XOF, NGN, GHS, KES et plus. Cotisez depuis l'Europe, recevez en Afrique.", accent: false },
-                { icon: Zap, title: "Paiements mobiles", desc: "Wallet intégré, Stripe, Wave, Orange Money, MTN MoMo. Payer en 1 clic depuis votre banque européenne.", accent: false },
-                { icon: Users, title: "Invitez votre cercle", desc: "Partagez un lien. Les membres rejoignent en 30 secondes. Kotizy, c'est votre communauté digitale.", accent: false },
-                { icon: Smartphone, title: "App native Android", desc: "Téléchargez l'APK ou installez la PWA. Notifications push, accès offline, expérience native.", accent: false },
-              ].map(({ icon: Icon, title, desc, accent }) => (
+              {FEATURES.map(({ icon: Icon, title, desc, accent }) => (
                 <div key={title} className={`rounded-3xl p-6 ring-1 transition hover:bg-white/5 ${accent ? "bg-emerald-500/6 ring-emerald-500/20" : "bg-white/3 ring-white/6"}`}>
                   <div className={`mb-4 grid h-11 w-11 place-items-center rounded-2xl ${accent ? "bg-emerald-500 text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.4)]" : "bg-white/8 text-emerald-400"}`}>
                     <Icon size={20} />
@@ -226,31 +231,12 @@ export default async function LandingPage() {
 
           {/* ── COMMENT ÇA MARCHE ── */}
           <section className="border-t border-white/6 py-20">
-            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Simple comme bonjour</div>
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "howLabel")}</div>
             <h2 className="mb-14 text-center text-3xl font-black text-white md:text-4xl">
-              Comment ça marche ?
+              {t("landing", "howTitle")}
             </h2>
             <div className="grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  title: "Créez votre cercle",
-                  desc: "Choisissez un montant (ex: 100€/mois), invitez 7 amis ou famille. Votre groupe est prêt en 2 minutes.",
-                  detail: "8 membres × 100€ = 800€ dans le pot",
-                },
-                {
-                  step: "02",
-                  title: "Chacun cotise chaque mois",
-                  desc: "À chaque échéance, chaque membre verse 100€ depuis son wallet. Automatique, rappel 3 jours avant.",
-                  detail: "Paiement en 1 clic, depuis votre banque européenne",
-                },
-                {
-                  step: "03",
-                  title: "Un membre reçoit le pot",
-                  desc: "À tour de rôle, un membre reçoit les 800€ d'un coup. En 8 mois, tout le monde aura reçu son pot.",
-                  detail: "Vous donnez 800€ sur 8 mois. Vous recevez 800€ en 1 fois.",
-                },
-              ].map(({ step, title, desc, detail }) => (
+              {HOW_STEPS.map(({ step, title, desc, detail }) => (
                 <div key={step} className="relative rounded-3xl bg-white/3 p-6 ring-1 ring-white/8">
                   <div className="mb-4 text-5xl font-black text-emerald-500/20">{step}</div>
                   <p className="mb-2 text-lg font-black text-white">{title}</p>
@@ -262,17 +248,17 @@ export default async function LandingPage() {
               ))}
             </div>
             <p className="mt-8 text-center text-sm text-white/30">
-              La tontine = accès immédiat à un capital collectif, basé sur la confiance. <span className="text-white/50">Personne ne gagne, personne ne perd — mais tout le monde accède à plus.</span>
+              {t("landing", "howFooter")} <span className="text-white/50">{t("landing", "howFooter2")}</span>
             </p>
           </section>
 
           {/* ── NIVEAUX GEMS ── */}
           <section className="border-t border-white/6 py-20">
-            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Tous les niveaux</div>
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "gemLabel")}</div>
             <h2 className="mb-4 text-center text-3xl font-black text-white md:text-4xl">
-              Choisissez votre cercle
+              {t("landing", "gemTitle")}
             </h2>
-            <p className="mb-12 text-center text-white/40">Des gems africaines pour valoriser votre engagement. Plus vous cotisez, plus vous brillez.</p>
+            <p className="mb-12 text-center text-white/40">{t("landing", "gemSubtitle")}</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {GEM_TIERS.map((tier) => (
                 <div
@@ -290,9 +276,9 @@ export default async function LandingPage() {
                   <p className="mb-1 text-xs text-white/50">{tier.tagline}</p>
                   <p className="text-sm font-bold text-white">
                     {tier.maxCents === Infinity
-                      ? `${(tier.minCents / 100).toLocaleString("fr-FR")}€+`
-                      : `${(tier.minCents / 100).toLocaleString("fr-FR")} – ${(tier.maxCents / 100).toLocaleString("fr-FR")}€`}
-                    <span className="ml-1 text-[10px] font-normal text-white/35">/ mois</span>
+                      ? `${(tier.minCents / 100).toLocaleString(lang === "en" ? "en-GB" : "fr-FR")}€+`
+                      : `${(tier.minCents / 100).toLocaleString(lang === "en" ? "en-GB" : "fr-FR")} – ${(tier.maxCents / 100).toLocaleString(lang === "en" ? "en-GB" : "fr-FR")}€`}
+                    <span className="ml-1 text-[10px] font-normal text-white/35">{t("landing", "perMonth")}</span>
                   </p>
                 </div>
               ))}
@@ -302,12 +288,7 @@ export default async function LandingPage() {
           {/* ── SOCIAL PROOF ── */}
           <section className="border-t border-white/6 py-16">
             <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-              {[
-                { value: userCount > 0 ? `${userCount}+` : "100+", label: "Membres actifs" },
-                { value: groupCount > 0 ? `${groupCount}+` : "20+", label: "Cercles créés" },
-                { value: "0€", label: "Frais cachés" },
-                { value: "100%", label: "Données chiffrées" },
-              ].map(({ value, label }) => (
+              {STATS.map(({ value, label }) => (
                 <div key={label} className="rounded-3xl bg-white/3 p-5 text-center ring-1 ring-white/6">
                   <p className="text-3xl font-black text-emerald-400">{value}</p>
                   <p className="mt-1 text-xs text-white/40">{label}</p>
@@ -318,9 +299,9 @@ export default async function LandingPage() {
 
           {/* ── TÉMOIGNAGES ── */}
           <section className="border-t border-white/6 py-20">
-            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Ils kotisent déjà</div>
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "testiLabel")}</div>
             <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
-              La diaspora nous fait confiance.
+              {t("landing", "testiTitle")}
             </h2>
             <div className="grid gap-4 md:grid-cols-3">
               {TESTIMONIALS.map(({ name, city, quote, avatar }) => (
@@ -345,9 +326,9 @@ export default async function LandingPage() {
 
           {/* ── FAQ ── */}
           <section className="border-t border-white/6 py-20">
-            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Questions fréquentes</div>
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "faqLabel")}</div>
             <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
-              Tout ce que vous voulez savoir.
+              {t("landing", "faqTitle")}
             </h2>
             <div className="mx-auto max-w-2xl space-y-3">
               {FAQ.map(({ q, a }) => (
@@ -361,22 +342,22 @@ export default async function LandingPage() {
               ))}
             </div>
             <p className="mt-8 text-center text-sm text-white/30">
-              Une autre question ?{" "}
+              {t("landing", "faqContact")}{" "}
               <a href="mailto:hello@kotizy.app" className="text-emerald-400 hover:underline">
-                Écrivez-nous
+                {t("landing", "faqContactLink")}
               </a>
             </p>
           </section>
 
           {/* ── CTA FINAL ── */}
           <section className="py-20 text-center">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400/60">Gratuit · Sans engagement</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400/60">{t("landing", "ctaLabel")}</p>
             <h2 className="mb-3 text-4xl font-black tracking-tight text-white md:text-5xl">
-              Prêt à kotiser ?
+              {t("landing", "ctaTitle")}
             </h2>
-            <p className="mb-8 text-white/40">Créez votre groupe en 2 minutes.</p>
+            <p className="mb-8 text-white/40">{t("landing", "ctaSubtitle")}</p>
             <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-[#080b07] shadow-[0_0_32px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400 hover:shadow-[0_0_48px_rgba(34,197,94,0.5)]">
-              Créer mon compte <ArrowRight size={20} />
+              {t("landing", "ctaButton")} <ArrowRight size={20} />
             </Link>
           </section>
 
@@ -385,12 +366,12 @@ export default async function LandingPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <span>© {new Date().getFullYear()} Kotizy</span>
               <div className="flex flex-wrap items-center gap-4">
-                <Link href="/legal/mentions-legales" className="transition hover:text-white">Mentions légales</Link>
-                <Link href="/legal/cgu" className="transition hover:text-white">CGU</Link>
-                <Link href="/legal/confidentialite" className="transition hover:text-white">Confidentialité</Link>
-                <Link href="/legal/cookies" className="transition hover:text-white">Cookies</Link>
+                <Link href="/legal/mentions-legales" className="transition hover:text-white">{t("landing", "footerLegal")}</Link>
+                <Link href="/legal/cgu" className="transition hover:text-white">{t("landing", "footerCgu")}</Link>
+                <Link href="/legal/confidentialite" className="transition hover:text-white">{t("landing", "footerPrivacy")}</Link>
+                <Link href="/legal/cookies" className="transition hover:text-white">{t("landing", "footerCookies")}</Link>
                 <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
-                  Un produit KAH Digital
+                  {t("landing", "footerBy")}
                 </a>
               </div>
             </div>

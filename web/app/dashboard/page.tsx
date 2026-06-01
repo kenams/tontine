@@ -84,20 +84,20 @@ export default async function DashboardPage() {
       <div className="mb-4 glass rounded-[1.75rem] p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gold">{lang === "en" ? "Quick action" : "Action rapide"}</p>
-            <p className="text-xl font-black">{nextMembership?.name ?? (lang === "en" ? "Get started" : "Démarrer")}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gold">{t("dashboard", "quickAction")}</p>
+            <p className="text-xl font-black">{nextMembership?.name ?? t("dashboard", "getStarted")}</p>
           </div>
           {nextMembership && <StatusBadge value={nextMembership.status} />}
         </div>
         <p className="mb-4 text-sm leading-6 text-[var(--muted)]">
           {nextMembership
-            ? `${money(nextMembership.contributionCents, nextMembership.currency)} · ${lang === "en" ? "before" : "avant le"} ${dateShort(nextMembership.nextDueAt)}`
-            : (lang === "en" ? "Create a group or join with a code." : "Créez un groupe ou rejoignez avec un code.")}
+            ? `${money(nextMembership.contributionCents, nextMembership.currency)} · ${t("dashboard", "before")} ${dateShort(nextMembership.nextDueAt)}`
+            : t("dashboard", "createOrJoin")}
         </p>
         <div className="grid grid-cols-2 gap-2">
           <Link href={nextMembership ? `/tontines/${nextMembership.id}` : "/tontines/create"}
             className="rounded-2xl bg-emerald-500 py-3 text-center text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400">
-            {nextMembership ? (lang === "en" ? "Pay now" : "Payer maintenant") : (lang === "en" ? "Create a group" : "Créer un groupe")}
+            {nextMembership ? t("dashboard", "payNow") : t("dashboard", "createGroup")}
           </Link>
           <Link href="/tontines"
             className="rounded-2xl bg-[var(--surface)] py-3 text-center text-sm font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)]">
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
                 <StatusBadge value={tontineGroup.status} />
               </div>
               <ProgressBar value={progress} />
-              <p className="mt-2 text-xs text-smoke">{progress}% du cycle finance</p>
+              <p className="mt-2 text-xs text-smoke">{progress}% {t("dashboard", "cycleFinance")}</p>
             </Link>
           );
         })}
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-4 glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">{lang === "en" ? "Recent transactions" : "Transactions récentes"}</p>
+        <p className="mb-3 text-sm font-black">{t("dashboard", "recentTx")}</p>
 
         <div className="space-y-3">
           {transactions.slice(0, 4).map((transaction) => (

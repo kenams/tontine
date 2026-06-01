@@ -7,27 +7,28 @@ import { ProgressBar } from "@/components/app/progress-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { getUserTontines } from "@/lib/data";
+import { getServerT } from "@/lib/i18n/server";
 import { dateShort, money, pct } from "@/lib/format";
 import { getTierFromCents } from "@/lib/tiers";
 
 export default async function TontinesPage() {
   const session = await requireUser();
   const memberships = await getUserTontines(session.userId);
+  const { t } = await getServerT();
 
   return (
-    <MobileShell user={session} title="Groupes">
-      {/* Header */}
+    <MobileShell user={session} title={t("groups", "title")}>
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">Mes tontines</p>
-          <h1 className="text-2xl font-black">Groupes</h1>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">{t("groups", "myGroups")}</p>
+          <h1 className="text-2xl font-black">{t("groups", "title")}</h1>
         </div>
         <Link
           href="/tontines/create"
           className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400"
-          aria-label="Créer"
+          aria-label={t("groups", "createLabel")}
         >
-          <Plus size={16} /> Nouveau
+          <Plus size={16} /> {t("groups", "create")}
         </Link>
       </div>
 
@@ -36,10 +37,10 @@ export default async function TontinesPage() {
       {memberships.length === 0 ? (
         <div className="glass mt-4 rounded-3xl p-8 text-center">
           <p className="text-3xl mb-3">🤝</p>
-          <p className="font-black">Aucun groupe pour l'instant</p>
-          <p className="mt-1 text-sm text-[var(--muted)]">Créez un cercle ou rejoignez-en un avec un code d'invitation.</p>
+          <p className="font-black">{t("groups", "noGroup")}</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">{t("groups", "noGroupSub")}</p>
           <Link href="/tontines/create" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-ink shadow-glow">
-            <Plus size={14} /> Créer mon premier groupe
+            <Plus size={14} /> {t("groups", "createFirst")}
           </Link>
         </div>
       ) : (
@@ -71,8 +72,8 @@ export default async function TontinesPage() {
                 </div>
                 <ProgressBar value={progress} />
                 <div className="mt-2.5 flex items-center justify-between text-[10px] text-[var(--muted)]">
-                  <span>{tontineGroup.memberships.length}/{tontineGroup.maxMembers} membres · {progress}% collecté</span>
-                  <span>Dû {dateShort(tontineGroup.nextDueAt)}</span>
+                  <span>{tontineGroup.memberships.length}/{tontineGroup.maxMembers} {t("groups", "members")} · {progress}% {t("groups", "collected")}</span>
+                  <span>{t("groups", "due")} {dateShort(tontineGroup.nextDueAt)}</span>
                 </div>
               </Link>
             );

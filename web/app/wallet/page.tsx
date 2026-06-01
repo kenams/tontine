@@ -6,41 +6,8 @@ import { PageHeading } from "@/components/app/page-heading";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { getUserDashboard } from "@/lib/data";
+import { getServerT } from "@/lib/i18n/server";
 import { dateShort, money } from "@/lib/format";
-
-const TYPE_LABELS: Record<string, string> = {
-  CONTRIBUTION: "Cotisation",
-  WALLET_DEPOSIT: "Dépôt",
-  WALLET_WITHDRAWAL: "Retrait",
-  PAYOUT: "Payout reçu",
-};
-
-const DEPOSIT_METHODS = [
-  {
-    href: "/wallet/deposit",
-    icon: CreditCard,
-    label: "Carte bancaire",
-    sub: "Visa · Mastercard · Apple Pay · Google Pay · Revolut",
-    badge: "Instantané",
-    active: true,
-  },
-  {
-    href: "/wallet/deposit/sepa",
-    icon: Building2,
-    label: "Virement SEPA",
-    sub: "IBAN virtuel — compatible toutes banques EU",
-    badge: "1–3 jours",
-    active: true,
-  },
-  {
-    href: "/wallet/deposit/mobile-money/initiate",
-    icon: Smartphone,
-    label: "Mobile Money",
-    sub: "Wave · Orange Money · MTN MoMo · M-Pesa",
-    badge: "Instantané",
-    active: true,
-  },
-];
 
 export default async function WalletPage({
   searchParams,
@@ -50,26 +17,62 @@ export default async function WalletPage({
   const session = await requireUser();
   const query = searchParams ? await searchParams : {};
   const { user, transactions } = await getUserDashboard(session.userId);
+  const { t } = await getServerT();
+
   const wallet = user.wallet;
   const walletCurrency = wallet?.currency ?? "EUR";
   const balance = wallet?.balanceCents ?? 0;
   const paid = transactions
-    .filter((t) => t.status === "PAID" && t.type === "CONTRIBUTION")
-    .reduce((s, t) => s + t.amountCents, 0);
+    .filter((tx) => tx.status === "PAID" && tx.type === "CONTRIBUTION")
+    .reduce((s, tx) => s + tx.amountCents, 0);
   const deposited = transactions
-    .filter((t) => t.status === "PAID" && t.type === "WALLET_DEPOSIT")
-    .reduce((s, t) => s + t.amountCents, 0);
+    .filter((tx) => tx.status === "PAID" && tx.type === "WALLET_DEPOSIT")
+    .reduce((s, tx) => s + tx.amountCents, 0);
+
+  const TYPE_LABELS: Record<string, string> = {
+    CONTRIBUTION:      t("wallet", "txContrib"),
+    WALLET_DEPOSIT:    t("wallet", "txDeposit"),
+    WALLET_WITHDRAWAL: t("wallet", "txWithdraw"),
+    PAYOUT:            t("wallet", "txPayout"),
+  };
+
+  const DEPOSIT_METHODS = [
+    {
+      href: "/wallet/deposit",
+      icon: CreditCard,
+      label: t("wallet", "bankCard"),
+      sub: t("wallet", "bankCardSub"),
+      badge: t("wallet", "instant"),
+      active: true,
+    },
+    {
+      href: "/wallet/deposit/sepa",
+      icon: Building2,
+      label: t("wallet", "sepa"),
+      sub: t("wallet", "sepaSub"),
+      badge: t("wallet", "days1to3"),
+      active: true,
+    },
+    {
+      href: "/wallet/deposit/mobile-money/initiate",
+      icon: Smartphone,
+      label: t("wallet", "mobileMoney"),
+      sub: t("wallet", "mobileMoneySub"),
+      badge: t("wallet", "instant"),
+      active: true,
+    },
+  ];
 
   return (
-    <MobileShell user={session} title="Wallet">
-      <PageHeading eyebrow="Wallet Kotizy" title={money(balance, walletCurrency)}>
-        Solde disponible — payer vos cotisations en 1 clic.
+    <MobileShell user={session} title={t("wallet", "title")}>
+      <PageHeading eyebrow={t("wallet", "eyebrow")} title={money(balance, walletCurrency)}>
+        {t("wallet", "balanceSub")}
       </PageHeading>
 
       {query.deposit === "success" && (
         <div className="mb-4 flex items-center gap-3 rounded-3xl border border-emerald-300/30 bg-emerald-400/10 p-4">
           <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
-          <p className="text-sm font-bold text-emerald-200">Recharge confirmée. Les fonds sont disponibles sur votre wallet.</p>
+          <p className="text-sm font-bold text-emerald-200">{t("wallet", "depositSuccessSub")}</p>
         </div>
       )}
 
@@ -97,21 +100,21 @@ export default async function WalletPage({
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/15">
             <ArrowDownToLine size={18} className="text-emerald-400" />
           </div>
-          <span className="text-xs font-bold">Déposer</span>
-          <span className="text-[10px] font-bold text-emerald-400">Carte · SEPA · +</span>
+          <span className="text-xs font-bold">{t("wallet", "deposit")}</span>
+          <span className="text-[10px] font-bold text-emerald-400">{t("wallet", "depositSub")}</span>
         </Link>
         <Link href="/wallet/withdraw" className="glass flex flex-col items-center gap-2 rounded-3xl p-4 transition hover:bg-[var(--surface-strong)] active:scale-95">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
             <ArrowUpFromLine size={18} className="text-[var(--text)]" />
           </div>
-          <span className="text-xs font-bold">Retirer</span>
-          <span className="text-[10px] text-[var(--muted)]">Virement SEPA</span>
+          <span className="text-xs font-bold">{t("wallet", "withdraw")}</span>
+          <span className="text-[10px] text-[var(--muted)]">{t("wallet", "withdrawSub")}</span>
         </Link>
       </div>
 
-      {/* Méthodes de dépôt — cliquables */}
+      {/* Méthodes de dépôt */}
       <div className="glass mb-4 rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Alimenter votre wallet</p>
+        <p className="mb-3 text-sm font-black">{t("wallet", "depositMethodsTitle")}</p>
         <div className="space-y-2">
           {DEPOSIT_METHODS.map((m) => {
             const Icon = m.icon;
@@ -148,22 +151,22 @@ export default async function WalletPage({
       {/* Stats */}
       <div className="mb-4 grid grid-cols-2 gap-3">
         <div className="glass rounded-3xl p-4">
-          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">Total cotisé</p>
+          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">{t("wallet", "totalPaid")}</p>
           <p className="text-xl font-black text-emerald-400">{money(paid, walletCurrency)}</p>
         </div>
         <div className="glass rounded-3xl p-4">
-          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">Total déposé</p>
+          <p className="mb-1 text-[10px] font-bold uppercase text-[var(--muted)]">{t("wallet", "deposited")}</p>
           <p className="text-xl font-black text-gold">{money(deposited, walletCurrency)}</p>
         </div>
       </div>
 
       {/* Historique transactions */}
       <div className="glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Historique</p>
+        <p className="mb-3 text-sm font-black">{t("wallet", "history")}</p>
         {transactions.length === 0 ? (
           <div className="py-6 text-center">
             <WalletCards size={24} className="mx-auto mb-2 text-[var(--muted)]" />
-            <p className="text-sm text-[var(--muted)]">Aucune transaction. Déposez des fonds ou cotisez dans un groupe.</p>
+            <p className="text-sm text-[var(--muted)]">{t("wallet", "noTxSub")}</p>
           </div>
         ) : (
           <div className="space-y-3">
