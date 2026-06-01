@@ -80,8 +80,7 @@ export async function createWalletDepositCheckoutSession(input: {
     client_reference_id: input.transactionId,
     success_url: successUrl,
     cancel_url: cancelUrl,
-    // Toutes les méthodes actives sur le compte Stripe : Apple Pay, Google Pay, Link, Klarna, iDEAL…
-    automatic_payment_methods: { enabled: true },
+    payment_method_types: ["card"],
     line_items: [
       {
         quantity: 1,
