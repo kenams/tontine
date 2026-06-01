@@ -3,27 +3,29 @@
 import { UserX, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 type Props = { groupId: string; membershipId: string; memberName: string };
 
 export function ExcludeMemberButton({ groupId, membershipId, memberName }: Props) {
   const [step, setStep] = useState<"idle" | "confirm" | "loading">("idle");
-  const [reason, setReason] = useState("Non-paiement persistant");
+  const [reason, setReason] = useState("");
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function handleExclude() {
     setStep("loading");
     const res = await fetch(`/api/tontines/${groupId}/members/${membershipId}/exclude`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ reason: reason || t("exclude", "defaultReason") }),
     });
     const data = await res.json() as { ok?: boolean; error?: string; message?: string };
     if (data.ok) {
       router.refresh();
       setStep("idle");
     } else {
-      alert(data.error ?? "Erreur.");
+      alert(data.error ?? t("exclude", "errGeneric"));
       setStep("idle");
     }
   }
@@ -33,9 +35,9 @@ export function ExcludeMemberButton({ groupId, membershipId, memberName }: Props
       <button
         onClick={() => setStep("confirm")}
         className="flex items-center gap-1.5 rounded-xl bg-rose-500/10 px-2.5 py-1.5 text-[11px] font-bold text-rose-400 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20"
-        title={`Exclure ${memberName}`}
+        title={`${t("exclude", "btnLabel")} ${memberName}`}
       >
-        <UserX size={12} /> Exclure
+        <UserX size={12} /> {t("exclude", "btnLabel")}
       </button>
     );
   }
@@ -44,20 +46,20 @@ export function ExcludeMemberButton({ groupId, membershipId, memberName }: Props
     return (
       <div className="col-span-full glass rounded-2xl p-3 ring-1 ring-rose-500/20">
         <p className="mb-2 text-xs font-black text-rose-400 flex items-center gap-1.5">
-          <AlertTriangle size={13} /> Exclure {memberName} ?
+          <AlertTriangle size={13} /> {t("exclude", "title")} {memberName} ?
         </p>
         <input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           className="mb-2 w-full rounded-xl border border-white/10 bg-[var(--bg)] px-3 py-2 text-xs text-[var(--text)] outline-none focus:border-emerald-400/40"
-          placeholder="Raison..."
+          placeholder={t("exclude", "reasonPh")}
         />
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => setStep("idle")} className="rounded-xl bg-[var(--surface)] px-3 py-2 text-xs font-bold">
-            Annuler
+            {t("exclude", "cancel")}
           </button>
           <button onClick={handleExclude} className="rounded-xl bg-rose-500 px-3 py-2 text-xs font-bold text-white">
-            Confirmer
+            {t("exclude", "confirm")}
           </button>
         </div>
       </div>

@@ -7,11 +7,13 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
+import { useLanguage } from "@/lib/i18n/context";
 
 const SELECT_CLS = "min-h-12 w-full rounded-2xl border border-white/10 bg-[var(--bg)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-emerald-400/60";
 
 export function CreateTontineForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -39,19 +41,19 @@ export function CreateTontineForm() {
     });
     const data = (await response.json()) as { error?: string; group?: { id: string } };
     setLoading(false);
-    if (!response.ok || !data.group) { setError(data.error ?? "Création impossible."); return; }
+    if (!response.ok || !data.group) { setError(data.error ?? t("createTontine", "errCreation")); return; }
     router.push(`/tontines/${data.group.id}`);
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <Input name="name" placeholder="Nom du groupe (ex: Cercle Famille 2026)" required />
-      <Textarea name="description" placeholder="Objectif du groupe" required />
+      <Input name="name" placeholder={t("createTontine", "nameLabel")} required />
+      <Textarea name="description" placeholder={t("createTontine", "descLabel")} required />
 
       <div className="grid grid-cols-2 gap-3">
-        <Input name="contribution" type="number" min={1} step="0.01" defaultValue={100} placeholder="Cotisation" required />
-        <Input name="maxMembers" type="number" min={3} max={30} defaultValue={8} placeholder="Membres max" required />
+        <Input name="contribution" type="number" min={1} step="0.01" defaultValue={100} placeholder={t("createTontine", "contribLabel")} required />
+        <Input name="maxMembers" type="number" min={3} max={30} defaultValue={8} placeholder={t("createTontine", "membersLabel")} required />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -61,63 +63,57 @@ export function CreateTontineForm() {
           ))}
         </select>
         <select name="frequency" className={SELECT_CLS} defaultValue="MONTHLY" style={{ colorScheme: "dark" }}>
-          <option value="WEEKLY">Hebdomadaire</option>
-          <option value="BIWEEKLY">Bi-mensuelle</option>
-          <option value="MONTHLY">Mensuelle</option>
+          <option value="WEEKLY">{t("createTontine", "weekly")}</option>
+          <option value="BIWEEKLY">{t("createTontine", "biweekly")}</option>
+          <option value="MONTHLY">{t("createTontine", "monthly")}</option>
         </select>
       </div>
 
-      <Textarea name="rules" placeholder="Règles : pénalités, ordre de passage, conditions de sortie..." required />
+      <Textarea name="rules" placeholder={t("createTontine", "rulesLabel")} required />
 
-      {/* Paramètres avancés */}
       <button
         type="button"
         onClick={() => setShowAdvanced((v) => !v)}
         className="flex w-full items-center justify-between rounded-2xl bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--muted)] transition hover:bg-[var(--surface-strong)]"
       >
-        Paramètres avancés
+        {t("createTontine", "advanced")}
         <ChevronDown size={15} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
       </button>
 
       {showAdvanced && (
         <div className="space-y-3 rounded-3xl bg-[var(--surface)] p-4">
-          {/* Score minimum pour rejoindre */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">
-              Score de confiance minimum pour rejoindre
+              {t("createTontine", "minTrustLabel")}
             </label>
             <select name="minTrustScore" className={SELECT_CLS} defaultValue="0" style={{ colorScheme: "dark" }}>
-              <option value="0">Aucun (ouvert à tous)</option>
-              <option value="30">30+ — Bronze minimum</option>
-              <option value="50">50+ — Intermédiaire</option>
-              <option value="70">70+ — Avancé</option>
-              <option value="85">85+ — Gold (cercle premium)</option>
+              <option value="0">{t("createTontine", "minTrustNone")}</option>
+              <option value="30">{t("createTontine", "minTrust30")}</option>
+              <option value="50">{t("createTontine", "minTrust50")}</option>
+              <option value="70">{t("createTontine", "minTrust70")}</option>
+              <option value="85">{t("createTontine", "minTrust85")}</option>
             </select>
-            <p className="mt-1 text-[11px] text-[var(--muted)]">Filtre les membres selon leur historique de paiement.</p>
+            <p className="mt-1 text-[11px] text-[var(--muted)]">{t("createTontine", "minTrustHint")}</p>
           </div>
 
-          {/* Exclusion automatique */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">
-              Exclusion automatique après (jours sans paiement)
+              {t("createTontine", "autoExcludeLabel")}
             </label>
             <select name="autoExcludeDays" className={SELECT_CLS} defaultValue="30" style={{ colorScheme: "dark" }}>
-              <option value="14">14 jours</option>
-              <option value="21">21 jours</option>
-              <option value="30">30 jours (recommandé)</option>
-              <option value="45">45 jours</option>
-              <option value="60">60 jours</option>
+              <option value="14">{t("createTontine", "days14")}</option>
+              <option value="21">{t("createTontine", "days21")}</option>
+              <option value="30">{t("createTontine", "days30")}</option>
+              <option value="45">{t("createTontine", "days45")}</option>
+              <option value="60">{t("createTontine", "days60")}</option>
             </select>
           </div>
 
-          {/* Paiement complet requis */}
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[var(--bg)] px-4 py-3">
             <input type="checkbox" name="requireFullPayment" className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500" />
             <div>
-              <p className="text-sm font-bold">Bloquer le cycle si paiement incomplet</p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted)]">
-                Le round n'avance pas tant que tous les membres actifs n'ont pas cotisé (ou que le fonds d'urgence n'a pas comblé les retards).
-              </p>
+              <p className="text-sm font-bold">{t("createTontine", "blockCycleLabel")}</p>
+              <p className="mt-0.5 text-[11px] text-[var(--muted)]">{t("createTontine", "blockCycleHint")}</p>
             </div>
           </label>
         </div>
@@ -126,7 +122,7 @@ export function CreateTontineForm() {
       {error && <p className="rounded-2xl bg-rose-500/12 px-4 py-3 text-sm text-rose-200">{error}</p>}
 
       <Button disabled={loading} className="w-full">
-        {loading ? "Création..." : "Créer le groupe"}
+        {loading ? t("createTontine", "btnCreating") : t("createTontine", "btnCreate")}
         <ArrowRight size={18} />
       </Button>
     </form>

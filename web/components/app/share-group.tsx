@@ -2,11 +2,13 @@
 
 import { Check, Copy, MessageCircle, Share2 } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 const APP_URL = "https://tontineapp-web.vercel.app";
 
 export function ShareGroupButton({ joinCode, groupName = "ma tontine" }: { joinCode: string; groupName?: string }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   const link = `${APP_URL}/g/${joinCode}`;
   const whatsappMsg = encodeURIComponent(
@@ -34,12 +36,11 @@ export function ShareGroupButton({ joinCode, groupName = "ma tontine" }: { joinC
 
   return (
     <div className="glass rounded-3xl p-4">
-      <p className="mb-2 text-xs font-bold uppercase text-gold">Inviter des membres</p>
+      <p className="mb-2 text-xs font-bold uppercase text-gold">{t("share", "title")}</p>
 
-      {/* Lien cliquable */}
       <div className="mb-3 flex items-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-2">
         <code className="flex-1 truncate text-xs font-bold text-emerald-400">
-          Code : {joinCode}
+          {t("share", "codeLabel")} {joinCode}
         </code>
         <button type="button" onClick={copy} className="shrink-0 text-[var(--muted)] hover:text-[var(--text)] transition">
           {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -47,7 +48,6 @@ export function ShareGroupButton({ joinCode, groupName = "ma tontine" }: { joinC
       </div>
 
       <div className="flex gap-2">
-        {/* WhatsApp */}
         <a
           href={whatsappUrl}
           target="_blank"
@@ -55,17 +55,16 @@ export function ShareGroupButton({ joinCode, groupName = "ma tontine" }: { joinC
           className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 text-sm font-bold text-[#25D366] transition hover:bg-[#25D366]/20"
         >
           <MessageCircle size={16} />
-          WhatsApp
+          {t("share", "whatsapp")}
         </a>
 
-        {/* Partage natif / copie */}
         <button
           type="button"
           onClick={share}
           className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-500/10 py-3 text-sm font-bold text-emerald-400 transition hover:bg-emerald-500/20"
         >
           <Share2 size={16} />
-          Partager
+          {t("share", "share")}
         </button>
       </div>
     </div>

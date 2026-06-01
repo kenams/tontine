@@ -2,6 +2,7 @@
 
 import { Bell, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 type Pref = { notifEcheance: boolean; notifChat: boolean; mobileMoneyTest: boolean };
 
@@ -28,6 +29,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 
 export function SettingsToggles() {
   const [prefs, setPrefs] = useState<Pref>(DEFAULT);
+  const { t } = useLanguage();
 
   useEffect(() => { setPrefs(loadPrefs()); }, []);
 
@@ -40,9 +42,9 @@ export function SettingsToggles() {
   }
 
   const items = [
-    { key: "notifEcheance" as keyof Pref, icon: Bell, title: "Rappels d'échéance", desc: "Notification avant chaque date de cotisation" },
-    { key: "notifChat" as keyof Pref, icon: Bell, title: "Notifications chat", desc: "Messages reçus dans les groupes" },
-    { key: "mobileMoneyTest" as keyof Pref, icon: Smartphone, title: "Mobile Money (test)", desc: "Wave, Orange Money, MTN MoMo en mode sandbox" },
+    { key: "notifEcheance" as keyof Pref, icon: Bell, title: t("settingsToggles", "deadlineTitle"), desc: t("settingsToggles", "deadlineDesc") },
+    { key: "notifChat" as keyof Pref, icon: Bell, title: t("settingsToggles", "chatTitle"), desc: t("settingsToggles", "chatDesc") },
+    { key: "mobileMoneyTest" as keyof Pref, icon: Smartphone, title: t("settingsToggles", "mobileMoneyTitle"), desc: t("settingsToggles", "mobileMoneyDesc") },
   ];
 
   return (

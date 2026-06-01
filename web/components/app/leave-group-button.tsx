@@ -3,6 +3,7 @@
 import { LogOut, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 type Props = { groupId: string; groupName: string };
 
@@ -10,8 +11,8 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
   const [step, setStep] = useState<"idle" | "confirm" | "loading" | "debt">("idle");
   const [debtCents, setDebtCents] = useState(0);
   const [debtMsg, setDebtMsg] = useState("");
-  const [currency, setCurrency] = useState("EUR");
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function handleLeave() {
     setStep("loading");
@@ -30,7 +31,7 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
       router.push("/tontines");
       router.refresh();
     } else {
-      alert(data.error ?? "Erreur.");
+      alert(data.error ?? t("leave", "errGeneric"));
       setStep("idle");
     }
   }
@@ -40,10 +41,9 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
     const res = await fetch(`/api/tontines/${groupId}/repay-debt`, { method: "POST" });
     const data = await res.json() as { ok?: boolean; error?: string };
     if (data.ok) {
-      // Réessayer de partir après remboursement
       await handleLeave();
     } else {
-      alert(data.error ?? "Solde insuffisant.");
+      alert(data.error ?? t("leave", "insufficientMsg"));
       setStep("debt");
     }
   }
@@ -54,7 +54,7 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
         onClick={() => setStep("confirm")}
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-400 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20"
       >
-        <LogOut size={15} /> Quitter ce groupe
+        <LogOut size={15} /> {t("leave", "btnLabel")}
       </button>
     );
   }
@@ -63,17 +63,15 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
     return (
       <div className="glass rounded-3xl p-4 ring-1 ring-rose-500/20">
         <div className="mb-3 flex items-center gap-2 text-sm font-black text-rose-400">
-          <AlertTriangle size={16} /> Quitter "{groupName}" ?
+          <AlertTriangle size={16} /> {t("leave", "confirm")} "{groupName}" ?
         </div>
-        <p className="mb-4 text-xs text-[var(--muted)] leading-5">
-          Si vous avez déjà reçu le pot, une dette sera calculée. Le cycle continue sans vous.
-        </p>
+        <p className="mb-4 text-xs text-[var(--muted)] leading-5">{t("leave", "warning")}</p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => setStep("idle")} className="rounded-2xl bg-[var(--surface)] px-4 py-2.5 text-sm font-bold transition hover:bg-[var(--surface-strong)]">
-            Annuler
+            {t("leave", "cancel")}
           </button>
           <button onClick={handleLeave} className="rounded-2xl bg-rose-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-rose-400">
-            Confirmer
+            {t("leave", "confirm")}
           </button>
         </div>
       </div>
@@ -84,7 +82,7 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
     return (
       <div className="flex items-center justify-center rounded-2xl bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
-        Traitement...
+        {t("leave", "processing")}
       </div>
     );
   }
@@ -93,15 +91,15 @@ export function LeaveGroupButton({ groupId, groupName }: Props) {
     return (
       <div className="glass rounded-3xl p-4 ring-1 ring-gold/20">
         <div className="mb-3 flex items-center gap-2 text-sm font-black text-gold">
-          <AlertTriangle size={16} /> Remboursement requis
+          <AlertTriangle size={16} /> {t("leave", "debtTitle")}
         </div>
         <p className="mb-4 text-sm text-[var(--muted)] leading-5">{debtMsg}</p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => setStep("idle")} className="rounded-2xl bg-[var(--surface)] px-4 py-2.5 text-sm font-bold transition hover:bg-[var(--surface-strong)]">
-            Plus tard
+            {t("leave", "later")}
           </button>
           <button onClick={handleRepay} className="rounded-2xl bg-gold px-4 py-2.5 text-sm font-bold text-ink transition hover:brightness-110">
-            Solder &amp; partir
+            {t("leave", "settleAndLeave")}
           </button>
         </div>
       </div>

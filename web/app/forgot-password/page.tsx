@@ -7,11 +7,13 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MotionPage } from "@/components/ui/motion";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,29 +40,29 @@ export default function ForgotPasswordPage() {
         <div className="glass rounded-[1.75rem] p-5">
           <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
             <Sparkles size={14} />
-            Récupération de compte
+            {t("forgotPwd", "badge")}
           </p>
-          <h1 className="mt-2 text-3xl font-black">Mot de passe oublié</h1>
+          <h1 className="mt-2 text-3xl font-black">{t("forgotPwd", "title")}</h1>
 
           {sent ? (
             <div className="mt-6 space-y-4">
               <div className="rounded-2xl bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
-                Si un compte existe avec cet email, un lien de réinitialisation vous a été envoyé. Vérifiez vos spams.
+                {t("forgotPwd", "sent")}
               </div>
               <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-black text-[var(--text)] ring-1 ring-white/10">
-                <ArrowLeft size={16} /> Retour connexion
+                <ArrowLeft size={16} /> {t("forgotPwd", "backLogin")}
               </Link>
             </div>
           ) : (
             <form onSubmit={submit} className="mt-6 space-y-3">
-              <p className="text-sm leading-6 text-smoke">Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+              <p className="text-sm leading-6 text-smoke">{t("forgotPwd", "instructions")}</p>
               <Input name="email" type="email" placeholder="Email" autoComplete="email" required />
               {error ? <p className="rounded-2xl bg-rose-500/12 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
               <Button disabled={loading} className="w-full">
-                {loading ? "Envoi..." : "Envoyer le lien"} <ArrowRight size={18} />
+                {loading ? t("forgotPwd", "btnSending") : t("forgotPwd", "btnSend")} <ArrowRight size={18} />
               </Button>
               <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/5 text-sm font-bold text-smoke">
-                <ArrowLeft size={16} /> Retour
+                <ArrowLeft size={16} /> {t("forgotPwd", "back")}
               </Link>
             </form>
           )}

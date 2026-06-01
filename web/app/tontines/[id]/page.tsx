@@ -1,6 +1,7 @@
 import { AlertTriangle, CalendarClock, PiggyBank, ShieldCheck, Users } from "lucide-react";
 import { getTierFromCents } from "@/lib/tiers";
 import { notFound } from "next/navigation";
+import { getServerT } from "@/lib/i18n/server";
 
 import { AutoPayToggle } from "@/components/app/autopay-toggle";
 import { DebtAlert } from "@/components/app/debt-alert";
@@ -39,6 +40,7 @@ export default async function TontineDetailPage({
     calcMemberDebt(session.userId, id),
   ]);
   if (!detail || (!detail.isMember && session.role !== "ADMIN")) notFound();
+  const { t } = await getServerT();
   const { group } = detail;
   const paid = group.contributions.filter((item) => item.status === "PAID").length;
   const progress = pct(paid, group.memberships.length || group.maxMembers);
@@ -54,7 +56,7 @@ export default async function TontineDetailPage({
           <div className="mb-4 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black"
               style={{ background: tier.bg, color: tier.color, border: `1px solid ${tier.border}` }}>
-              {tier.emoji} Cercle {tier.name}
+              {tier.emoji} {t("tontineDetail", "circle")} {tier.name}
             </span>
             <span className="text-xs text-[var(--muted)]">{tier.origin} · {tier.tagline}</span>
           </div>
@@ -66,7 +68,7 @@ export default async function TontineDetailPage({
 
       {query.payment === "success" ? (
         <div className="mb-4 rounded-3xl border border-emerald-300/30 bg-emerald-400/10 p-4 text-sm font-bold text-emerald-200">
-          Paiement Stripe recu. La cotisation est synchronisee automatiquement.
+          {t("tontineDetail", "paymentOk")}
         </div>
       ) : null}
 
@@ -74,28 +76,28 @@ export default async function TontineDetailPage({
 
       {query.payment === "cancelled" ? (
         <div className="mb-4 rounded-3xl border border-gold/30 bg-gold/10 p-4 text-sm font-bold text-gold">
-          Paiement annule. Vous pouvez relancer Stripe, carte ou Mobile Money.
+          {t("tontineDetail", "paymentCancelled")}
         </div>
       ) : null}
 
       <div className="mb-4 glass rounded-[1.75rem] p-4">
         <div className="mb-3 flex items-center justify-between">
           <StatusBadge value={group.status} />
-          <p className="text-xs text-smoke">Round {group.currentRound}</p>
+          <p className="text-xs text-smoke">{t("tontineDetail", "round")} {group.currentRound}</p>
         </div>
         <p className="text-4xl font-black">{money(group.contributionCents, group.currency)}</p>
-        <p className="mt-1 text-sm text-smoke">Prochaine cotisation le {dateShort(group.nextDueAt)}</p>
+        <p className="mt-1 text-sm text-smoke">{t("tontineDetail", "nextContrib")} {dateShort(group.nextDueAt)}</p>
         <div className="mt-5">
           <ProgressBar value={progress} />
-          <p className="mt-2 text-xs text-smoke">{progress}% du cycle collecte</p>
+          <p className="mt-2 text-xs text-smoke">{progress}% {t("tontineDetail", "cycleCollected")}</p>
         </div>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <StatCard label="Membres" value={`${group.memberships.length}/${group.maxMembers}`} icon={<Users size={18} />} />
-        <StatCard label="Retards" value={String(late)} icon={<AlertTriangle size={18} />} />
-        <StatCard label="Urgence" value={money(group.emergencyFund?.balanceCents ?? 0, group.currency)} icon={<PiggyBank size={18} />} />
-        <StatCard label="Penalite" value={money(group.latePenaltyCents, group.currency)} icon={<CalendarClock size={18} />} />
+        <StatCard label={t("tontineDetail", "members")} value={`${group.memberships.length}/${group.maxMembers}`} icon={<Users size={18} />} />
+        <StatCard label={t("tontineDetail", "latePayments")} value={String(late)} icon={<AlertTriangle size={18} />} />
+        <StatCard label={t("tontineDetail", "emergency")} value={money(group.emergencyFund?.balanceCents ?? 0, group.currency)} icon={<PiggyBank size={18} />} />
+        <StatCard label={t("tontineDetail", "penalty")} value={money(group.latePenaltyCents, group.currency)} icon={<CalendarClock size={18} />} />
       </div>
 
       {/* Alerte dette si applicable */}
@@ -125,8 +127,8 @@ export default async function TontineDetailPage({
 
       <div className="mb-4 glass rounded-3xl p-4">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-black">Ordre de passage</p>
-          <p className="text-xs text-[var(--muted)]">{activeMembers.length} actif{activeMembers.length > 1 ? "s" : ""}</p>
+          <p className="text-sm font-black">{t("tontineDetail", "payoutOrder")}</p>
+          <p className="text-xs text-[var(--muted)]">{activeMembers.length} {activeMembers.length > 1 ? t("tontineDetail", "actives") : t("tontineDetail", "active")}</p>
         </div>
         <div className="space-y-3">
           {group.memberships.map((membership) => {
@@ -143,8 +145,8 @@ export default async function TontineDetailPage({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold">{membership.payoutOrder}. {membership.user.fullName}</p>
                     <p className="text-xs text-smoke">
-                      Score {membership.user.trustScore?.score ?? 0}/100
-                      {mDebt > 0 && <span className="ml-1 text-gold">· Dette {money(mDebt, group.currency)}</span>}
+                      {t("tontineDetail", "score")} {membership.user.trustScore?.score ?? 0}/100
+                      {mDebt > 0 && <span className="ml-1 text-gold">· {t("tontineDetail", "debt")} {money(mDebt, group.currency)}</span>}
                     </p>
                   </div>
                 </div>
@@ -167,23 +169,23 @@ export default async function TontineDetailPage({
       <div className="mb-4 glass rounded-3xl p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-black">
           <ShieldCheck size={18} className="text-gold" />
-          Règles &amp; Fonds de solidarité
+          {t("tontineDetail", "rulesTitle")}
         </div>
         <p className="text-sm leading-6 text-smoke">{group.rules}</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-2xl bg-emerald-500/8 p-3 ring-1 ring-emerald-500/15">
-            <p className="text-[10px] font-bold uppercase text-emerald-400/60">Fonds urgence</p>
+            <p className="text-[10px] font-bold uppercase text-emerald-400/60">{t("tontineDetail", "emergencyFund")}</p>
             <p className="text-lg font-black text-emerald-400">{money(group.emergencyFund?.balanceCents ?? 0, group.currency)}</p>
-            <p className="text-[10px] text-[var(--muted)]">Couvre les retards</p>
+            <p className="text-[10px] text-[var(--muted)]">{t("tontineDetail", "coversLate")}</p>
           </div>
           <div className="rounded-2xl bg-white/[0.05] p-3 ring-1 ring-white/8">
-            <p className="text-[10px] font-bold uppercase text-[var(--muted)]">Exclusion auto</p>
+            <p className="text-[10px] font-bold uppercase text-[var(--muted)]">{t("tontineDetail", "autoExclude")}</p>
             <p className="text-lg font-black">{(group as unknown as { autoExcludeDays?: number }).autoExcludeDays ?? 30}j</p>
-            <p className="text-[10px] text-[var(--muted)]">Sans paiement</p>
+            <p className="text-[10px] text-[var(--muted)]">{t("tontineDetail", "noPayment")}</p>
           </div>
         </div>
         <p className="mt-3 text-[11px] text-[var(--muted)]">
-          5% de chaque cotisation alimente le fonds. En cas de retard, le fonds avance la mise. Le membre doit rembourser sous 30 jours, sinon exclusion automatique.
+          {t("tontineDetail", "fundExplain")}
         </p>
       </div>
 
@@ -210,7 +212,7 @@ export default async function TontineDetailPage({
       )}
 
       <div className="mb-4 glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Timeline activite</p>
+        <p className="mb-3 text-sm font-black">{t("tontineDetail", "timeline")}</p>
         <div className="space-y-3">
           {group.transactions.slice(0, 5).map((transaction) => (
             <div key={transaction.id} className="flex items-center justify-between gap-3">
@@ -228,7 +230,7 @@ export default async function TontineDetailPage({
       </div>
 
       <div className="mb-4 glass rounded-3xl p-4">
-        <p className="mb-3 text-sm font-black">Chat groupe</p>
+        <p className="mb-3 text-sm font-black">{t("tontineDetail", "groupChat")}</p>
         <div className="space-y-3">
           {group.messages.map((message) => (
             <div key={message.id} className="rounded-2xl bg-white/[0.08] p-3">

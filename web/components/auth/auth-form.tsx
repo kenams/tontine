@@ -8,6 +8,7 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MotionPage } from "@/components/ui/motion";
+import { useLanguage } from "@/lib/i18n/context";
 
 type Props = { mode: "login" | "register"; admin?: boolean };
 
@@ -21,16 +22,17 @@ function passwordScore(pwd: string) {
   return score;
 }
 
-const scoreLabel = ["", "Trop court", "Faible", "Moyen", "Fort", "Très fort"];
 const scoreColor = ["", "bg-rose-500", "bg-orange-400", "bg-gold", "bg-emerald-400", "bg-emerald-500"];
 
 function PasswordStrength({ password }: { password: string }) {
+  const { t } = useLanguage();
   if (!password) return null;
   const score = passwordScore(password);
+  const scoreLabels = ["", t("authForm", "tooShort"), t("authForm", "weak"), t("authForm", "medium"), t("authForm", "strong"), t("authForm", "veryStrong")];
   const checks = [
-    { ok: password.length >= 8, label: "8 caractères min." },
-    { ok: /[A-Z]/.test(password), label: "1 majuscule" },
-    { ok: /[0-9]/.test(password), label: "1 chiffre" },
+    { ok: password.length >= 8, label: t("authForm", "check8chars") },
+    { ok: /[A-Z]/.test(password), label: t("authForm", "checkUpper") },
+    { ok: /[0-9]/.test(password), label: t("authForm", "checkDigit") },
   ];
   return (
     <div className="space-y-2 rounded-2xl bg-[var(--surface)] px-4 py-3">
@@ -40,7 +42,7 @@ function PasswordStrength({ password }: { password: string }) {
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= score ? scoreColor[score] : "bg-white/10"}`} />
           ))}
         </div>
-        <span className="text-[11px] font-bold text-[var(--muted)]">{scoreLabel[score] ?? ""}</span>
+        <span className="text-[11px] font-bold text-[var(--muted)]">{scoreLabels[score] ?? ""}</span>
       </div>
       <div className="flex gap-3">
         {checks.map((c) => (
@@ -59,6 +61,7 @@ function PasswordStrength({ password }: { password: string }) {
 function PasswordInput({ name, placeholder, autoComplete, onChange }: {
   name: string; placeholder: string; autoComplete: string; onChange?: (v: string) => void;
 }) {
+  const { t } = useLanguage();
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -76,7 +79,7 @@ function PasswordInput({ name, placeholder, autoComplete, onChange }: {
         tabIndex={-1}
         onClick={() => setShow((v) => !v)}
         className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]"
-        aria-label={show ? "Masquer" : "Afficher"}
+        aria-label={show ? t("authForm", "hidePwd") : t("authForm", "showPwd")}
       >
         {show ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
@@ -86,6 +89,7 @@ function PasswordInput({ name, placeholder, autoComplete, onChange }: {
 
 export function AuthForm({ mode, admin = false }: Props) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [quickLoading, setQuickLoading] = useState<"user" | "admin" | null>(null);
@@ -107,11 +111,11 @@ export function AuthForm({ mode, admin = false }: Props) {
         body: JSON.stringify(creds),
       });
       const data = await res.json() as { error?: string; redirectTo?: string };
-      if (!res.ok) { setError(data.error ?? "Erreur connexion rapide."); return; }
+      if (!res.ok) { setError(data.error ?? t("authForm", "errQuickLogin")); return; }
       router.push(data.redirectTo ?? "/dashboard");
       router.refresh();
     } catch {
-      setError("Connexion impossible. Vérifiez votre réseau.");
+      setError(t("authForm", "errNetwork"));
     } finally {
       setQuickLoading(null);
     }
@@ -124,7 +128,7 @@ export function AuthForm({ mode, admin = false }: Props) {
 
     if (mode === "register") {
       const pwd = String(fd.get("password") ?? "");
-      if (passwordScore(pwd) < 3) { setError("Mot de passe trop faible. Ajoutez une majuscule et un chiffre."); return; }
+      if (passwordScore(pwd) < 3) { setError(t("authForm", "errWeakPwd")); return; }
     }
 
     setLoading(true);
@@ -150,12 +154,12 @@ export function AuthForm({ mode, admin = false }: Props) {
       let data: { error?: string; redirectTo?: string } = {};
       try { data = await res.json(); } catch { /* non-JSON */ }
 
-      if (!res.ok) { setError(data.error ?? `Erreur ${res.status}. Veuillez réessayer.`); return; }
+      if (!res.ok) { setError(data.error ?? `${t("authForm", "errGeneric")}`); return; }
       const dest = nextUrl || (admin ? "/admin" : data.redirectTo ?? "/dashboard");
       router.push(dest);
       router.refresh();
     } catch {
-      setError("Connexion impossible. Vérifiez votre réseau et réessayez.");
+      setError(t("authForm", "errNetwork2"));
     } finally {
       setLoading(false);
     }
@@ -173,28 +177,28 @@ export function AuthForm({ mode, admin = false }: Props) {
           <div className="mb-6">
             <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
               {admin ? <ShieldCheck size={14} /> : mode === "register" ? <Lock size={14} /> : <Sparkles size={14} />}
-              {admin ? "Backoffice sécurisé" : mode === "register" ? "Inscription en 30 secondes" : "Mobile money ready"}
+              {admin ? t("authForm", "badgeAdmin") : mode === "register" ? t("authForm", "badgeRegister") : t("authForm", "badgeLogin")}
             </p>
             <h1 className="text-3xl font-black">
-              {mode === "login" ? "Connexion" : "Créer mon compte"}
+              {mode === "login" ? t("authForm", "titleLogin") : t("authForm", "titleRegister")}
             </h1>
             <p className="mt-1 text-sm text-[var(--muted)]">
               {admin
-                ? "Accès admin avec RBAC et audit logs."
+                ? t("authForm", "subtitleAdmin")
                 : mode === "register"
-                  ? "Rejoignez le cercle. Gratuit, sans CB."
-                  : "Wallet, tontines et score de confiance."}
+                  ? t("authForm", "subtitleRegister")
+                  : t("authForm", "subtitleLogin")}
             </p>
           </div>
 
           <form onSubmit={submit} className="space-y-3">
             {mode === "register" && (
-              <Input name="fullName" placeholder="Votre prénom et nom" autoComplete="name" required />
+              <Input name="fullName" placeholder={t("authForm", "placeholderName")} autoComplete="name" required />
             )}
-            <Input name="email" type="email" placeholder="Adresse email" autoComplete="email" required />
+            <Input name="email" type="email" placeholder={t("authForm", "placeholderEmail")} autoComplete="email" required />
             <PasswordInput
               name="password"
-              placeholder="Mot de passe"
+              placeholder={t("authForm", "placeholderPwd")}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               onChange={mode === "register" ? setPassword : undefined}
             />
@@ -204,11 +208,11 @@ export function AuthForm({ mode, admin = false }: Props) {
               <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[var(--surface)] px-4 py-3 cursor-pointer">
                 <input type="checkbox" name="cgu" required className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500" />
                 <span className="text-xs text-[var(--muted)] leading-relaxed">
-                  J'accepte les{" "}
-                  <Link href="/legal/cgu" target="_blank" className="text-emerald-400 hover:underline font-bold">CGU</Link>
-                  {" "}et la{" "}
-                  <Link href="/legal/confidentialite" target="_blank" className="text-emerald-400 hover:underline font-bold">politique de confidentialité</Link>.
-                  {" "}18 ans minimum.
+                  {t("authForm", "cguText")}{" "}
+                  <Link href="/legal/cgu" target="_blank" className="text-emerald-400 hover:underline font-bold">{t("authForm", "cguLink")}</Link>
+                  {" "}{t("authForm", "andThe")}{" "}
+                  <Link href="/legal/confidentialite" target="_blank" className="text-emerald-400 hover:underline font-bold">{t("authForm", "privacyLink")}</Link>.
+                  {" "}{t("authForm", "ageMin")}
                 </span>
               </label>
             )}
@@ -216,7 +220,7 @@ export function AuthForm({ mode, admin = false }: Props) {
             {mode === "login" && (
               <div className="text-right">
                 <Link href="/forgot-password" className="text-xs text-[var(--muted)] hover:text-emerald-400 transition-colors">
-                  Mot de passe oublié ?
+                  {t("authForm", "forgotPwd")}
                 </Link>
               </div>
             )}
@@ -229,7 +233,7 @@ export function AuthForm({ mode, admin = false }: Props) {
             )}
 
             <Button disabled={loading} className="w-full">
-              {loading ? "Traitement..." : mode === "login" ? "Se connecter" : "Rejoindre le cercle"}
+              {loading ? t("authForm", "btnLoading") : mode === "login" ? t("authForm", "btnLogin") : t("authForm", "btnRegister")}
               <ArrowRight size={18} />
             </Button>
           </form>
@@ -237,14 +241,14 @@ export function AuthForm({ mode, admin = false }: Props) {
           {mode === "register" && (
             <p className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">
               <ShieldCheck size={14} className="shrink-0 text-emerald-400" />
-              Gratuit · Sans CB · Données chiffrées · Résiliable à tout moment
+              {t("authForm", "guarantee")}
             </p>
           )}
 
           {mode === "login" && (
             <div className="mt-5 space-y-2">
               <p className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)]">
-                <Zap size={12} className="text-gold" /> Connexion rapide démo
+                <Zap size={12} className="text-gold" /> {t("authForm", "demoLabel")}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -253,7 +257,7 @@ export function AuthForm({ mode, admin = false }: Props) {
                   disabled={quickLoading !== null}
                   className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] text-xs font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)] disabled:opacity-50"
                 >
-                  {quickLoading === "user" ? "..." : "👤 Utilisateur"}
+                  {quickLoading === "user" ? "..." : t("authForm", "demoUser")}
                 </button>
                 <button
                   type="button"
@@ -261,7 +265,7 @@ export function AuthForm({ mode, admin = false }: Props) {
                   disabled={quickLoading !== null}
                   className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-gold/10 text-xs font-bold text-gold ring-1 ring-gold/20 transition hover:bg-gold/20 disabled:opacity-50"
                 >
-                  {quickLoading === "admin" ? "..." : "🛡️ Admin"}
+                  {quickLoading === "admin" ? "..." : t("authForm", "demoAdmin")}
                 </button>
               </div>
             </div>
@@ -270,9 +274,9 @@ export function AuthForm({ mode, admin = false }: Props) {
 
         <div className="mt-5 text-center text-sm text-[var(--muted)]">
           {mode === "login" ? (
-            <>Pas de compte ?{" "}<Link className="font-bold text-emerald-400" href="/register">Inscription gratuite</Link></>
+            <>{t("authForm", "noAccount")}{" "}<Link className="font-bold text-emerald-400" href="/register">{t("authForm", "signupFree")}</Link></>
           ) : (
-            <>Déjà inscrit ?{" "}<Link className="font-bold text-emerald-400" href="/login">Connexion</Link></>
+            <>{t("authForm", "alreadyAccount")}{" "}<Link className="font-bold text-emerald-400" href="/login">{t("authForm", "signinLink")}</Link></>
           )}
         </div>
       </div>

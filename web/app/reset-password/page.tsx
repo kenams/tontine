@@ -8,6 +8,7 @@ import { type FormEvent, Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MotionPage } from "@/components/ui/motion";
+import { useLanguage } from "@/lib/i18n/context";
 
 function ResetForm() {
   const params = useSearchParams();
@@ -15,13 +16,14 @@ function ResetForm() {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const password = String(fd.get("password") ?? "");
     const confirm = String(fd.get("confirm") ?? "");
-    if (password !== confirm) { setError("Les mots de passe ne correspondent pas."); return; }
+    if (password !== confirm) { setError(t("resetPwd", "errMismatch")); return; }
     setLoading(true);
     setError(null);
     const res = await fetch("/api/auth/reset-password", {
@@ -31,37 +33,38 @@ function ResetForm() {
     });
     const data = await res.json() as { error?: string };
     setLoading(false);
-    if (!res.ok) { setError(data.error ?? "Erreur lors de la réinitialisation."); return; }
+    if (!res.ok) { setError(data.error ?? t("resetPwd", "errReset")); return; }
     setDone(true);
   }
 
   if (!token) {
-    return <p className="text-sm text-rose-300">Lien invalide. Demandez un nouveau lien de réinitialisation.</p>;
+    return <p className="text-sm text-rose-300">{t("resetPwd", "invalidLink")}</p>;
   }
 
   return done ? (
     <div className="mt-6 space-y-4">
       <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-4 text-sm font-bold text-emerald-200">
-        <CheckCircle size={20} /> Mot de passe mis à jour avec succès.
+        <CheckCircle size={20} /> {t("resetPwd", "successMsg")}
       </div>
       <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-sm font-black text-ink shadow-glow">
-        Se connecter <ArrowRight size={16} />
+        {t("resetPwd", "btnLogin")} <ArrowRight size={16} />
       </Link>
     </div>
   ) : (
     <form onSubmit={submit} className="mt-6 space-y-3">
-      <p className="text-sm leading-6 text-smoke">Choisissez un nouveau mot de passe (min. 8 caractères, 1 majuscule, 1 chiffre).</p>
-      <Input name="password" type="password" placeholder="Nouveau mot de passe" autoComplete="new-password" required />
-      <Input name="confirm" type="password" placeholder="Confirmer le mot de passe" autoComplete="new-password" required />
+      <p className="text-sm leading-6 text-smoke">{t("resetPwd", "instructions")}</p>
+      <Input name="password" type="password" placeholder={t("resetPwd", "placeholderNew")} autoComplete="new-password" required />
+      <Input name="confirm" type="password" placeholder={t("resetPwd", "placeholderConfirm")} autoComplete="new-password" required />
       {error ? <p className="rounded-2xl bg-rose-500/12 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
       <Button disabled={loading} className="w-full">
-        {loading ? "Enregistrement..." : "Enregistrer"} <ArrowRight size={18} />
+        {loading ? t("resetPwd", "btnSaving") : t("resetPwd", "btnSave")} <ArrowRight size={18} />
       </Button>
     </form>
   );
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useLanguage();
   return (
     <MotionPage>
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
@@ -71,10 +74,10 @@ export default function ResetPasswordPage() {
         </Link>
         <div className="glass rounded-[1.75rem] p-5">
           <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
-            <Sparkles size={14} /> Sécurité compte
+            <Sparkles size={14} /> {t("resetPwd", "badge")}
           </p>
-          <h1 className="mt-2 text-3xl font-black">Nouveau mot de passe</h1>
-          <Suspense fallback={<p className="mt-6 text-sm text-smoke">Chargement...</p>}>
+          <h1 className="mt-2 text-3xl font-black">{t("resetPwd", "title")}</h1>
+          <Suspense fallback={<p className="mt-6 text-sm text-smoke">{t("resetPwd", "loading")}</p>}>
             <ResetForm />
           </Suspense>
         </div>

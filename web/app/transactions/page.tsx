@@ -1,14 +1,13 @@
-import { ArrowDownToLine, ArrowUpFromLine, ReceiptText } from "lucide-react";
-
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
 import { TransactionList } from "@/components/app/transaction-list";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerT } from "@/lib/i18n/server";
 
 export default async function TransactionsPage() {
   const session = await requireUser();
+  const { t } = await getServerT();
   const transactions = await prisma.transaction.findMany({
     where: { userId: session.userId },
     include: { tontineGroup: true },
@@ -17,9 +16,9 @@ export default async function TransactionsPage() {
   });
 
   return (
-    <MobileShell user={session} title="Transactions">
-      <PageHeading eyebrow="Historique" title="Transactions">
-        Cotisations, dépôts, retraits et paiements.
+    <MobileShell user={session} title={t("txPage", "navTitle")}>
+      <PageHeading eyebrow={t("txPage", "eyebrow")} title={t("txPage", "title")}>
+        {t("txPage", "subtitle")}
       </PageHeading>
       <TransactionList transactions={transactions} />
     </MobileShell>

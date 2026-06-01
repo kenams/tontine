@@ -2,6 +2,7 @@
 
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 const VAPID_PUBLIC_KEY = "BFfhNfiQk-domnclYRatx6tTSod-8-FhOag1z26NjsnBOmLB3j5kOov1C1Tl2Yfp2lSY8-N7uA0gDY4wNRW3dy4";
 
@@ -14,6 +15,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function PushSubscribeButton() {
   const [status, setStatus] = useState<"idle" | "subscribed" | "denied" | "loading" | "unsupported">("idle");
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -70,39 +72,33 @@ export function PushSubscribeButton() {
 
   if (status === "unsupported") return null;
 
+  const desc = status === "subscribed" ? t("push", "enabled")
+    : status === "denied" ? t("push", "blocked")
+    : t("push", "desc");
+
   return (
-    <div className="glass flex items-center gap-3 rounded-3xl p-4">
+    <div className="glass mb-3 flex items-center gap-3 rounded-3xl p-4">
       <div className={`grid h-11 w-11 place-items-center rounded-2xl ${status === "subscribed" ? "bg-emerald-500/15" : "bg-white/10"}`}>
         {status === "subscribed"
           ? <Bell size={18} className="text-emerald-400" />
           : <BellOff size={18} className="text-[var(--muted)]" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-black">Notifications push</p>
-        <p className="text-sm text-smoke">
-          {status === "subscribed" ? "Activées sur cet appareil" :
-           status === "denied" ? "Bloquées dans le navigateur" :
-           "Rappels d'échéance et payouts"}
-        </p>
+        <p className="font-black">{t("push", "title")}</p>
+        <p className="text-sm text-smoke">{desc}</p>
       </div>
       {status === "loading"
         ? <Loader2 size={18} className="animate-spin text-[var(--muted)]" />
         : status === "subscribed"
         ? (
-          <button
-            onClick={unsubscribe}
-            className="relative h-7 w-12 rounded-full bg-emerald-500 transition-colors"
-          >
+          <button onClick={unsubscribe} className="relative h-7 w-12 rounded-full bg-emerald-500 transition-colors">
             <span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white shadow transition-all" />
           </button>
         )
         : status === "denied"
-        ? <span className="text-xs text-[var(--muted)]">Bloqué</span>
+        ? <span className="text-xs text-[var(--muted)]">{t("push", "blockedLabel")}</span>
         : (
-          <button
-            onClick={subscribe}
-            className="relative h-7 w-12 rounded-full bg-white/20 transition-colors"
-          >
+          <button onClick={subscribe} className="relative h-7 w-12 rounded-full bg-white/20 transition-colors">
             <span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-all" />
           </button>
         )

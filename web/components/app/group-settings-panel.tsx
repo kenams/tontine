@@ -3,6 +3,7 @@
 import { Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 type Props = {
   groupId: string;
@@ -22,6 +23,7 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
   const [saved, setSaved] = useState(false);
   const [vals, setVals] = useState(current);
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function save() {
     setLoading(true);
@@ -45,40 +47,40 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between text-sm font-black"
       >
-        <span className="flex items-center gap-2"><Settings size={16} className="text-[var(--muted)]" /> Paramètres admin</span>
-        <span className="text-xs text-[var(--muted)]">{open ? "Fermer" : "Modifier"}</span>
+        <span className="flex items-center gap-2"><Settings size={16} className="text-[var(--muted)]" /> {t("groupSettings", "title")}</span>
+        <span className="text-xs text-[var(--muted)]">{open ? t("groupSettings", "close") : t("groupSettings", "edit")}</span>
       </button>
 
       {open && (
         <div className="mt-4 space-y-3">
           <div>
-            <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">Score min. pour rejoindre</label>
+            <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">{t("groupSettings", "minTrustLabel")}</label>
             <select className={SELECT_CLS} value={vals.minTrustScore} onChange={(e) => setVals({ ...vals, minTrustScore: Number(e.target.value) })} style={{ colorScheme: "dark" }}>
-              <option value={0}>Aucun</option>
-              <option value={30}>30+ Bronze</option>
-              <option value={50}>50+ Intermédiaire</option>
-              <option value={70}>70+ Avancé</option>
-              <option value={85}>85+ Gold</option>
+              <option value={0}>{t("groupSettings", "minTrustNone")}</option>
+              <option value={30}>{t("groupSettings", "minTrust30")}</option>
+              <option value={50}>{t("groupSettings", "minTrust50")}</option>
+              <option value={70}>{t("groupSettings", "minTrust70")}</option>
+              <option value={85}>{t("groupSettings", "minTrust85")}</option>
             </select>
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">Exclusion automatique</label>
+            <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">{t("groupSettings", "autoExcludeLabel")}</label>
             <select className={SELECT_CLS} value={vals.autoExcludeDays} onChange={(e) => setVals({ ...vals, autoExcludeDays: Number(e.target.value) })} style={{ colorScheme: "dark" }}>
-              <option value={14}>14 jours</option>
-              <option value={21}>21 jours</option>
-              <option value={30}>30 jours</option>
-              <option value={45}>45 jours</option>
-              <option value={60}>60 jours</option>
+              <option value={14}>{t("groupSettings", "days14")}</option>
+              <option value={21}>{t("groupSettings", "days21")}</option>
+              <option value={30}>{t("groupSettings", "days30")}</option>
+              <option value={45}>{t("groupSettings", "days45")}</option>
+              <option value={60}>{t("groupSettings", "days60")}</option>
             </select>
           </div>
 
           <div>
             <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">
-              Pénalité retard ({currency})
+              {t("groupSettings", "penaltyLabel")} ({currency})
             </label>
             <select className={SELECT_CLS} value={vals.latePenaltyCents} onChange={(e) => setVals({ ...vals, latePenaltyCents: Number(e.target.value) })} style={{ colorScheme: "dark" }}>
-              <option value={0}>Aucune</option>
+              <option value={0}>{t("groupSettings", "noPenalty")}</option>
               <option value={500}>5 {currency === "XOF" ? "500 XOF" : "€5"}</option>
               <option value={1000}>1 000 cts (10€)</option>
               <option value={2000}>2 000 cts (20€)</option>
@@ -88,14 +90,14 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
 
           <div>
             <label className="mb-1 block text-[11px] font-bold text-[var(--muted)]">
-              Fonds urgence (% de chaque cotisation)
+              {t("groupSettings", "emergencyLabel")}
             </label>
             <select className={SELECT_CLS} value={vals.emergencyFundBps} onChange={(e) => setVals({ ...vals, emergencyFundBps: Number(e.target.value) })} style={{ colorScheme: "dark" }}>
-              <option value={0}>0% (désactivé)</option>
-              <option value={250}>2,5%</option>
-              <option value={500}>5% (recommandé)</option>
-              <option value={750}>7,5%</option>
-              <option value={1000}>10%</option>
+              <option value={0}>{t("groupSettings", "emergency0")}</option>
+              <option value={250}>{t("groupSettings", "emergency25")}</option>
+              <option value={500}>{t("groupSettings", "emergency5")}</option>
+              <option value={750}>{t("groupSettings", "emergency75")}</option>
+              <option value={1000}>{t("groupSettings", "emergency10")}</option>
             </select>
           </div>
 
@@ -107,8 +109,8 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
               onChange={(e) => setVals({ ...vals, requireFullPayment: e.target.checked })}
             />
             <div>
-              <p className="text-xs font-bold">Bloquer cycle si paiement incomplet</p>
-              <p className="text-[11px] text-[var(--muted)]">Round bloqué jusqu'à ce que tous aient payé.</p>
+              <p className="text-xs font-bold">{t("groupSettings", "blockCycleLabel")}</p>
+              <p className="text-[11px] text-[var(--muted)]">{t("groupSettings", "blockCycleHint")}</p>
             </div>
           </label>
 
@@ -117,7 +119,7 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
             disabled={loading}
             className="w-full rounded-2xl bg-emerald-500 py-2.5 text-sm font-black text-ink shadow-glow transition hover:bg-emerald-400 disabled:opacity-50"
           >
-            {saved ? "✓ Sauvegardé" : loading ? "..." : "Enregistrer"}
+            {saved ? t("groupSettings", "saved") : loading ? "..." : t("groupSettings", "btnSave")}
           </button>
         </div>
       )}

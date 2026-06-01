@@ -2,23 +2,18 @@
 
 import { Loader2, Zap } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/context";
 
 export function AutoPayToggle({
-  groupId,
-  initialEnabled,
-  walletBalance,
-  contributionCents,
-  currency,
+  groupId, initialEnabled, walletBalance, contributionCents, currency,
 }: {
-  groupId: string;
-  initialEnabled: boolean;
-  walletBalance: number;
-  contributionCents: number;
-  currency: string;
+  groupId: string; initialEnabled: boolean; walletBalance: number;
+  contributionCents: number; currency: string;
 }) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const insufficient = walletBalance < contributionCents;
 
@@ -34,7 +29,7 @@ export function AutoPayToggle({
     setLoading(false);
     if (res.ok) {
       setEnabled(data.autoPayEnabled);
-      setMsg(data.autoPayEnabled ? "Auto-paiement activé ✅" : "Auto-paiement désactivé");
+      setMsg(data.autoPayEnabled ? t("autoPay", "activated") : t("autoPay", "deactivated"));
     }
   }
 
@@ -45,9 +40,9 @@ export function AutoPayToggle({
           <Zap size={18} className={enabled ? "text-emerald-400" : "text-[var(--muted)]"} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-sm">Auto-paiement</p>
+          <p className="font-black text-sm">{t("autoPay", "title")}</p>
           <p className="text-xs text-[var(--muted)]">
-            {enabled ? "Prélevé automatiquement à l'échéance" : "Paiement manuel requis"}
+            {enabled ? t("autoPay", "enabledDesc") : t("autoPay", "disabledDesc")}
           </p>
         </div>
         <button
@@ -64,8 +59,8 @@ export function AutoPayToggle({
       </div>
       {enabled && insufficient && (
         <div className="mt-3 rounded-2xl border border-gold/20 bg-gold/8 px-3 py-2 text-xs text-gold">
-          ⚠️ Solde insuffisant pour le prochain prélèvement.{" "}
-          <a href="/wallet/deposit" className="underline font-bold">Recharger →</a>
+          {t("autoPay", "insufficientWarn")}{" "}
+          <a href="/wallet/deposit" className="underline font-bold">{t("autoPay", "recharge")}</a>
         </div>
       )}
       {msg && <p className="mt-2 text-xs text-emerald-400">{msg}</p>}

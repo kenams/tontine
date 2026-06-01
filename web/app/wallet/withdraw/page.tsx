@@ -7,9 +7,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function WalletWithdrawPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [amountStr, setAmountStr] = useState("");
   const [iban, setIban] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
@@ -24,10 +26,10 @@ export default function WalletWithdrawPage() {
     setError(null);
 
     const cleanIban = iban.replace(/\s/g, "").toUpperCase();
-    if (amountCents < 10_00) { setError("Montant minimum : 10 €"); return; }
-    if (amountCents > 200_000_00) { setError("Montant maximum : 2 000 €"); return; }
-    if (!cleanIban) { setError("IBAN requis."); return; }
-    if (!beneficiary.trim()) { setError("Nom du bénéficiaire requis."); return; }
+    if (amountCents < 10_00) { setError(t("withdraw", "errMin")); return; }
+    if (amountCents > 200_000_00) { setError(t("withdraw", "errMax")); return; }
+    if (!cleanIban) { setError(t("withdraw", "errIban")); return; }
+    if (!beneficiary.trim()) { setError(t("withdraw", "errBeneficiary")); return; }
 
     setLoading(true);
     const res = await fetch("/api/wallet/withdraw", {
@@ -40,7 +42,7 @@ export default function WalletWithdrawPage() {
     setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Erreur lors de la demande de retrait.");
+      setError(data?.error ?? t("withdraw", "errGeneric"));
       return;
     }
 
@@ -53,13 +55,11 @@ export default function WalletWithdrawPage() {
         <div className="mx-auto max-w-sm">
           <div className="glass rounded-[1.75rem] p-8 text-center">
             <CheckCircle2 size={40} className="mx-auto mb-4 text-emerald-400" />
-            <h2 className="mb-2 text-xl font-black">Retrait soumis</h2>
-            <p className="mb-1 text-sm text-[var(--muted)]">Référence : <span className="font-bold text-[var(--text)]">{success}</span></p>
-            <p className="mb-6 text-sm text-[var(--muted)]">
-              Le virement sera effectué sous 1 à 3 jours ouvrés. Un email de confirmation vous sera envoyé.
-            </p>
+            <h2 className="mb-2 text-xl font-black">{t("withdraw", "successTitle")}</h2>
+            <p className="mb-1 text-sm text-[var(--muted)]">{t("withdraw", "successRef")} <span className="font-bold text-[var(--text)]">{success}</span></p>
+            <p className="mb-6 text-sm text-[var(--muted)]">{t("withdraw", "successDesc")}</p>
             <Link href="/wallet" className="block rounded-2xl bg-emerald-500 py-3 text-center text-sm font-black text-ink transition hover:bg-emerald-400">
-              Retour au wallet
+              {t("withdraw", "backWallet")}
             </Link>
           </div>
         </div>
@@ -75,17 +75,17 @@ export default function WalletWithdrawPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Wallet</p>
-            <h1 className="text-xl font-black">Retirer</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">{t("withdraw", "navTitle")}</p>
+            <h1 className="text-xl font-black">{t("withdraw", "title")}</h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="glass rounded-[1.75rem] p-5">
-            <p className="mb-4 text-sm font-black">Coordonnées bancaires</p>
+            <p className="mb-4 text-sm font-black">{t("withdraw", "formTitle")}</p>
 
             <div className="mb-3">
-              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">Montant (€)</label>
+              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">{t("withdraw", "amountLabel")}</label>
               <Input
                 type="number" min="10" max="2000" step="0.01"
                 placeholder="ex : 50"
@@ -93,11 +93,11 @@ export default function WalletWithdrawPage() {
                 onChange={(e) => { setAmountStr(e.target.value); setError(null); }}
                 required
               />
-              <p className="mt-1 text-[10px] text-[var(--muted)]">Min : 10 € · Max : 2 000 €</p>
+              <p className="mt-1 text-[10px] text-[var(--muted)]">{t("withdraw", "amountHint")}</p>
             </div>
 
             <div className="mb-3">
-              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">IBAN</label>
+              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">{t("withdraw", "ibanLabel")}</label>
               <Input
                 type="text"
                 placeholder="FR76 3000 6000 0112 3456 7890 189"
@@ -108,10 +108,10 @@ export default function WalletWithdrawPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">Nom du bénéficiaire</label>
+              <label className="mb-1.5 block text-xs font-bold text-[var(--muted)]">{t("withdraw", "beneficiaryLabel")}</label>
               <Input
                 type="text"
-                placeholder="Prénom Nom"
+                placeholder={t("withdraw", "beneficiaryPh")}
                 value={beneficiary}
                 onChange={(e) => { setBeneficiary(e.target.value); setError(null); }}
                 required
@@ -121,9 +121,7 @@ export default function WalletWithdrawPage() {
 
           <div className="glass rounded-3xl px-4 py-3 flex items-start gap-3">
             <Building2 size={16} className="mt-0.5 shrink-0 text-[var(--muted)]" />
-            <p className="text-xs text-[var(--muted)]">
-              Le solde est débité immédiatement. Le virement SEPA arrive sous 1–3 jours ouvrés. Minimum de retrait : 10 €.
-            </p>
+            <p className="text-xs text-[var(--muted)]">{t("withdraw", "info")}</p>
           </div>
 
           {error && (
@@ -134,7 +132,7 @@ export default function WalletWithdrawPage() {
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Building2 size={18} />}
-            {loading ? "Traitement..." : "Soumettre le retrait"}
+            {loading ? t("withdraw", "btnLoading") : t("withdraw", "btnSubmit")}
           </Button>
         </form>
       </div>
