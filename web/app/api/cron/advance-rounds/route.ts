@@ -141,9 +141,29 @@ export async function GET(request: NextRequest) {
     const days = dueDays[group.frequency] ?? 30;
     const nextDue = new Date(group.nextDueAt.getTime() + days * 24 * 60 * 60 * 1000);
     const nextRound = group.currentRound + 1;
-    const totalMembers = group.memberships.length || 1;
+    const activeMs = group.memberships.filter((m) => !["LEFT", "EXCLUDED"].includes(m.status));
+    const totalMembers = activeMs.length || 1;
     const payoutIdx = (group.currentRound - 1) % totalMembers;
-    const payoutMembership = group.memberships[payoutIdx];
+    const payoutMembership = activeMs[payoutIdx];
+
+    // Si requireFullPayment activé et membres actifs non payés → bloquer l'avancement
+    const requireFull = (group as unknown as { requireFullPayment?: boolean }).requireFullPayment ?? false;
+    if (requireFull) {
+      const unpaid = activeMs.filter((m) => !m.paidThisRound).length;
+      if (unpaid > 0) {
+        // Notifier l'admin et sauter ce round
+        await prisma.notification.create({
+          data: {
+            userId: group.memberships.find((m) => m.role === "ORGANIZER")?.userId ?? group.memberships[0].userId,
+            tontineGroupId: group.id,
+            title: `⏸️ Round bloqué — ${group.name}`,
+            body: `${unpaid} membre${unpaid > 1 ? "s" : ""} n'ont pas cotisé. "Paiement complet requis" est activé. Le round avancera quand tous auront payé.`,
+            type: "ROUND_BLOCKED",
+          },
+        });
+        continue;
+      }
+    }
 
     // Calculer le pot = contributions PAID de ce round
     const paidContributions = await prisma.contribution.aggregate({

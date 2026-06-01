@@ -1,6 +1,7 @@
-import { Award, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound, Flame } from "lucide-react";
+import { AlertTriangle, Award, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound, Flame } from "lucide-react";
 import Link from "next/link";
 import { AvatarUpload } from "@/components/app/avatar-upload";
+import { prisma } from "@/lib/db";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -24,8 +25,15 @@ const badgeColors: Record<string, string> = {
 
 export default async function ProfilePage() {
   const session = await requireUser();
-  const { user, memberships, transactions } = await getUserDashboard(session.userId);
+  const [{ user, memberships, transactions }, debtMemberships] = await Promise.all([
+    getUserDashboard(session.userId),
+    prisma.membership.findMany({
+      where: { userId: session.userId, debtCents: { gt: 0 } },
+      include: { tontineGroup: { select: { name: true, id: true, currency: true } } },
+    } as never),
+  ]);
   const { lang, t } = await getServerT();
+  const totalDebt = (debtMemberships as unknown as Array<{ debtCents: number }>).reduce((s, m) => s + m.debtCents, 0);
 
   const walletCurrency = user.wallet?.currency ?? "XOF";
   const trust = user.trustScore?.score ?? 0;
@@ -73,6 +81,27 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileEditForm initialName={user.fullName} initialPhone={user.phone} />
+
+      {/* Alerte dettes globales */}
+      {totalDebt > 0 && (
+        <div className="mb-4 glass rounded-3xl p-4 ring-1 ring-gold/20">
+          <div className="mb-2 flex items-center gap-2 text-sm font-black text-gold">
+            <AlertTriangle size={16} /> {lang === "en" ? "Outstanding debts" : "Dettes en cours"}
+          </div>
+          <div className="space-y-2">
+            {(debtMemberships as unknown as Array<{ debtCents: number; tontineGroup: { name: string; id: string; currency: string } }>).map((m) => (
+              <Link key={m.tontineGroup.id} href={`/tontines/${m.tontineGroup.id}`}
+                className="flex items-center justify-between rounded-2xl bg-[var(--surface)] px-3 py-2.5 text-sm hover:bg-[var(--surface-strong)] transition">
+                <span className="font-bold">{m.tontineGroup.name}</span>
+                <span className="font-black text-gold">{money(m.debtCents, m.tontineGroup.currency)}</span>
+              </Link>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            {lang === "en" ? "Repay from each group page → wallet debit." : "Remboursez depuis la page de chaque groupe → débit wallet."}
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mb-4 grid grid-cols-2 gap-3">

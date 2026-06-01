@@ -22,7 +22,18 @@ export const createTontineSchema = z.object({
   currency: z.enum(currencyCodes).default("XOF"),
   frequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY"]),
   maxMembers: z.coerce.number().int().min(3).max(30),
-  rules: z.string().min(10).max(600)
+  rules: z.string().min(10).max(600),
+  minTrustScore: z.coerce.number().int().min(0).max(100).default(0),
+  requireFullPayment: z.coerce.boolean().default(false),
+  autoExcludeDays: z.coerce.number().int().min(7).max(90).default(30),
+});
+
+export const updateGroupSettingsSchema = z.object({
+  minTrustScore: z.coerce.number().int().min(0).max(100).optional(),
+  requireFullPayment: z.coerce.boolean().optional(),
+  autoExcludeDays: z.coerce.number().int().min(7).max(90).optional(),
+  latePenaltyCents: z.coerce.number().int().min(0).max(5000).optional(),
+  emergencyFundBps: z.coerce.number().int().min(0).max(1000).optional(),
 });
 
 export const joinSchema = z.object({

@@ -49,33 +49,24 @@ export async function POST(request: NextRequest) {
       joinCode: Math.random().toString(36).slice(2, 10).toUpperCase(),
       nextDueAt: new Date(Date.now() + dueDays[parsed.data.frequency] * 24 * 60 * 60 * 1000),
       createdById: session.userId,
+      minTrustScore: parsed.data.minTrustScore,
+      requireFullPayment: parsed.data.requireFullPayment,
+      autoExcludeDays: parsed.data.autoExcludeDays,
       memberships: {
-        create: {
-          userId: session.userId,
-          role: "ORGANIZER",
-          payoutOrder: 1,
-          paidThisRound: false
-        }
+        create: { userId: session.userId, role: "ORGANIZER", payoutOrder: 1, paidThisRound: false },
       },
       emergencyFund: {
         create: {
           balanceCents: 0,
           targetCents: amountToMinorUnits(parsed.data.contributionAmount, parsed.data.currency) * 2,
           loanPoolCents: 0,
-          currency: parsed.data.currency
-        }
-      }
-    }
+          currency: parsed.data.currency,
+        },
+      },
+    } as never,
   });
 
-  await auditLog({
-    actorId: session.userId,
-    action: "TONTINE_CREATED",
-    targetType: "TontineGroup",
-    targetId: group.id,
-    ipAddress: clientIp(request)
-  });
-
+  await auditLog({ actorId: session.userId, action: "TONTINE_CREATED", targetType: "TontineGroup", targetId: group.id, ipAddress: clientIp(request) });
   void awardFounder(session.userId);
 
   return NextResponse.json({ group }, { status: 201 });

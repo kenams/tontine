@@ -30,12 +30,24 @@ export async function POST(request: NextRequest) {
 
   const group = await prisma.tontineGroup.findUnique({
     where: { joinCode: parsed.data.joinCode },
-    select: { id: true, maxMembers: true, name: true, status: true }
+    select: { id: true, maxMembers: true, name: true, status: true, minTrustScore: true },
   });
 
-  // Code invalide → même message que "pas trouvé" (pas d'info sur l'existence)
   if (!group || !["ACTIVE", "OPEN"].includes(group.status)) {
     return NextResponse.json({ error: "Code invalide ou groupe non disponible." }, { status: 404 });
+  }
+
+  // Vérification score de confiance minimum
+  const minScore = (group as unknown as { minTrustScore?: number }).minTrustScore ?? 0;
+  if (minScore > 0) {
+    const userScore = user.trustScore?.score ?? 0;
+    if (userScore < minScore) {
+      return NextResponse.json({
+        error: `Ce groupe requiert un score de confiance de ${minScore}/100. Votre score actuel est ${userScore}/100. Payez à l'heure dans d'autres groupes pour progresser.`,
+        requiredScore: minScore,
+        currentScore: userScore,
+      }, { status: 403 });
+    }
   }
 
   const existingMembership = await prisma.membership.findFirst({

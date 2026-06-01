@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AutoPayToggle } from "@/components/app/autopay-toggle";
 import { DebtAlert } from "@/components/app/debt-alert";
 import { ExcludeMemberButton } from "@/components/app/exclude-member-button";
+import { GroupSettingsPanel } from "@/components/app/group-settings-panel";
 import { LeaveGroupButton } from "@/components/app/leave-group-button";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -185,6 +186,21 @@ export default async function TontineDetailPage({
           5% de chaque cotisation alimente le fonds. En cas de retard, le fonds avance la mise. Le membre doit rembourser sous 30 jours, sinon exclusion automatique.
         </p>
       </div>
+
+      {/* Panel settings admin */}
+      {isGroupAdmin && (
+        <GroupSettingsPanel
+          groupId={group.id}
+          currency={group.currency}
+          current={{
+            minTrustScore: (group as unknown as { minTrustScore?: number }).minTrustScore ?? 0,
+            requireFullPayment: (group as unknown as { requireFullPayment?: boolean }).requireFullPayment ?? false,
+            autoExcludeDays: (group as unknown as { autoExcludeDays?: number }).autoExcludeDays ?? 30,
+            latePenaltyCents: group.latePenaltyCents,
+            emergencyFundBps: (group as unknown as { emergencyFundBps?: number }).emergencyFundBps ?? 500,
+          }}
+        />
+      )}
 
       {/* Bouton quitter le groupe — visible pour les membres non-admin */}
       {detail.isMember && !isGroupAdmin && myMembership && !["LEFT", "EXCLUDED"].includes(myMembership.status) && (
