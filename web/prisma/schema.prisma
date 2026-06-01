@@ -16,17 +16,21 @@ model User {
   phone           String?
   role            String         @default("USER")
   status          String         @default("ACTIVE")
+  plan            String         @default("FREE")
   locale          String         @default("fr-FR")
   kycStatus       String         @default("NONE")
   kycVerifiedAt   DateTime?
   kycSessionId    String?
   avatarUrl       String?
   lastLoginAt     DateTime?
+  referralCode    String?        @unique
+  referredById    String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   adminProfile    Admin?
   wallet          Wallet?
   trustScore      TrustScore?
+  subscription    Subscription?
   memberships     Membership[]
   contributions   Contribution[]
   transactions    Transaction[]
@@ -42,6 +46,7 @@ model User {
   pushSubscriptions   PushSubscription[]
   expoPushToken       ExpoPushToken?
   stripeCustomerId    String?
+  walletLocks         WalletLock[]
 }
 
 model Admin {
@@ -376,7 +381,7 @@ model EmergencyLoan {
   @@index([tontineGroupId])
 }
 
-// ── Parrainage (FK via raw SQL — colonnes plan/referralCode/referredById ajoutées après migration) ──
+// ── Parrainage ────────────────────────────────────────────────────────────────
 model Referral {
   id          String    @id @default(cuid())
   referrerId  String
@@ -394,6 +399,7 @@ model Referral {
 model Subscription {
   id                   String    @id @default(cuid())
   userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan                 String    @default("FREE")
   status               String    @default("ACTIVE")
   stripeSubscriptionId String?   @unique
@@ -408,6 +414,7 @@ model Subscription {
 model WalletLock {
   id              String    @id @default(cuid())
   userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   walletId        String
   tontineGroupId  String
   amountCents     Int
