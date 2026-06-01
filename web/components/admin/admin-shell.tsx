@@ -23,6 +23,7 @@ import { cn } from "@/lib/cn";
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: Home },
+  { href: "/admin/metrics", label: "KPI / Métriques", icon: BarChart3 },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/transactions", label: "Transactions", icon: Database },
   { href: "/admin/withdrawals", label: "Retraits", icon: ArrowDownToLine },
