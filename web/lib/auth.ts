@@ -19,6 +19,7 @@ export type Session = {
   fullName: string;
   role: "USER" | "ADMIN";
   status: string;
+  avatarUrl?: string | null;
   exp: number;
 };
 
@@ -73,7 +74,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, email: true, fullName: true, role: true, status: true }
+      select: { id: true, email: true, fullName: true, role: true, status: true, avatarUrl: true }
     });
     if (!user || user.status === "BANNED" || user.status === "SUSPENDED") return null;
 
@@ -83,6 +84,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
       fullName: user.fullName,
       role: user.role === "ADMIN" ? "ADMIN" : "USER",
       status: user.status,
+      avatarUrl: user.avatarUrl,
       exp: session.exp
     };
   } catch {

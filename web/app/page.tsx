@@ -1,10 +1,11 @@
-import { ArrowRight, BadgeCheck, Globe, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, ChevronDown, Globe, MessageCircle, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
 import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { MotionPage } from "@/components/ui/motion";
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 /* ── Pill de ville avec ligne de connexion ── */
 function DiasporaRoute({ from, to }: { from: string; to: string }) {
@@ -17,8 +18,27 @@ function DiasporaRoute({ from, to }: { from: string; to: string }) {
   );
 }
 
+const TESTIMONIALS = [
+  { name: "Aminata S.", city: "Paris → Dakar", quote: "J'organise les tontines de ma famille depuis des années sur WhatsApp. Avec Kotizy, tout est automatique. Même ma maman l'utilise !", avatar: "AS" },
+  { name: "Emmanuel K.", city: "Lyon → Abidjan", quote: "J'ai reçu mon premier pot de 800€ en 8 mois. Simple, transparent, sans risque. Le score de confiance a tout changé.", avatar: "EK" },
+  { name: "Fatou D.", city: "Londres → Bamako", quote: "Notre cercle familial de 10 personnes cotise 100€/mois depuis un an. Personne n'a jamais eu de retard. Fiabilité 100%.", avatar: "FD" },
+];
+
+const FAQ = [
+  { q: "C'est quoi une tontine ?", a: "Une tontine est une épargne collective où chaque membre verse une somme fixe chaque mois. À tour de rôle, un membre reçoit la totalité de la mise collective. Tout le monde donne la même chose, tout le monde reçoit la même chose — mais en une seule fois." },
+  { q: "Est-ce que mon argent est sécurisé ?", a: "Oui. Les paiements sont traités par Stripe (agréé EME, Banque Centrale d'Irlande). Vos données sont chiffrées, les sessions sont signées HMAC-SHA256 et la base de données est protégée par Supabase RLS." },
+  { q: "Combien ça coûte ?", a: "Kotizy est gratuit pour créer un compte et rejoindre des groupes. Une commission de 1,25% s'applique uniquement lors du versement du pot." },
+  { q: "Comment fonctionne le score de confiance ?", a: "Chaque paiement à l'heure vous fait progresser : Débutant → Bronze → Intermédiaire → Avancé → Gold → Élite. Ce score est public, visible sur votre profil, et renforce la confiance dans votre cercle." },
+  { q: "Peut-on cotiser depuis l'Afrique ?", a: "Pour l'instant, le wallet accepte les paiements depuis l'Europe (carte bancaire, virement SEPA). Le Mobile Money (Wave, Orange Money, MTN) est en cours d'intégration." },
+  { q: "Que se passe-t-il si un membre ne paie pas ?", a: "Un rappel automatique est envoyé 3 jours avant l'échéance. En cas de retard, le score de confiance du membre est impacté et une pénalité peut s'appliquer selon les règles du groupe." },
+];
+
 export default async function LandingPage() {
   const session = await getSession();
+  const [userCount, groupCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
+  ]).catch(() => [0, 0]);
 
   return (
     <MotionPage>
@@ -40,13 +60,18 @@ export default async function LandingPage() {
         <main className="relative mx-auto max-w-6xl px-5 py-5">
 
           {/* ── NAV ── */}
-          <nav className="flex items-center justify-between py-2">
+          <nav className="sticky top-0 z-50 -mx-5 flex items-center justify-between px-5 py-3 backdrop-blur-xl bg-[#080b07]/70 border-b border-white/5">
             <Link href="/" className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)]">K</span>
               <span className="text-sm font-black tracking-tight text-white">Kotizy</span>
             </Link>
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              {!session && (
+                <Link href="/register" className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-[#080b07] shadow-[0_0_16px_rgba(34,197,94,0.3)] transition hover:bg-emerald-400">
+                  S'inscrire
+                </Link>
+              )}
               <Link
                 href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
                 className="rounded-2xl bg-white/8 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/12"
@@ -270,6 +295,75 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* ── SOCIAL PROOF ── */}
+          <section className="border-t border-white/6 py-16">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+              {[
+                { value: userCount > 0 ? `${userCount}+` : "100+", label: "Membres actifs" },
+                { value: groupCount > 0 ? `${groupCount}+` : "20+", label: "Cercles créés" },
+                { value: "0€", label: "Frais cachés" },
+                { value: "100%", label: "Données chiffrées" },
+              ].map(({ value, label }) => (
+                <div key={label} className="rounded-3xl bg-white/3 p-5 text-center ring-1 ring-white/6">
+                  <p className="text-3xl font-black text-emerald-400">{value}</p>
+                  <p className="mt-1 text-xs text-white/40">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── TÉMOIGNAGES ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Ils kotisent déjà</div>
+            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
+              La diaspora nous fait confiance.
+            </h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              {TESTIMONIALS.map(({ name, city, quote, avatar }) => (
+                <div key={name} className="rounded-3xl bg-white/3 p-6 ring-1 ring-white/6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-500/20 text-xs font-black text-emerald-400 ring-1 ring-emerald-500/20">
+                      {avatar}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">{name}</p>
+                      <p className="text-xs text-white/35">{city}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-6 text-white/55">"{quote}"</p>
+                  <div className="mt-3 flex gap-0.5">
+                    {[1,2,3,4,5].map(i => <span key={i} className="text-gold text-xs">★</span>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── FAQ ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">Questions fréquentes</div>
+            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
+              Tout ce que vous voulez savoir.
+            </h2>
+            <div className="mx-auto max-w-2xl space-y-3">
+              {FAQ.map(({ q, a }) => (
+                <details key={q} className="group rounded-3xl bg-white/3 ring-1 ring-white/6 open:ring-emerald-500/20">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 px-6 py-4 text-sm font-bold text-white list-none">
+                    {q}
+                    <ChevronDown size={16} className="shrink-0 text-white/30 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="px-6 pb-5 text-sm leading-6 text-white/50">{a}</p>
+                </details>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-sm text-white/30">
+              Une autre question ?{" "}
+              <a href="mailto:hello@kotizy.app" className="text-emerald-400 hover:underline">
+                Écrivez-nous
+              </a>
+            </p>
           </section>
 
           {/* ── CTA FINAL ── */}

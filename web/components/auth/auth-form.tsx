@@ -8,7 +8,6 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MotionPage } from "@/components/ui/motion";
-import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 
 type Props = { mode: "login" | "register"; admin?: boolean };
 
@@ -29,10 +28,9 @@ function PasswordStrength({ password }: { password: string }) {
   if (!password) return null;
   const score = passwordScore(password);
   const checks = [
-    { ok: password.length >= 8, label: "8 caractères minimum" },
-    { ok: /[A-Z]/.test(password), label: "1 lettre majuscule" },
+    { ok: password.length >= 8, label: "8 caractères min." },
+    { ok: /[A-Z]/.test(password), label: "1 majuscule" },
     { ok: /[0-9]/.test(password), label: "1 chiffre" },
-    { ok: /[^A-Za-z0-9]/.test(password), label: "1 caractère spécial (recommandé)" }
   ];
   return (
     <div className="space-y-2 rounded-2xl bg-[var(--surface)] px-4 py-3">
@@ -44,13 +42,13 @@ function PasswordStrength({ password }: { password: string }) {
         </div>
         <span className="text-[11px] font-bold text-[var(--muted)]">{scoreLabel[score] ?? ""}</span>
       </div>
-      <div className="grid grid-cols-2 gap-1">
+      <div className="flex gap-3">
         {checks.map((c) => (
-          <div key={c.label} className="flex items-center gap-1.5">
+          <div key={c.label} className="flex items-center gap-1">
             {c.ok
-              ? <CheckCircle size={12} className="shrink-0 text-emerald-400" />
-              : <XCircle size={12} className="shrink-0 text-[var(--muted)]" />}
-            <span className={`text-[11px] ${c.ok ? "text-emerald-400" : "text-[var(--muted)]"}`}>{c.label}</span>
+              ? <CheckCircle size={11} className="shrink-0 text-emerald-400" />
+              : <XCircle size={11} className="shrink-0 text-[var(--muted)]" />}
+            <span className={`text-[10px] ${c.ok ? "text-emerald-400" : "text-[var(--muted)]"}`}>{c.label}</span>
           </div>
         ))}
       </div>
@@ -58,9 +56,7 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
-function PasswordInput({
-  name, placeholder, autoComplete, onChange
-}: {
+function PasswordInput({ name, placeholder, autoComplete, onChange }: {
   name: string; placeholder: string; autoComplete: string; onChange?: (v: string) => void;
 }) {
   const [show, setShow] = useState(false);
@@ -95,7 +91,6 @@ export function AuthForm({ mode, admin = false }: Props) {
   const [quickLoading, setQuickLoading] = useState<"user" | "admin" | null>(null);
   const [password, setPassword] = useState("");
 
-  // Récupère le paramètre ?next= pour rediriger après connexion (ex: depuis /g/[code])
   const nextUrl = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("next") ?? ""
     : "";
@@ -109,7 +104,7 @@ export function AuthForm({ mode, admin = false }: Props) {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(creds)
+        body: JSON.stringify(creds),
       });
       const data = await res.json() as { error?: string; redirectTo?: string };
       if (!res.ok) { setError(data.error ?? "Erreur connexion rapide."); return; }
@@ -129,8 +124,6 @@ export function AuthForm({ mode, admin = false }: Props) {
 
     if (mode === "register") {
       const pwd = String(fd.get("password") ?? "");
-      const confirm = String(fd.get("confirm") ?? "");
-      if (pwd !== confirm) { setError("Les mots de passe ne correspondent pas."); return; }
       if (passwordScore(pwd) < 3) { setError("Mot de passe trop faible. Ajoutez une majuscule et un chiffre."); return; }
     }
 
@@ -140,28 +133,24 @@ export function AuthForm({ mode, admin = false }: Props) {
         ? {
             fullName: String(fd.get("fullName") ?? ""),
             email: String(fd.get("email") ?? ""),
-            phone: String(fd.get("phone") ?? ""),
-            currency: String(fd.get("currency") ?? "XOF"),
-            password: String(fd.get("password") ?? "")
+            password: String(fd.get("password") ?? ""),
+            currency: "EUR",
           }
         : {
             email: String(fd.get("email") ?? ""),
-            password: String(fd.get("password") ?? "")
+            password: String(fd.get("password") ?? ""),
           };
 
       const res = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      let data: { error?: string; redirectTo?: string; role?: string } = {};
-      try { data = await res.json(); } catch { /* non-JSON 500 */ }
+      let data: { error?: string; redirectTo?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON */ }
 
-      if (!res.ok) {
-        setError(data.error ?? `Erreur ${res.status}. Veuillez réessayer.`);
-        return;
-      }
+      if (!res.ok) { setError(data.error ?? `Erreur ${res.status}. Veuillez réessayer.`); return; }
       const dest = nextUrl || (admin ? "/admin" : data.redirectTo ?? "/dashboard");
       router.push(dest);
       router.refresh();
@@ -184,65 +173,44 @@ export function AuthForm({ mode, admin = false }: Props) {
           <div className="mb-6">
             <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
               {admin ? <ShieldCheck size={14} /> : mode === "register" ? <Lock size={14} /> : <Sparkles size={14} />}
-              {admin ? "Backoffice sécurisé" : mode === "register" ? "Compte sécurisé" : "Mobile money ready"}
+              {admin ? "Backoffice sécurisé" : mode === "register" ? "Inscription en 30 secondes" : "Mobile money ready"}
             </p>
             <h1 className="text-3xl font-black">
-              {mode === "login" ? "Connexion" : "Créer un compte"}
+              {mode === "login" ? "Connexion" : "Créer mon compte"}
             </h1>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            <p className="mt-1 text-sm text-[var(--muted)]">
               {admin
-                ? "Accès admin avec RBAC, audit logs et alertes fraude."
+                ? "Accès admin avec RBAC et audit logs."
                 : mode === "register"
-                  ? "Vos données et transactions sont chiffrées et sécurisées."
+                  ? "Rejoignez le cercle. Gratuit, sans CB."
                   : "Wallet, tontines et score de confiance."}
             </p>
           </div>
 
           <form onSubmit={submit} className="space-y-3">
             {mode === "register" && (
-              <Input name="fullName" placeholder="Nom complet" autoComplete="name" required />
+              <Input name="fullName" placeholder="Votre prénom et nom" autoComplete="name" required />
             )}
-            <Input name="email" type="email" placeholder="Email" autoComplete="email" required />
-            {mode === "register" && (
-              <Input name="phone" placeholder="Téléphone (optionnel)" autoComplete="tel" />
-            )}
-            {mode === "register" && (
-              <select
-                name="currency"
-                className="min-h-12 w-full rounded-2xl border border-white/10 bg-[var(--bg)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-emerald-400/60"
-                defaultValue="EUR"
-                style={{ colorScheme: "dark" }}
-              >
-                {SUPPORTED_CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code} className="bg-[var(--bg)] text-[var(--text)]">
-                    {c.code} — {c.label}
-                  </option>
-                ))}
-              </select>
-            )}
-
+            <Input name="email" type="email" placeholder="Adresse email" autoComplete="email" required />
             <PasswordInput
               name="password"
               placeholder="Mot de passe"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               onChange={mode === "register" ? setPassword : undefined}
             />
+            {mode === "register" && <PasswordStrength password={password} />}
 
             {mode === "register" && (
-              <>
-                <PasswordStrength password={password} />
-                <PasswordInput name="confirm" placeholder="Confirmer le mot de passe" autoComplete="new-password" />
-                <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[var(--surface)] px-4 py-3 cursor-pointer">
-                  <input type="checkbox" name="cgu" required className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500" />
-                  <span className="text-xs text-[var(--muted)] leading-relaxed">
-                    J'accepte les{" "}
-                    <Link href="/legal/cgu" target="_blank" className="text-emerald-400 hover:underline font-bold">CGU</Link>
-                    {" "}et la{" "}
-                    <Link href="/legal/confidentialite" target="_blank" className="text-emerald-400 hover:underline font-bold">politique de confidentialité</Link>
-                    {" "}de Kotizy. Je certifie avoir 18 ans ou plus.
-                  </span>
-                </label>
-              </>
+              <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[var(--surface)] px-4 py-3 cursor-pointer">
+                <input type="checkbox" name="cgu" required className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500" />
+                <span className="text-xs text-[var(--muted)] leading-relaxed">
+                  J'accepte les{" "}
+                  <Link href="/legal/cgu" target="_blank" className="text-emerald-400 hover:underline font-bold">CGU</Link>
+                  {" "}et la{" "}
+                  <Link href="/legal/confidentialite" target="_blank" className="text-emerald-400 hover:underline font-bold">politique de confidentialité</Link>.
+                  {" "}18 ans minimum.
+                </span>
+              </label>
             )}
 
             {mode === "login" && (
@@ -261,7 +229,7 @@ export function AuthForm({ mode, admin = false }: Props) {
             )}
 
             <Button disabled={loading} className="w-full">
-              {loading ? "Traitement..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+              {loading ? "Traitement..." : mode === "login" ? "Se connecter" : "Rejoindre le cercle"}
               <ArrowRight size={18} />
             </Button>
           </form>
@@ -269,7 +237,7 @@ export function AuthForm({ mode, admin = false }: Props) {
           {mode === "register" && (
             <p className="mt-4 flex items-center gap-2 rounded-2xl bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">
               <ShieldCheck size={14} className="shrink-0 text-emerald-400" />
-              Mot de passe chiffré bcrypt · Sessions HMAC-SHA256 · Rate limiting actif
+              Gratuit · Sans CB · Données chiffrées · Résiliable à tout moment
             </p>
           )}
 
@@ -302,7 +270,7 @@ export function AuthForm({ mode, admin = false }: Props) {
 
         <div className="mt-5 text-center text-sm text-[var(--muted)]">
           {mode === "login" ? (
-            <>Pas de compte ?{" "}<Link className="font-bold text-emerald-400" href="/register">Inscription</Link></>
+            <>Pas de compte ?{" "}<Link className="font-bold text-emerald-400" href="/register">Inscription gratuite</Link></>
           ) : (
             <>Déjà inscrit ?{" "}<Link className="font-bold text-emerald-400" href="/login">Connexion</Link></>
           )}

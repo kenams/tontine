@@ -1,5 +1,6 @@
 import { Award, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound, Flame } from "lucide-react";
 import Link from "next/link";
+import { AvatarUpload } from "@/components/app/avatar-upload";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -46,8 +47,8 @@ export default async function ProfilePage() {
 
       {/* Avatar + identité */}
       <div className="glass mb-4 rounded-[1.75rem] p-5 text-center">
-        <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-[1.5rem] bg-emerald-500 text-2xl font-black text-ink shadow-glow">
-          {initials(user.fullName)}
+        <div className="mb-4 flex justify-center">
+          <AvatarUpload currentUrl={user.avatarUrl} initials={initials(user.fullName)} />
         </div>
         <h1 className="text-2xl font-black">{user.fullName}</h1>
         <p className="text-sm text-[var(--muted)]">{user.email}</p>

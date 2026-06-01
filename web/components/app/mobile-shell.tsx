@@ -14,7 +14,7 @@ import { initials } from "@/lib/format";
 type Props = {
   children: ReactNode;
   title?: string;
-  user: { fullName: string; email: string };
+  user: { fullName: string; email: string; avatarUrl?: string | null };
 };
 
 export function MobileShell({ children, user, title }: Props) {
@@ -35,8 +35,10 @@ export function MobileShell({ children, user, title }: Props) {
       <header className="sticky top-0 z-30 border-b border-[var(--surface-strong)] bg-[var(--bg)]/80 px-4 py-3 backdrop-blur-2xl">
         <div className="flex items-center justify-between gap-3">
           <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500 text-sm font-black text-ink shadow-glow">
-              {initials(user.fullName)}
+            <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500 text-sm font-black text-ink shadow-glow overflow-hidden">
+              {user.avatarUrl
+                ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                : initials(user.fullName)}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-black text-[var(--text)]">{title ?? "Kotizy"}</p>
