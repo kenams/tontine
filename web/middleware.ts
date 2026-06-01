@@ -1,28 +1,39 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { sessionCookieName, verifySessionToken } from "@/lib/auth";
+const COOKIE_NAME = "tontine_session";
+
+// Edge-compatible token check — just validates structure & expiry
+// Full HMAC verification happens in getSession() (Node.js routes)
+function isTokenFormatValid(token: string): boolean {
+  const parts = token.split(".");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8")) as { exp?: number };
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!pathname.startsWith("/api/")) return NextResponse.next();
 
-  // Si le cookie de session est déjà là, rien à faire
-  if (request.cookies.get(sessionCookieName)) return NextResponse.next();
+  // Cookie déjà présent → rien à faire
+  if (request.cookies.get(COOKIE_NAME)) return NextResponse.next();
 
-  // Extraire Bearer token du header Authorization (clients mobiles)
+  // Bearer token (clients mobiles) → injecter comme cookie
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return NextResponse.next();
 
   const token = auth.slice(7).trim();
-  const session = verifySessionToken(token);
-  if (!session) return NextResponse.next();
+  if (!isTokenFormatValid(token)) return NextResponse.next();
 
-  // Injecter le token comme cookie dans les headers de la requête
-  // pour que getSession() → cookies() puisse le lire
   const existingCookie = request.headers.get("cookie") ?? "";
   const cookieHeader = existingCookie
-    ? `${existingCookie}; ${sessionCookieName}=${token}`
-    : `${sessionCookieName}=${token}`;
+    ? `${existingCookie}; ${COOKIE_NAME}=${token}`
+    : `${COOKIE_NAME}=${token}`;
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("cookie", cookieHeader);
