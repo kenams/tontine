@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { auditLog } from "@/lib/security";
+import { safeUserSelect } from "@/lib/select";
 
 export async function GET() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Acces refuse." }, { status: 403 });
-  const transactions = await prisma.transaction.findMany({ include: { user: true, tontineGroup: true }, orderBy: { createdAt: "desc" } });
+  const transactions = await prisma.transaction.findMany({ include: { user: { select: safeUserSelect }, tontineGroup: true }, orderBy: { createdAt: "desc" } });
   const rows = [
     ["reference", "date", "user", "email", "group", "type", "status", "provider", "amount_minor", "currency", "risk_score"],
     ...transactions.map((tx) => [

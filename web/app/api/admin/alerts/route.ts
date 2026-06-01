@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { safeUserSelect } from "@/lib/select";
 
 export async function GET() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Acces refuse." }, { status: 403 });
   const alerts = await prisma.fraudAlert.findMany({
-    include: { user: true, tontineGroup: true },
+    include: { user: { select: safeUserSelect }, tontineGroup: true },
     orderBy: { createdAt: "desc" }
   });
   const disputes = await prisma.dispute.findMany({
-    include: { user: true, tontineGroup: true },
+    include: { user: { select: safeUserSelect }, tontineGroup: true },
     orderBy: { createdAt: "desc" }
   });
   return NextResponse.json({ alerts, disputes });

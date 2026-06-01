@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sanitizeSearch } from "@/lib/security";
+import { safeUserSelect } from "@/lib/select";
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
           }
         : {})
     },
-    include: { user: true, tontineGroup: true },
+    include: { user: { select: safeUserSelect }, tontineGroup: true },
     orderBy: { createdAt: "desc" },
     take: 200
   });

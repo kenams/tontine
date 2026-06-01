@@ -1,14 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { defaultCurrency } from "@/lib/currency";
-
-// Champs user sûrs — passwordHash jamais renvoyé au client
-const safeUserSelect = {
-  id: true, email: true, fullName: true, phone: true, role: true,
-  status: true, locale: true, kycStatus: true, kycVerifiedAt: true,
-  avatarUrl: true, lastLoginAt: true, createdAt: true, updatedAt: true,
-  stripeCustomerId: true, kycSessionId: false
-} as const;
+import { safeUserSelect } from "@/lib/select";
 
 async function _getUserDashboard(userId: string) {
   const [user, memberships, transactions, notifications] = await Promise.all([
