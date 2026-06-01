@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
+import { awardWelcome } from "@/lib/badges";
 import { hashPassword } from "@/lib/password";
 import { redirectUrl, safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
   });
 
   void sendWelcomeEmail(user.email, user.fullName);
+  void awardWelcome(user.id);
 
   const token = createSessionToken({
     userId: user.id,

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 type BadgeCode =
+  | "welcome"
   | "founder"
   | "on-time"
   | "consistent"
@@ -14,6 +15,7 @@ type BadgeCode =
   | "streak-12";
 
 const BADGE_DEFS: Record<BadgeCode, { name: string; nameEn: string; description: string; descriptionEn: string; color: string }> = {
+  "welcome":   { name: "Cercle Kotizy",   nameEn: "Kotizy Circle",  description: "A rejoint le cercle Kotizy — bienvenue dans la communauté", descriptionEn: "Joined the Kotizy circle — welcome to the community", color: "emerald" },
   "founder":   { name: "Fondateur",       nameEn: "Founder",        description: "A créé sa première tontine",                   descriptionEn: "Created their first tontine",              color: "gold" },
   "on-time":   { name: "Ponctuel",         nameEn: "On Time",        description: "Premier paiement effectué à l'heure",          descriptionEn: "First on-time payment made",               color: "emerald" },
   "consistent":{ name: "Régulier",         nameEn: "Consistent",     description: "5 paiements consécutifs sans retard",           descriptionEn: "5 consecutive on-time payments",           color: "emerald" },
@@ -77,6 +79,10 @@ export async function checkBadgesAfterPayment(userId: string) {
 
 export async function awardFounder(userId: string) {
   await awardIfMissing(userId, "founder");
+}
+
+export async function awardWelcome(userId: string) {
+  await awardIfMissing(userId, "welcome");
 }
 
 export function badgeMeta(code: string, lang: "fr" | "en" = "fr") {
