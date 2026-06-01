@@ -78,6 +78,28 @@ export const getSession = cache(async (): Promise<Session | null> => {
     });
     if (!user || user.status === "BANNED" || user.status === "SUSPENDED") return null;
 
+    // Auto-renew si le token expire dans moins de 2 jours
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (session.exp - nowSec < 60 * 60 * 48) {
+      const newToken = createSessionToken({
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role === "ADMIN" ? "ADMIN" : "USER",
+        status: user.status,
+      });
+      // Injecter dans les cookies de la réponse courante (best-effort)
+      try {
+        store.set(sessionCookieName, newToken, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+        });
+      } catch { /* headers déjà envoyés — ok */ }
+    }
+
     return {
       userId: user.id,
       email: user.email,

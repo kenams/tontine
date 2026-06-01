@@ -7,14 +7,14 @@ import { sendPushToUser } from "@/lib/push";
 import { emitEvent } from "@/lib/realtime-server";
 import { checkBadgesAfterPayment } from "@/lib/badges";
 import { penalizeLate, rewardPayment } from "@/lib/trust";
-import { coverByEmergencyFund, excludeMember, feedEmergencyFund } from "@/lib/defaults";
+import { coverByEmergencyFund, excludeMember } from "@/lib/defaults";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
 export async function GET(request: NextRequest) {
   try {
   const secret = process.env.CRON_SECRET;
-  if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -179,6 +179,21 @@ export async function GET(request: NextRequest) {
       const payoutRef = `PAYOUT-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
       const feeRef = `FEE-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
       await prisma.$transaction(async (tx) => {
+        // Vérifier que le wallet existant est dans la même devise, sinon créer un wallet dédié
+        const existingWallet = await tx.wallet.findUnique({ where: { userId: payoutMembership.userId } });
+        if (existingWallet && existingWallet.currency !== group.currency) {
+          // Ne pas mélanger les devises — signaler l'admin et sauter
+          await tx.notification.create({
+            data: {
+              userId: group.memberships[0].userId,
+              tontineGroupId: group.id,
+              title: "⚠️ Payout bloqué — conflit de devise",
+              body: `Le wallet de ${payoutMembership.user.fullName} est en ${existingWallet.currency} mais la tontine est en ${group.currency}. Contactez le support.`,
+              type: "PAYOUT",
+            },
+          });
+          return;
+        }
         await tx.wallet.upsert({
           where: { userId: payoutMembership.userId },
           create: { userId: payoutMembership.userId, balanceCents: netPayout, currency: group.currency, status: "ACTIVE" },
@@ -387,19 +402,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── 6. ALIMENTATION DU FONDS D'URGENCE (5% de chaque cotisation) ────────────
-  const recentPaidContributions = await prisma.contribution.findMany({
-    where: {
-      status: "PAID",
-      paidAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) }, // dernière heure
-    },
-    select: { tontineGroupId: true, amountCents: true, currency: true },
-  });
-  for (const c of recentPaidContributions) {
-    void feedEmergencyFund(c.tontineGroupId, c.amountCents, c.currency);
-  }
-
-  // ── 7. ALERTES PRÊTS D'URGENCE EN RETARD ────────────────────────────────────
+  // ── 6. ALERTES PRÊTS D'URGENCE EN RETARD ────────────────────────────────────
   const overdueLoans = (await prisma.emergencyLoan.findMany({
     where: { status: "PENDING", dueAt: { lt: now } },
     include: { membership: { include: { user: true } } },

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { checkBadgesAfterPayment } from "@/lib/badges";
+import { feedEmergencyFund } from "@/lib/defaults";
 import { prisma } from "@/lib/db";
 import { sendContributionConfirmEmail } from "@/lib/email";
 import { money } from "@/lib/format";
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     prisma.wallet.findUnique({ where: { userId: session.userId } })
   ]);
   if (!group || !membership) return NextResponse.json({ error: "Tontine introuvable." }, { status: 404 });
+  if (membership.paidThisRound) return NextResponse.json({ error: "Vous avez déjà cotisé pour ce round." }, { status: 409 });
 
   const reference = `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const amount = group.contributionCents;
@@ -185,6 +187,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     revalidateTag("admin");
     void rewardPayment(session.userId);
     void checkBadgesAfterPayment(session.userId);
+    void feedEmergencyFund(id, group.contributionCents, group.currency);
     void sendContributionConfirmEmail(session.email, session.fullName, group.name, money(group.contributionCents, group.currency));
     void emitEvent({
       type: "activity:new",

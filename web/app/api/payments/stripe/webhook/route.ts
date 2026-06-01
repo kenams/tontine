@@ -197,14 +197,13 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    if (webhookSecret) {
-      if (!stripe || !signature) {
-        return NextResponse.json({ error: "Signature Stripe manquante." }, { status: 400 });
-      }
-      event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-    } else {
-      event = JSON.parse(payload) as Stripe.Event;
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "Webhook non configuré." }, { status: 503 });
     }
+    if (!stripe || !signature) {
+      return NextResponse.json({ error: "Signature Stripe manquante." }, { status: 400 });
+    }
+    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch {
     return NextResponse.json({ error: "Signature Stripe invalide." }, { status: 400 });
   }

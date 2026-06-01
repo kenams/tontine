@@ -7,7 +7,7 @@ import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { safeJson } from "@/lib/request";
 
 const withdrawSchema = z.object({
-  amountCents: z.number().int().min(100_00).max(200_000_00),
+  amountCents: z.number().int().min(1_000).max(200_000),
   iban: z.string().min(15).max(34).regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN invalide"),
   beneficiary: z.string().min(2).max(80),
 });
