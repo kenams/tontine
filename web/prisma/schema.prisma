@@ -16,6 +16,7 @@ model User {
   phone           String?
   role            String         @default("USER")
   status          String         @default("ACTIVE")
+  plan            String         @default("FREE")
   locale          String         @default("fr-FR")
   kycStatus       String         @default("NONE")
   kycVerifiedAt   DateTime?
@@ -24,6 +25,10 @@ model User {
   lastLoginAt     DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  referralCode    String?        @unique
+  referredById    String?
+  referredBy      User?          @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals       User[]         @relation("Referrals")
   adminProfile    Admin?
   wallet          Wallet?
   trustScore      TrustScore?
@@ -42,6 +47,10 @@ model User {
   pushSubscriptions   PushSubscription[]
   expoPushToken       ExpoPushToken?
   stripeCustomerId    String?
+  subscription        Subscription?
+  walletLocks         WalletLock[]
+  referralRewards     Referral[]         @relation("ReferralReferrer")
+  referralSources     Referral[]         @relation("ReferralReferred")
 }
 
 model Admin {
@@ -60,6 +69,7 @@ model Wallet {
   currency       String        @default("XOF")
   status         String        @default("ACTIVE")
   transactions   Transaction[]
+  locks          WalletLock[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -74,6 +84,8 @@ model TontineGroup {
   frequency          String
   maxMembers         Int
   status             String          @default("ACTIVE")
+  isPublic           Boolean         @default(false)
+  payoutMode         String          @default("ORDERED")
   joinCode           String          @unique
   rules              String
   nextDueAt          DateTime
@@ -81,6 +93,7 @@ model TontineGroup {
   platformFeeBps     Int             @default(125)
   latePenaltyCents   Int             @default(1000)
   minTrustScore      Int             @default(0)
+  collateralRounds   Int             @default(0)
   requireFullPayment Boolean         @default(false)
   autoExcludeDays    Int             @default(30)
   emergencyFundBps   Int             @default(500)
@@ -371,4 +384,56 @@ model EmergencyLoan {
   @@index([userId])
   @@index([status])
   @@index([tontineGroupId])
+}
+
+// ── Parrainage ───────────────────────────────────────────────────────────────
+model Referral {
+  id              String   @id @default(cuid())
+  referrerId      String
+  referrer        User     @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId      String   @unique
+  referred        User     @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
+  status          String   @default("PENDING")
+  rewardCents     Int      @default(500)
+  rewardedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([referrerId])
+  @@index([status])
+}
+
+// ── Abonnement premium ────────────────────────────────────────────────────────
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 String    @default("FREE")
+  status               String    @default("ACTIVE")
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+// ── Collatéral wallet (bloqué jusqu'à fin tontine) ───────────────────────────
+model WalletLock {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId        String
+  wallet          Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  tontineGroupId  String
+  amountCents     Int
+  currency        String
+  reason          String    @default("COLLATERAL")
+  status          String    @default("LOCKED")
+  releasedAt      DateTime?
+  seizedAt        DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tontineGroupId])
+  @@index([status])
 }
