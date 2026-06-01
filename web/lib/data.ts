@@ -2,11 +2,20 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { defaultCurrency } from "@/lib/currency";
 
+// Champs user sûrs — passwordHash jamais renvoyé au client
+const safeUserSelect = {
+  id: true, email: true, fullName: true, phone: true, role: true,
+  status: true, locale: true, kycStatus: true, kycVerifiedAt: true,
+  avatarUrl: true, lastLoginAt: true, createdAt: true, updatedAt: true,
+  stripeCustomerId: true, kycSessionId: false
+} as const;
+
 async function _getUserDashboard(userId: string) {
   const [user, memberships, transactions, notifications] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      include: {
+      select: {
+        ...safeUserSelect,
         wallet: true,
         trustScore: true,
         badges: { include: { badge: true } }
@@ -20,7 +29,7 @@ async function _getUserDashboard(userId: string) {
             emergencyFund: true,
             memberships: true,
             contributions: true,
-            messages: { include: { user: true }, orderBy: { createdAt: "desc" }, take: 2 }
+            messages: { include: { user: { select: safeUserSelect } }, orderBy: { createdAt: "desc" }, take: 2 }
           }
         }
       },
@@ -60,26 +69,26 @@ export async function getTontineDetail(groupId: string, userId?: string) {
     include: {
       emergencyFund: true,
       memberships: {
-        include: { user: { include: { trustScore: true, wallet: true } } },
+        include: { user: { select: { ...safeUserSelect, trustScore: true, wallet: true } } },
         orderBy: { payoutOrder: "asc" }
       },
       contributions: {
-        include: { user: true },
+        include: { user: { select: safeUserSelect } },
         orderBy: { createdAt: "desc" },
         take: 20
       },
       transactions: {
-        include: { user: true },
+        include: { user: { select: safeUserSelect } },
         orderBy: { createdAt: "desc" },
         take: 20
       },
       messages: {
-        include: { user: true },
+        include: { user: { select: safeUserSelect } },
         orderBy: { createdAt: "asc" },
         take: 50
       },
       votes: {
-        include: { user: true },
+        include: { user: { select: safeUserSelect } },
         orderBy: { createdAt: "desc" },
         take: 5
       }
@@ -137,11 +146,11 @@ export async function getAdminStats() {
     prisma.membership.count({ where: { status: "LATE" } }),
     prisma.fraudAlert.findMany({ include: { user: true, tontineGroup: true }, orderBy: { createdAt: "desc" } }),
     prisma.transaction.findMany({
-      include: { user: true, tontineGroup: true },
+      include: { user: { select: safeUserSelect }, tontineGroup: true },
       orderBy: { createdAt: "desc" },
       take: 10
     }),
-    prisma.user.findMany({ include: { wallet: true, trustScore: true }, orderBy: { createdAt: "desc" }, take: 8 }),
+    prisma.user.findMany({ select: { ...safeUserSelect, wallet: true, trustScore: true }, orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.tontineGroup.findMany({ include: { memberships: true, contributions: true }, take: 8 }),
     prisma.transaction.aggregate({ where: { type: "PLATFORM_FEE", status: "PAID" }, _sum: { amountCents: true } }),
     prisma.transaction.aggregate({ where: { type: "PLATFORM_FEE", status: "PAID", createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } }, _sum: { amountCents: true } })
