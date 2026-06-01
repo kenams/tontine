@@ -137,7 +137,7 @@ export async function getAdminStats() {
     prisma.transaction.count({ where: { status: "PENDING" } }),
     prisma.transaction.count({ where: { status: "FAILED" } }),
     prisma.membership.count({ where: { status: "LATE" } }),
-    prisma.fraudAlert.findMany({ include: { user: true, tontineGroup: true }, orderBy: { createdAt: "desc" } }),
+    prisma.fraudAlert.findMany({ include: { user: { select: safeUserSelect }, tontineGroup: true }, orderBy: { createdAt: "desc" } }),
     prisma.transaction.findMany({
       include: { user: { select: safeUserSelect }, tontineGroup: true },
       orderBy: { createdAt: "desc" },
