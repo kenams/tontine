@@ -3,6 +3,7 @@ import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/theme-toggle";
+import { LangToggle } from "@/components/app/lang-toggle";
 import { MotionPage } from "@/components/ui/motion";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -66,6 +67,7 @@ export default async function LandingPage() {
               <span className="text-sm font-black tracking-tight text-white">Kotizy</span>
             </Link>
             <div className="flex items-center gap-2">
+              <LangToggle />
               <ThemeToggle />
               {!session && (
                 <Link href="/register" className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-[#080b07] shadow-[0_0_16px_rgba(34,197,94,0.3)] transition hover:bg-emerald-400">

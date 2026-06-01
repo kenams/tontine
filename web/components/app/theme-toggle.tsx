@@ -10,14 +10,13 @@ export function ThemeToggle() {
   const dark = theme !== "light";
 
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      className="h-11 w-11 rounded-full p-0"
+      className="grid h-9 w-9 place-items-center rounded-xl text-[var(--muted)] transition hover:text-[var(--text)]"
       aria-label="Changer de theme"
       onClick={() => setTheme(dark ? "light" : "dark")}
     >
       {dark ? <Sun size={18} /> : <Moon size={18} />}
-    </Button>
+    </button>
   );
 }
