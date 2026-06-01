@@ -259,6 +259,50 @@ export async function GET(request: NextRequest) {
         url: "/wallet",
       });
       report.payouts++;
+
+      // B2B: Revenue sharing 0.25% pour l'organisation liée si existante
+      void (async () => {
+        try {
+          const orgLink = await (prisma.orgTontine as never).findUnique({
+            where: { tontineGroupId: group.id },
+            include: { org: { select: { id: true, ownerId: true, revenueShareBps: true } } },
+          }) as { org: { id: string; ownerId: string; revenueShareBps: number } } | null;
+          if (!orgLink) return;
+          const org = orgLink.org;
+          const orgShareCents = Math.round(potCents * org.revenueShareBps / 10_000);
+          if (orgShareCents <= 0) return;
+          const ownerWallet = await prisma.wallet.findUnique({ where: { userId: org.ownerId } });
+          if (!ownerWallet) return;
+          const shareRef = `ORG-SHARE-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+          await prisma.$transaction([
+            prisma.wallet.update({ where: { id: ownerWallet.id }, data: { balanceCents: { increment: orgShareCents } } }),
+            prisma.transaction.create({
+              data: {
+                userId: org.ownerId, walletId: ownerWallet.id, tontineGroupId: group.id,
+                type: "ORG_REVENUE_SHARE", status: "PAID", amountCents: orgShareCents,
+                currency: group.currency, provider: "WALLET",
+                reference: shareRef, riskScore: 0,
+                metadata: JSON.stringify({ orgId: org.id, round: group.currentRound, bps: org.revenueShareBps }),
+              },
+            }),
+            (prisma.organization as never).update({
+              where: { id: org.id },
+              data: {
+                totalVolumeCents: { increment: potCents },
+                totalEarnedCents: { increment: orgShareCents },
+              },
+            }),
+            prisma.notification.create({
+              data: {
+                userId: org.ownerId, tontineGroupId: group.id,
+                title: "💼 Revenus organisation",
+                body: `${money(orgShareCents, group.currency)} de commission sur le pot de ${group.name} (Round ${group.currentRound}).`,
+                type: "ORG_REVENUE",
+              },
+            }),
+          ]);
+        } catch { /* non-bloquant */ }
+      })();
     }
 
     // Reset paidThisRound + reminderSentAt + avancer le round
