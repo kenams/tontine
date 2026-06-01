@@ -16,7 +16,6 @@ model User {
   phone           String?
   role            String         @default("USER")
   status          String         @default("ACTIVE")
-  plan            String         @default("FREE")
   locale          String         @default("fr-FR")
   kycStatus       String         @default("NONE")
   kycVerifiedAt   DateTime?
@@ -25,10 +24,6 @@ model User {
   lastLoginAt     DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  referralCode    String?        @unique
-  referredById    String?
-  referredBy      User?          @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
-  referrals       User[]         @relation("Referrals")
   adminProfile    Admin?
   wallet          Wallet?
   trustScore      TrustScore?
@@ -47,10 +42,6 @@ model User {
   pushSubscriptions   PushSubscription[]
   expoPushToken       ExpoPushToken?
   stripeCustomerId    String?
-  subscription        Subscription?
-  walletLocks         WalletLock[]
-  referralRewards     Referral[]         @relation("ReferralReferrer")
-  referralSources     Referral[]         @relation("ReferralReferred")
 }
 
 model Admin {
@@ -69,7 +60,6 @@ model Wallet {
   currency       String        @default("XOF")
   status         String        @default("ACTIVE")
   transactions   Transaction[]
-  locks          WalletLock[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -386,17 +376,15 @@ model EmergencyLoan {
   @@index([tontineGroupId])
 }
 
-// ── Parrainage ───────────────────────────────────────────────────────────────
+// ── Parrainage (FK via raw SQL — colonnes plan/referralCode/referredById ajoutées après migration) ──
 model Referral {
-  id              String   @id @default(cuid())
-  referrerId      String
-  referrer        User     @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredId      String   @unique
-  referred        User     @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
-  status          String   @default("PENDING")
-  rewardCents     Int      @default(500)
-  rewardedAt      DateTime?
-  createdAt       DateTime @default(now())
+  id          String    @id @default(cuid())
+  referrerId  String
+  referredId  String    @unique
+  status      String    @default("PENDING")
+  rewardCents Int       @default(500)
+  rewardedAt  DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([referrerId])
   @@index([status])
@@ -406,7 +394,6 @@ model Referral {
 model Subscription {
   id                   String    @id @default(cuid())
   userId               String    @unique
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan                 String    @default("FREE")
   status               String    @default("ACTIVE")
   stripeSubscriptionId String?   @unique
@@ -417,13 +404,11 @@ model Subscription {
   updatedAt            DateTime  @updatedAt
 }
 
-// ── Collatéral wallet (bloqué jusqu'à fin tontine) ───────────────────────────
+// ── Collatéral wallet ────────────────────────────────────────────────────────
 model WalletLock {
   id              String    @id @default(cuid())
   userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   walletId        String
-  wallet          Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
   tontineGroupId  String
   amountCents     Int
   currency        String
