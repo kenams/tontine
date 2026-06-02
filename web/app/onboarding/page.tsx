@@ -35,7 +35,7 @@ const STEPS = [
     color: "bg-white/10 text-white",
     title: "Télécharge l'app",
     body: "Notifications push, paiements Mobile Money, suivi en temps réel. L'APK Android est disponible gratuitement.",
-    action: { label: "Télécharger l'APK", href: "https://github.com/kenams/tontine/releases/download/v2.0.0/kotizy-v2.0.0.apk", secondary: { label: "Ignorer", href: null } },
+    action: { label: "Télécharger l'APK", href: "https://github.com/kenams/tontine/releases/download/v2.1.0/kotizy-v2.1.0.apk", secondary: { label: "Ignorer", href: null } },
   },
 ];
 
