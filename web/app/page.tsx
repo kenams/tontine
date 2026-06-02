@@ -140,6 +140,9 @@ export default async function LandingPage() {
                 <a href="https://github.com/kenams/tontine/releases/download/v2.0.0/kotizy-v2.0.0.apk" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
                   <Download size={15} /> APK Android
                 </a>
+                <Link href="/install-ios" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
+                  <Smartphone size={15} /> iPhone / iOS
+                </Link>
               </div>
 
               {/* Social proof inline */}
