@@ -1,11 +1,7 @@
 import { AlertTriangle, Award, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound, Flame } from "lucide-react";
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
 import { AvatarUpload } from "@/components/app/avatar-upload";
 import { prisma } from "@/lib/db";
-
-export const revalidate = 0;
-
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
@@ -20,29 +16,30 @@ import { badgeMeta } from "@/lib/badges";
 import { getServerT } from "@/lib/i18n/server";
 import { initials, money } from "@/lib/format";
 
+export const revalidate = 0;
+
 const badgeColors: Record<string, string> = {
   gold:    "bg-gold/15 text-gold ring-gold/25",
   emerald: "bg-emerald-500/15 text-emerald-400 ring-emerald-400/25",
   ivory:   "bg-white/10 text-[var(--text)] ring-white/10",
 };
 
+async function getDebtMemberships(userId: string) {
+  return prisma.membership.findMany({
+    where: { userId, debtCents: { gt: 0 } },
+    select: { id: true, debtCents: true, tontineGroup: { select: { name: true, id: true, currency: true } } },
+  });
+}
+
 export default async function ProfilePage() {
   const session = await requireUser();
-  const getDebtMemberships = unstable_cache(
-    (uid: string) => prisma.membership.findMany({
-      where: { userId: uid, debtCents: { gt: 0 } },
-      select: { id: true, debtCents: true, tontineGroup: { select: { name: true, id: true, currency: true } } },
-    }),
-    ["debt-memberships", session.userId],
-    { revalidate: 30, tags: [`user-${session.userId}`] }
-  );
 
   const [{ user, memberships, transactions }, debtMemberships] = await Promise.all([
     getUserDashboard(session.userId),
     getDebtMemberships(session.userId),
   ]);
   const { lang, t } = await getServerT();
-  const totalDebt = debtMemberships.reduce((s, m) => s + m.debtCents, 0);
+  const totalDebt = debtMemberships.reduce((s, m) => s + (m.debtCents ?? 0), 0);
 
   const walletCurrency = user.wallet?.currency ?? "XOF";
   const trust = user.trustScore?.score ?? 0;
