@@ -15,9 +15,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useStripe } from "@stripe/stripe-react-native";
 
 import { apiCall } from "../../services/api";
+import { useStripeCompat as useStripe } from "../../hooks/useStripeCompat";
 import { colors } from "../../theme/colors";
 import { useLang } from "../../i18n/useLang";
 

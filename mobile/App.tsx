@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer, type LinkingOptions } from "@react-navigation/native";
-import { StripeProvider } from "@stripe/stripe-react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -13,6 +13,12 @@ import { appNavigationTheme } from "./src/theme/theme";
 import { STRIPE_PUBLISHABLE_KEY } from "./src/config/constants";
 import { useLang } from "./src/i18n/useLang";
 import type { RootStackParamList } from "./src/types/navigation";
+
+// Stripe is native-only — import conditionally to avoid web bundler crash
+const StripeWrapper = Platform.OS !== "web"
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ? require("@stripe/stripe-react-native").StripeProvider
+  : ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ["kotizy://", "https://tontineapp-web.vercel.app"],
@@ -67,13 +73,13 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.kahdigital.kotizy">
+        <StripeWrapper publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.kahdigital.kotizy">
           {onboardingDone ? (
             <AppProviders />
           ) : (
             <OnboardingScreen onDone={() => setOnboardingDone(true)} />
           )}
-        </StripeProvider>
+        </StripeWrapper>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
