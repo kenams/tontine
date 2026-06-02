@@ -18,13 +18,19 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string 
   INVITE:       { icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/15" },
 };
 
+export const revalidate = 0;
+
 export default async function NotificationsPage() {
   const session = await requireUser();
   const { t } = await getServerT();
   const notifications = await prisma.notification.findMany({
     where: { userId: session.userId },
-    include: { tontineGroup: true },
-    orderBy: { createdAt: "desc" }
+    select: {
+      id: true, title: true, body: true, type: true, readAt: true, createdAt: true,
+      tontineGroup: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
   });
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 

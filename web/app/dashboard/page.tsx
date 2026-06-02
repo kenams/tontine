@@ -16,6 +16,8 @@ import { getUserDashboard } from "@/lib/data";
 import { getServerT } from "@/lib/i18n/server";
 import { dateShort, money, pct } from "@/lib/format";
 
+export const revalidate = 15;
+
 export default async function DashboardPage() {
   const session = await requireUser();
   if (session.role === "ADMIN") redirect("/admin");

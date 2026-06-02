@@ -1,7 +1,10 @@
 import { AlertTriangle, Award, ExternalLink, Fingerprint, KeyRound, ShieldCheck, TrendingUp, UserRound, Flame } from "lucide-react";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { AvatarUpload } from "@/components/app/avatar-upload";
 import { prisma } from "@/lib/db";
+
+export const revalidate = 0;
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -25,15 +28,21 @@ const badgeColors: Record<string, string> = {
 
 export default async function ProfilePage() {
   const session = await requireUser();
+  const getDebtMemberships = unstable_cache(
+    (uid: string) => prisma.membership.findMany({
+      where: { userId: uid, debtCents: { gt: 0 } },
+      select: { id: true, debtCents: true, tontineGroup: { select: { name: true, id: true, currency: true } } },
+    }),
+    ["debt-memberships", session.userId],
+    { revalidate: 30, tags: [`user-${session.userId}`] }
+  );
+
   const [{ user, memberships, transactions }, debtMemberships] = await Promise.all([
     getUserDashboard(session.userId),
-    prisma.membership.findMany({
-      where: { userId: session.userId, debtCents: { gt: 0 } },
-      include: { tontineGroup: { select: { name: true, id: true, currency: true } } },
-    } as never),
+    getDebtMemberships(session.userId),
   ]);
   const { lang, t } = await getServerT();
-  const totalDebt = (debtMemberships as unknown as Array<{ debtCents: number }>).reduce((s, m) => s + m.debtCents, 0);
+  const totalDebt = debtMemberships.reduce((s, m) => s + m.debtCents, 0);
 
   const walletCurrency = user.wallet?.currency ?? "XOF";
   const trust = user.trustScore?.score ?? 0;

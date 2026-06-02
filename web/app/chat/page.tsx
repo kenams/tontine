@@ -7,18 +7,26 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dateShort, initials } from "@/lib/format";
 
+export const revalidate = 30;
+
 export default async function ChatPage() {
   const session = await requireUser();
   const memberships = await prisma.membership.findMany({
     where: { userId: session.userId },
-    include: {
+    select: {
       tontineGroup: {
-        include: {
-          messages: { include: { user: true }, orderBy: { createdAt: "desc" }, take: 1 },
-          memberships: true
-        }
-      }
-    }
+        select: {
+          id: true, name: true,
+          messages: {
+            select: { createdAt: true, content: true, user: { select: { fullName: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+          _count: { select: { memberships: true } },
+        },
+      },
+    },
+    take: 50,
   });
 
   return (

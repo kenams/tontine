@@ -99,12 +99,13 @@ async function _getUserTontines(userId: string) {
       tontineGroup: {
         include: {
           emergencyFund: true,
-          memberships: true,
-          contributions: true
+          memberships: { select: { id: true, userId: true, status: true, payoutOrder: true } },
+          contributions: { orderBy: { createdAt: "desc" }, take: 5, select: { id: true, status: true, amountCents: true, currency: true, createdAt: true, userId: true } },
         }
       }
     },
-    orderBy: { joinedAt: "desc" }
+    orderBy: { joinedAt: "desc" },
+    take: 50,
   });
 }
 

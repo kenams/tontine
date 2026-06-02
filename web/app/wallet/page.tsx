@@ -10,6 +10,8 @@ import { getUserDashboard } from "@/lib/data";
 import { getServerT } from "@/lib/i18n/server";
 import { dateShort, money } from "@/lib/format";
 
+export const revalidate = 0;
+
 export default async function WalletPage({
   searchParams,
 }: {
