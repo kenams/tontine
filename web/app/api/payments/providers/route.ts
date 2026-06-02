@@ -31,7 +31,6 @@ export async function GET() {
         currencies: ["XOF", "XAF", "CDF", "GNF"],
       },
       { code: "WALLET", name: "Wallet Kotizy", status: "CONFIGURED", methods: ["wallet"], currencies: ["*"] },
-      { code: "BANK_TRANSFER", name: "Virement SEPA", status: "CONFIGURED", methods: ["sepa"], currencies: ["EUR"] },
     ],
   });
 }

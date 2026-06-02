@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowLeft, Building2, CreditCard, Loader2,
+  ArrowLeft, CreditCard, Loader2,
   Smartphone, Star, Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,7 +20,7 @@ const PRESETS = [
   { label: "200 €", cents: 20000 },
 ];
 
-type Method = "card" | "sepa" | "mobile";
+type Method = "card" | "mobile";
 
 function DepositContent() {
   const searchParams = useSearchParams();
@@ -38,22 +38,13 @@ function DepositContent() {
       available: true,
     },
     {
-      id: "sepa" as Method,
-      icon: Building2,
-      label: t("deposit", "sepaLabel"),
-      sub: t("deposit", "sepaSub"),
-      badge: t("deposit", "daysBadge"),
-      badgeColor: "bg-white/10 text-[var(--muted)]",
-      available: true,
-    },
-    {
       id: "mobile" as Method,
       icon: Smartphone,
       label: t("deposit", "mobileLabel"),
       sub: t("deposit", "mobileSub"),
-      badge: t("deposit", "soonBadge"),
-      badgeColor: "bg-white/10 text-[var(--muted)]",
-      available: false,
+      badge: t("deposit", "instantBadge"),
+      badgeColor: "bg-emerald-500/15 text-emerald-400",
+      available: true,
     },
   ];
 
@@ -71,8 +62,8 @@ function DepositContent() {
     setLoading(true);
     setError(null);
 
-    if (method === "sepa") {
-      window.location.assign("/wallet/deposit/sepa");
+    if (method === "mobile") {
+      window.location.assign(`/wallet/deposit/cinetpay?amount=${amountCents}`);
       return;
     }
 
@@ -176,22 +167,32 @@ function DepositContent() {
           </div>
         )}
 
-        {method === "sepa" && (
-          <div className="glass mb-4 rounded-[1.75rem] p-5">
-            <p className="mb-3 text-sm text-[var(--muted)]">{t("deposit", "sepaInfo")}</p>
-            {error && <div className="mb-3 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-300">{error}</div>}
-            <Link href="/wallet/deposit/sepa" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/15 py-3.5 text-sm font-black hover:bg-white/20 transition">
-              <Building2 size={18} />
-              {t("deposit", "sepaBtn")}
-            </Link>
-          </div>
-        )}
-
         {method === "mobile" && (
-          <div className="glass mb-4 rounded-[1.75rem] p-5 text-center">
-            <Smartphone size={32} className="mx-auto mb-3 text-[var(--muted)]" />
-            <p className="font-black">{t("deposit", "mobileSoon")}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">{t("deposit", "mobileSoonDesc")}</p>
+          <div className="glass mb-4 rounded-[1.75rem] p-5">
+            <p className="mb-3 text-sm font-black">{t("deposit", "amountTitle")}</p>
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              {[
+                { label: "1 000 XOF", cents: 100000 },
+                { label: "2 500 XOF", cents: 250000 },
+                { label: "5 000 XOF", cents: 500000 },
+                { label: "10 000 XOF", cents: 1000000 },
+                { label: "25 000 XOF", cents: 2500000 },
+                { label: "50 000 XOF", cents: 5000000 },
+              ].map((p) => (
+                <button
+                  key={p.cents}
+                  onClick={() => { setSelected(p.cents); setCustom(""); setError(null); }}
+                  className={`rounded-2xl py-3 text-xs font-bold transition ${selected === p.cents && !custom ? "bg-emerald-500 text-black" : "bg-white/10 hover:bg-white/15"}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {error && <div className="mb-3 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-300">{error}</div>}
+            <Button onClick={handleDeposit} disabled={loading || !amountCents || amountCents < 30000} className="w-full">
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Smartphone size={18} />}
+              {loading ? t("deposit", "btnOpening") : "Payer via Mobile Money"}
+            </Button>
           </div>
         )}
 
