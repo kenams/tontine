@@ -50,7 +50,7 @@ export const messageSchema = z.object({
 
 export const contributionSchema = z.object({
   provider: z
-    .enum(["WALLET", "ORANGE_MONEY", "MTN_MOMO", "WAVE", "FLUTTERWAVE", "STRIPE", "CARD_GLOBAL", "BANK_TRANSFER"])
+    .enum(["WALLET", "ORANGE_MONEY", "MTN_MOMO", "WAVE", "CINETPAY", "STRIPE", "CARD_GLOBAL", "BANK_TRANSFER"])
     .default("WALLET")
 });
 
