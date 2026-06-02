@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle, Eye, EyeOff, Lock, ShieldCheck, Sparkles, XCircle, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle, Eye, EyeOff, Lock, ShieldCheck, Sparkles, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -92,34 +92,11 @@ export function AuthForm({ mode, admin = false }: Props) {
   const { t } = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [quickLoading, setQuickLoading] = useState<"user" | "admin" | null>(null);
   const [password, setPassword] = useState("");
 
   const nextUrl = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("next") ?? ""
     : "";
-
-  async function quickLogin(role: "user" | "admin") {
-    setQuickLoading(role);
-    setError(null);
-    const creds = role === "admin"
-      ? { email: "admin@kotizy.app", password: "Admin123!" }
-      : { email: "user@kotizy.app", password: "User123!" };
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(creds),
-      });
-      const data = await res.json() as { error?: string; redirectTo?: string };
-      if (!res.ok) { setError(data.error ?? t("authForm", "errQuickLogin")); return; }
-      router.push(data.redirectTo ?? "/dashboard");
-      router.refresh();
-    } catch {
-      setError(t("authForm", "errNetwork"));
-    } finally {
-      setQuickLoading(null);
-    }
-  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -245,31 +222,6 @@ export function AuthForm({ mode, admin = false }: Props) {
             </p>
           )}
 
-          {mode === "login" && (
-            <div className="mt-5 space-y-2">
-              <p className="flex items-center gap-1.5 text-xs font-bold text-[var(--muted)]">
-                <Zap size={12} className="text-gold" /> {t("authForm", "demoLabel")}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => quickLogin("user")}
-                  disabled={quickLoading !== null}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] text-xs font-bold text-[var(--text)] ring-1 ring-[var(--surface-strong)] transition hover:bg-[var(--surface-strong)] disabled:opacity-50"
-                >
-                  {quickLoading === "user" ? "..." : t("authForm", "demoUser")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin("admin")}
-                  disabled={quickLoading !== null}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-gold/10 text-xs font-bold text-gold ring-1 ring-gold/20 transition hover:bg-gold/20 disabled:opacity-50"
-                >
-                  {quickLoading === "admin" ? "..." : t("authForm", "demoAdmin")}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="mt-5 text-center text-sm text-[var(--muted)]">
