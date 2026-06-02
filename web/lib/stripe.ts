@@ -213,7 +213,7 @@ export async function createContributionCheckoutSession(input: {
     client_reference_id: input.transactionId,
     success_url: successUrl,
     cancel_url: cancelUrl,
-    automatic_payment_methods: { enabled: true },
+    payment_method_types: ["card"],
     line_items: [
       {
         quantity: 1,

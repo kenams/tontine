@@ -31,7 +31,8 @@ export async function DELETE(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { endpoint } = await safeJson(request) as { endpoint?: string };
+  const body = await safeJson(request);
+  const endpoint = (body as { endpoint?: string } | null)?.endpoint;
   if (!endpoint) return NextResponse.json({ error: "Endpoint requis." }, { status: 400 });
 
   await prisma.pushSubscription.deleteMany({

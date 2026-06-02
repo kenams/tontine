@@ -65,25 +65,33 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   }, []);
 
   async function registerPushToken() {
-    if (!Device.isDevice) return null;
-    const { status: existing } = await Notifications.getPermissionsAsync();
-    let finalStatus = existing;
-    if (existing !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+    if (!Device.isDevice) {
+      // Simulateur ou Expo Go non lié — pas de push natif
+      return null;
     }
-    if (finalStatus !== "granted") return null;
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "Kotizy",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
+    try {
+      const { status: existing } = await Notifications.getPermissionsAsync();
+      let finalStatus = existing;
+      if (existing !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") return null;
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "Kotizy",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+        });
+      }
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId: "5e1b5c7a-7b38-4f86-97ff-2e23614f0f95",
       });
+      return token.data;
+    } catch {
+      // getExpoPushTokenAsync peut echouer sur certains builds/appareils
+      return null;
     }
-    const token = await Notifications.getExpoPushTokenAsync({
-      projectId: "5e1b5c7a-7b38-4f86-97ff-2e23614f0f95",
-    });
-    return token.data;
   }
 
   async function togglePush(val: boolean) {
@@ -92,6 +100,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
       if (val) {
         const token = await registerPushToken();
         if (!token) {
+          // Permissions refusées ou token non disponible (Expo Go / simulateur)
           Alert.alert(t("profile.notifications"), t("profile.push.denied"));
           setPushLoading(false);
           return;

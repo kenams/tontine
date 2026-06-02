@@ -79,7 +79,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
     await tx.membership.update({
       where: { id: membership.id },
-      data: { paidThisRound: status === "PAID", status: status === "PAID" ? "ACTIVE" : "LATE" }
+      data: {
+        paidThisRound: status === "PAID",
+        // PENDING = paiement Stripe en attente → garder ACTIVE, pas LATE
+        // LATE seulement si wallet vide et provider WALLET (echec immédiat)
+        status: status === "PAID" ? "ACTIVE" : (stripeProvider ? membership.status : "LATE"),
+      }
     });
     return { contribution, transaction };
   });

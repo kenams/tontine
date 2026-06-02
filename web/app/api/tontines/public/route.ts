@@ -6,17 +6,19 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const currency = sanitizeSearch(searchParams.get("currency"));
   const minContrib = Number(searchParams.get("minContrib") ?? 0);
-  const maxContrib = Number(searchParams.get("maxContrib") ?? 999_999_999);
+  const maxContrib = Number(searchParams.get("maxContrib") ?? 0);
 
   const tontines = await prisma.tontineGroup.findMany({
     where: {
       isPublic: true,
       status: "ACTIVE",
       ...(currency ? { currency } : {}),
-      contributionCents: {
-        gte: minContrib * 100 || 0,
-        lte: maxContrib * 100 || 999_999_999,
-      },
+      ...(minContrib > 0 || maxContrib > 0 ? {
+        contributionCents: {
+          ...(minContrib > 0 ? { gte: minContrib * 100 } : {}),
+          ...(maxContrib > 0 ? { lte: maxContrib * 100 } : {}),
+        },
+      } : {}),
     },
     select: {
       id: true, name: true, description: true, contributionCents: true,

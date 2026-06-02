@@ -59,14 +59,10 @@ export async function POST(request: NextRequest) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      const activeMembers = await tx.membership.findMany({
+      const memberCount = await tx.membership.count({
         where: { tontineGroupId: group.id, status: { notIn: ["LEFT", "EXCLUDED"] } },
-        orderBy: { payoutOrder: "desc" },
-        take: 1,
       });
-      const memberCount = activeMembers.length;
       if (memberCount >= group.maxMembers) throw new Error("FULL");
-      // Ordre initial = fin de liste (sera réordonné par l'admin ou rester tel quel)
       const payoutOrder = memberCount + 1;
       await tx.membership.create({
         data: {
