@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
+import { TransactionActions } from "@/components/app/transaction-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/auth";
 import { getUserDashboard } from "@/lib/data";
@@ -177,22 +178,34 @@ export default async function WalletPage({
               const sign = (isDeposit || isPayout) && tx.status === "PAID" ? "+" : "−";
               const amtColor = (isDeposit || isPayout) && tx.status === "PAID" ? "text-emerald-400" : "text-[var(--text)]";
               return (
-                <div key={tx.id} className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className={`grid h-10 w-10 place-items-center rounded-2xl ${tx.status === "PAID" ? "bg-emerald-500/15" : "bg-[var(--surface-strong)]"}`}>
-                      <WalletCards size={15} className={tx.status === "PAID" ? "text-emerald-400" : "text-[var(--muted)]"} />
+                <div key={tx.id} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className={`grid h-10 w-10 place-items-center rounded-2xl ${tx.status === "PAID" ? "bg-emerald-500/15" : "bg-[var(--surface-strong)]"}`}>
+                        <WalletCards size={15} className={tx.status === "PAID" ? "text-emerald-400" : "text-[var(--muted)]"} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold">{label}</p>
+                        <p className="text-[10px] text-[var(--muted)]">{dateShort(tx.createdAt)} · {tx.provider}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">{label}</p>
-                      <p className="text-[10px] text-[var(--muted)]">{dateShort(tx.createdAt)} · {tx.provider}</p>
+                    <div className="text-right">
+                      <p className={`text-sm font-black ${amtColor}`}>
+                        {sign}{money(tx.amountCents, tx.currency)}
+                      </p>
+                      <StatusBadge value={tx.status} />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-black ${amtColor}`}>
-                      {sign}{money(tx.amountCents, tx.currency)}
-                    </p>
-                    <StatusBadge value={tx.status} />
-                  </div>
+                  {tx.type === "WALLET_DEPOSIT" && (tx.status === "PENDING" || tx.status === "FAILED") && (
+                    <TransactionActions
+                      txId={tx.id}
+                      status={tx.status}
+                      provider={tx.provider}
+                      amountCents={tx.amountCents}
+                      currency={tx.currency}
+                      reference={tx.reference}
+                    />
+                  )}
                 </div>
               );
             })}
