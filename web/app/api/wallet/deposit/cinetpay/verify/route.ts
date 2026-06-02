@@ -19,9 +19,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, alreadyCredited: true, amountCents: pending.amountCents, currency: pending.currency });
   }
 
+  // Toujours re-vérifier via l'API (ne jamais faire confiance au status de la callback)
   const verification = await verifyCinetpayTransaction(txRef);
-  if (!verification.ok || verification.status !== "ACCEPTED") {
-    await prisma.transaction.update({ where: { id: pending.id }, data: { status: "FAILED" } });
+  if (!verification.ok || verification.status !== "SUCCESS") {
+    if (verification.status === "FAILED") {
+      await prisma.transaction.update({ where: { id: pending.id }, data: { status: "FAILED" } });
+    }
     return NextResponse.json({ ok: false, status: verification.status ?? "failed", error: verification.error });
   }
 

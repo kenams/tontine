@@ -3,32 +3,29 @@ import { prisma } from "@/lib/db";
 import { verifyCinetpayTransaction } from "@/lib/cinetpay";
 
 export async function POST(request: NextRequest) {
-  let body: { cpm_trans_id?: string; cpm_site_id?: string; cpm_result?: string } = {};
-  try {
-    body = await request.json();
-  } catch {
+  let body: { merchant_transaction_id?: string; status?: string } = {};
+  try { body = await request.json(); } catch {
     return NextResponse.json({ error: "JSON invalide." }, { status: 400 });
   }
 
-  const txRef = body.cpm_trans_id;
-  const result = body.cpm_result;
-
+  const txRef = body.merchant_transaction_id;
   if (!txRef) return NextResponse.json({ ok: true, ignored: true });
-
-  if (result !== "00") {
-    await prisma.transaction.updateMany({ where: { reference: txRef, status: "PENDING" }, data: { status: "FAILED" } });
-    return NextResponse.json({ ok: true });
-  }
 
   const pending = await prisma.transaction.findFirst({
     where: { reference: txRef, status: "PENDING" },
   });
   if (!pending || !pending.walletId) return NextResponse.json({ ok: true, skipped: "no_pending" });
 
-  // Double-vérification côté API CinetPay
+  // Re-vérifier via API — ne jamais faire confiance au payload webhook
   const verification = await verifyCinetpayTransaction(txRef);
-  if (!verification.ok || verification.status !== "ACCEPTED") {
-    return NextResponse.json({ ok: true, skipped: "verification_failed" });
+
+  if (!verification.ok || verification.status === "FAILED") {
+    await prisma.transaction.update({ where: { id: pending.id }, data: { status: "FAILED" } });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (verification.status !== "SUCCESS") {
+    return NextResponse.json({ ok: true, skipped: "not_final" });
   }
 
   await prisma.$transaction([

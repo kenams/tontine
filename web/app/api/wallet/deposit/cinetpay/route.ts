@@ -41,9 +41,11 @@ export async function POST(request: NextRequest) {
     update: {},
   });
 
-  const txRef = `CP-DEP-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-  const [firstName, ...rest] = (user.fullName ?? "Utilisateur Kotizy").split(" ");
-  const lastName = rest.join(" ") || firstName;
+  // max 30 chars pour merchant_transaction_id
+  const txRef = `CP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`.slice(0, 30);
+  const nameParts = (user.fullName ?? "Utilisateur Kotizy").split(" ");
+  const firstName = nameParts[0];
+  const lastName = nameParts.slice(1).join(" ") || firstName;
 
   await prisma.transaction.create({
     data: {
@@ -64,12 +66,13 @@ export async function POST(request: NextRequest) {
     txRef,
     amountCents,
     currency,
-    customerName: firstName,
-    customerSurname: lastName,
-    customerEmail: user.email,
-    customerPhone: user.phone ?? undefined,
+    clientFirstName: firstName,
+    clientLastName: lastName,
+    clientEmail: user.email,
+    clientPhone: user.phone ?? undefined,
     notifyUrl: `${APP_URL}/api/webhooks/cinetpay`,
-    returnUrl: `${APP_URL}/wallet/deposit/cinetpay/verify?tx_ref=${txRef}`,
+    successUrl: `${APP_URL}/wallet/deposit/cinetpay/verify?tx_ref=${txRef}&status=success`,
+    failedUrl: `${APP_URL}/wallet/deposit/cinetpay/verify?tx_ref=${txRef}&status=failed`,
     description: `Recharge wallet Kotizy — ${user.fullName}`,
   });
 
@@ -78,5 +81,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 502 });
   }
 
-  return NextResponse.json({ ok: true, paymentUrl: result.paymentUrl, txRef });
+  return NextResponse.json({ ok: true, paymentUrl: result.paymentUrl, txRef, mustRedirect: result.mustRedirect });
 }
