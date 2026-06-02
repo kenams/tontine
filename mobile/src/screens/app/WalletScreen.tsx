@@ -230,14 +230,17 @@ function TxActions({ tx, onRefresh }: { tx: Transaction; onRefresh: () => void }
   if (tx.type !== "WALLET_DEPOSIT") return null;
   if (tx.status !== "PENDING" && tx.status !== "FAILED") return null;
 
-  async function cancel() {
+  async function removeOrCancel() {
     setLoading("cancel");
     setErr(null);
     try {
-      await apiCall("post", `/api/transactions/${tx.id}/cancel`, {});
+      const endpoint = tx.status === "PENDING"
+        ? `/api/transactions/${tx.id}/cancel`
+        : `/api/transactions/${tx.id}/delete`;
+      await apiCall("post", endpoint, {});
       onRefresh();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erreur annulation.");
+      setErr(e instanceof Error ? e.message : "Erreur.");
     } finally {
       setLoading(null);
     }
@@ -272,11 +275,11 @@ function TxActions({ tx, onRefresh }: { tx: Transaction; onRefresh: () => void }
         </Pressable>
       )}
       {tx.status === "PENDING" && (
-        <Pressable style={[a.btn, a.btnRed]} onPress={() => void cancel()} disabled={loading !== null}>
+        <Pressable style={[a.btn, a.btnRed]} onPress={() => void removeOrCancel()} disabled={loading !== null}>
           {loading === "cancel"
             ? <ActivityIndicator size={10} color={colors.danger} />
-            : <Ionicons name="close" size={10} color={colors.danger} />}
-          <Text style={[a.txt, { color: colors.danger }]}>Annuler</Text>
+            : <Ionicons name="trash-outline" size={10} color={colors.danger} />}
+          <Text style={[a.txt, { color: colors.danger }]}>{tx.status === "PENDING" ? "Annuler" : "Supprimer"}</Text>
         </Pressable>
       )}
       {err && <Text style={{ fontSize: 10, color: colors.danger, marginTop: 4 }}>{err}</Text>}

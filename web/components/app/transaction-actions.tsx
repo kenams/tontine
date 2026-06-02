@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, RotateCcw, X, Play } from "lucide-react";
+import { Loader2, RotateCcw, Trash2, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,19 +15,22 @@ type Props = {
 
 export function TransactionActions({ txId, status, provider, amountCents }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState<"cancel" | "retry" | null>(null);
+  const [loading, setLoading] = useState<"delete" | "cancel" | "retry" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (status !== "PENDING" && status !== "FAILED") return null;
 
-  async function cancel() {
-    setLoading("cancel");
+  async function deleteOrCancel() {
+    setLoading(status === "PENDING" ? "cancel" : "delete");
     setError(null);
     try {
-      const res = await fetch(`/api/transactions/${txId}/cancel`, { method: "POST" });
+      const endpoint = status === "PENDING"
+        ? `/api/transactions/${txId}/cancel`
+        : `/api/transactions/${txId}/delete`;
+      const res = await fetch(endpoint, { method: "POST" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
-        setError(data.error ?? "Erreur lors de l'annulation.");
+        setError(data.error ?? "Erreur.");
         return;
       }
       router.refresh();
@@ -46,6 +49,8 @@ export function TransactionActions({ txId, status, provider, amountCents }: Prop
       window.location.assign("/wallet/deposit");
     }
   }
+
+  const isDeleting = loading === "delete" || loading === "cancel";
 
   return (
     <div className="flex flex-col gap-1">
@@ -70,16 +75,14 @@ export function TransactionActions({ txId, status, provider, amountCents }: Prop
             Réessayer
           </button>
         )}
-        {status === "PENDING" && (
-          <button
-            onClick={() => void cancel()}
-            disabled={loading !== null}
-            className="flex items-center gap-1 rounded-xl bg-rose-500/10 px-2.5 py-1.5 text-[10px] font-bold text-rose-400 transition hover:bg-rose-500/20 disabled:opacity-50"
-          >
-            {loading === "cancel" ? <Loader2 size={10} className="animate-spin" /> : <X size={10} />}
-            Annuler
-          </button>
-        )}
+        <button
+          onClick={() => void deleteOrCancel()}
+          disabled={loading !== null}
+          className="flex items-center gap-1 rounded-xl bg-rose-500/10 px-2.5 py-1.5 text-[10px] font-bold text-rose-400 transition hover:bg-rose-500/20 disabled:opacity-50"
+        >
+          {isDeleting ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
+          {status === "PENDING" ? "Annuler" : "Supprimer"}
+        </button>
       </div>
       {error && <p className="text-[10px] text-rose-400 pl-1">{error}</p>}
     </div>
