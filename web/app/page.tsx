@@ -1,12 +1,29 @@
-import { ArrowRight, BadgeCheck, ChevronDown, Globe, MessageCircle, Shield, Smartphone, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
+import {
+  ArrowRight, BadgeCheck, ChevronDown, Download,
+  Globe, MessageCircle, Shield, Smartphone,
+  Sparkles, Star, TrendingUp, Users, Zap,
+} from "lucide-react";
 import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
 
+import { AnimatedCounter } from "@/components/app/landing-counter";
 import { LangToggle } from "@/components/app/lang-toggle";
 import { MotionPage } from "@/components/ui/motion";
 import { getSession } from "@/lib/auth";
 import { getServerT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
+
+export const revalidate = 60;
+
+const getStats = unstable_cache(async () => {
+  const [userCount, groupCount, txCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
+    prisma.transaction.count({ where: { status: "PAID" } }),
+  ]).catch(() => [0, 0, 0]);
+  return { userCount, groupCount, txCount };
+}, ["landing-stats"], { revalidate: 60 });
 
 function DiasporaRoute({ from, to }: { from: string; to: string }) {
   return (
@@ -21,10 +38,7 @@ function DiasporaRoute({ from, to }: { from: string; to: string }) {
 export default async function LandingPage() {
   const session = await getSession();
   const { t, lang } = await getServerT();
-  const [userCount, groupCount] = await Promise.all([
-    prisma.user.count(),
-    prisma.tontineGroup.count({ where: { status: "ACTIVE" } }),
-  ]).catch(() => [0, 0]);
+  const { userCount, groupCount, txCount } = await getStats();
 
   const FEATURES = [
     { icon: TrendingUp, title: t("landing", "feat1Title"), desc: t("landing", "feat1Desc"), accent: true },
@@ -56,34 +70,24 @@ export default async function LandingPage() {
     { q: t("landing", "faq6Q"), a: t("landing", "faq6A") },
   ];
 
-  const STATS = [
-    { value: userCount > 0 ? `${userCount}+` : "100+", label: t("landing", "statMembers") },
-    { value: groupCount > 0 ? `${groupCount}+` : "20+", label: t("landing", "statCircles") },
-    { value: "0€", label: t("landing", "statFees") },
-    { value: "100%", label: t("landing", "statSecure") },
-  ];
+  const displayUsers = Math.max(userCount, 120);
+  const displayGroups = Math.max(groupCount, 18);
+  const displayTx = Math.max(txCount, 340);
 
   return (
     <MotionPage>
       <div className="relative min-h-dvh overflow-hidden bg-[#080b07]">
 
-        {/* ── FOND MONDE ── */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage: "url('/world-map.png')",
-            backgroundSize: "115%",
-            backgroundPosition: "center -2%",
-            backgroundRepeat: "no-repeat",
-            opacity: 0.13,
-            filter: "brightness(1.6) saturate(1.4) hue-rotate(-10deg)",
-          }}
-        />
+        {/* Fond carte du monde */}
+        <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: "url('/world-map.png')", backgroundSize: "115%", backgroundPosition: "center -2%", backgroundRepeat: "no-repeat", opacity: 0.13, filter: "brightness(1.6) saturate(1.4) hue-rotate(-10deg)" }} />
+
+        {/* Glow fond */}
+        <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-[120px]" />
 
         <main className="relative mx-auto max-w-6xl px-5 py-5">
 
           {/* ── NAV ── */}
-          <nav className="sticky top-0 z-50 -mx-5 flex items-center justify-between px-5 py-4">
+          <nav className="sticky top-0 z-50 -mx-5 flex items-center justify-between px-5 py-4 backdrop-blur-sm">
             <Link href="/" className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500 text-base font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)]">K</span>
               <span className="text-sm font-black tracking-tight text-white">Kotizy</span>
@@ -92,13 +96,10 @@ export default async function LandingPage() {
               <LangToggle />
               {!session && (
                 <Link href="/register" className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-[#080b07] shadow-[0_0_16px_rgba(34,197,94,0.3)] transition hover:bg-emerald-400">
-                  {t("landing", "register")}
+                  {t("landing", "cta")} <ArrowRight size={14} />
                 </Link>
               )}
-              <Link
-                href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
-                className="rounded-2xl bg-white/8 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/12"
-              >
+              <Link href={session ? (session.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"} className="rounded-2xl bg-white/8 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/12">
                 {session ? t("landing", "mySpace") : t("landing", "connect")}
               </Link>
             </div>
@@ -127,36 +128,40 @@ export default async function LandingPage() {
                 <DiasporaRoute from="London" to="Lagos" />
                 <DiasporaRoute from="Lyon" to="Dakar" />
                 <DiasporaRoute from="Bruxelles" to="Kinshasa" />
+                <DiasporaRoute from="Genève" to="Lomé" />
+                <DiasporaRoute from="Madrid" to="Bamako" />
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href={session ? "/dashboard" : "/register"}
-                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-[#080b07] shadow-[0_0_24px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400"
-                >
+                <Link href={session ? "/dashboard" : "/register"} className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-6 text-sm font-black text-[#080b07] shadow-[0_0_24px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400 hover:shadow-[0_0_40px_rgba(34,197,94,0.55)]">
                   {session ? t("landing", "dashboard") : t("landing", "cta")}
                   <ArrowRight size={16} />
                 </Link>
-                <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
-                  {t("landing", "login")}
-                </Link>
+                <a href="https://expo.dev/accounts/kenams/projects/kotizy/builds/eb9d7920-0a78-4e89-8b09-c0eb7c0b9c2f" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
+                  <Download size={15} /> APK Android
+                </a>
               </div>
 
-              <div className="mt-10 flex flex-wrap gap-8">
-                {[
-                  ["50€", t("landing", "stat1Sub")],
-                  ["100%", t("landing", "stat2Sub")],
-                  ["0€", t("landing", "stat3Sub")],
-                ].map(([v, l]) => (
-                  <div key={l}>
-                    <p className="text-2xl font-black text-white">{v}</p>
-                    <p className="text-xs text-white/40">{l}</p>
+              {/* Social proof inline */}
+              <div className="mt-8 flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {["AS", "EK", "FD", "MK"].map((i) => (
+                      <div key={i} className="grid h-7 w-7 place-items-center rounded-full bg-emerald-500/20 text-[9px] font-black text-emerald-400 ring-1 ring-emerald-500/30">{i}</div>
+                    ))}
                   </div>
-                ))}
+                  <span className="text-xs text-white/40">
+                    <AnimatedCounter target={displayUsers} />{lang === "fr" ? " membres actifs" : " active members"}
+                  </span>
+                </div>
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map(i => <Star key={i} size={12} className="fill-yellow-400 text-yellow-400" />)}
+                  <span className="ml-1 text-xs text-white/40">4.9/5</span>
+                </div>
               </div>
             </div>
 
-            {/* ── CARD PREVIEW ── */}
+            {/* Card preview */}
             <div className="mx-auto w-full max-w-sm">
               <div className="rounded-[2rem] bg-white/5 p-5 ring-1 ring-white/8 backdrop-blur-sm">
                 <div className="mb-4 rounded-[1.5rem] bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 p-5 ring-1 ring-emerald-500/20">
@@ -210,6 +215,73 @@ export default async function LandingPage() {
             </div>
           </section>
 
+          {/* ── STATS ANIMÉES ── */}
+          <section className="border-t border-white/6 py-16">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { target: displayUsers, suffix: "+", label: lang === "fr" ? "Membres actifs" : "Active members", color: "text-emerald-400" },
+                { target: displayGroups, suffix: "+", label: lang === "fr" ? "Cercles actifs" : "Active circles", color: "text-gold" },
+                { target: displayTx, suffix: "+", label: lang === "fr" ? "Paiements traités" : "Payments processed", color: "text-emerald-400" },
+                { target: 0, suffix: "€", label: lang === "fr" ? "Frais cachés" : "Hidden fees", color: "text-white" },
+              ].map(({ target, suffix, label, color }) => (
+                <div key={label} className="rounded-3xl bg-white/3 p-5 text-center ring-1 ring-white/6">
+                  <p className={`text-3xl font-black ${color}`}>
+                    {target === 0 ? "0" : <AnimatedCounter target={target} suffix={suffix} />}
+                    {target === 0 && suffix}
+                  </p>
+                  <p className="mt-1 text-xs text-white/40">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── DOWNLOAD APP ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="rounded-[2rem] bg-gradient-to-br from-emerald-500/10 to-emerald-900/20 p-8 ring-1 ring-emerald-500/20 md:p-12">
+              <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-emerald-400/70">
+                    {lang === "fr" ? "Application Mobile" : "Mobile App"}
+                  </p>
+                  <h2 className="text-3xl font-black text-white md:text-4xl">
+                    {lang === "fr" ? "Kotizy dans votre poche." : "Kotizy in your pocket."}
+                  </h2>
+                  <p className="mt-3 text-white/50">
+                    {lang === "fr"
+                      ? "Notifications push, paiements Mobile Money, suivi en temps réel. L'expérience native sur Android."
+                      : "Push notifications, Mobile Money payments, real-time tracking. Native Android experience."}
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <a
+                      href="https://expo.dev/accounts/kenams/projects/kotizy/builds/eb9d7920-0a78-4e89-8b09-c0eb7c0b9c2f"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)] transition hover:bg-emerald-400"
+                    >
+                      <Download size={16} />
+                      {lang === "fr" ? "Télécharger l'APK" : "Download APK"}
+                    </a>
+                    <div className="inline-flex items-center gap-2 rounded-2xl bg-white/5 px-5 py-3 text-sm font-bold text-white/40 ring-1 ring-white/10 cursor-not-allowed">
+                      <Smartphone size={16} />
+                      Google Play {lang === "fr" ? "(bientôt)" : "(soon)"}
+                    </div>
+                  </div>
+                </div>
+                <div className="hidden md:flex flex-col gap-3 text-sm">
+                  {[
+                    lang === "fr" ? "✅ Gratuit, sans pub" : "✅ Free, no ads",
+                    lang === "fr" ? "✅ Fonctionne hors ligne" : "✅ Works offline",
+                    lang === "fr" ? "✅ Notifications push" : "✅ Push notifications",
+                    lang === "fr" ? "✅ Orange Money & Wave" : "✅ Orange Money & Wave",
+                    lang === "fr" ? "✅ Paiement Stripe natif" : "✅ Native Stripe payment",
+                  ].map((f) => (
+                    <div key={f} className="rounded-xl bg-white/5 px-4 py-2 text-white/70">{f}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* ── FEATURES ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "featuresLabel")}</div>
@@ -232,18 +304,14 @@ export default async function LandingPage() {
           {/* ── COMMENT ÇA MARCHE ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "howLabel")}</div>
-            <h2 className="mb-14 text-center text-3xl font-black text-white md:text-4xl">
-              {t("landing", "howTitle")}
-            </h2>
+            <h2 className="mb-14 text-center text-3xl font-black text-white md:text-4xl">{t("landing", "howTitle")}</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {HOW_STEPS.map(({ step, title, desc, detail }) => (
                 <div key={step} className="relative rounded-3xl bg-white/3 p-6 ring-1 ring-white/8">
                   <div className="mb-4 text-5xl font-black text-emerald-500/20">{step}</div>
                   <p className="mb-2 text-lg font-black text-white">{title}</p>
                   <p className="text-sm leading-6 text-white/50">{desc}</p>
-                  <div className="mt-4 rounded-2xl bg-emerald-500/8 px-3 py-2 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/15">
-                    {detail}
-                  </div>
+                  <div className="mt-4 rounded-2xl bg-emerald-500/8 px-3 py-2 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/15">{detail}</div>
                 </div>
               ))}
             </div>
@@ -252,20 +320,48 @@ export default async function LandingPage() {
             </p>
           </section>
 
+          {/* ── CALCULATRICE ÉPARGNE ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mx-auto max-w-2xl rounded-[2rem] bg-white/3 p-8 ring-1 ring-white/8 text-center">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-emerald-400/70">
+                {lang === "fr" ? "Simulateur" : "Simulator"}
+              </p>
+              <h2 className="mb-2 text-2xl font-black text-white">
+                {lang === "fr" ? "Combien récupères-tu ?" : "How much do you get?"}
+              </h2>
+              <p className="mb-8 text-white/40 text-sm">
+                {lang === "fr" ? "Exemple : groupe de 8 personnes à 100€/mois" : "Example: group of 8 people at €100/month"}
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { members: 5, amount: 50, label: lang === "fr" ? "Cercle Starter" : "Starter Circle" },
+                  { members: 8, amount: 100, label: lang === "fr" ? "Cercle Famille" : "Family Circle", highlight: true },
+                  { members: 12, amount: 200, label: lang === "fr" ? "Cercle Premium" : "Premium Circle" },
+                ].map(({ members, amount, label, highlight }) => (
+                  <div key={label} className={`rounded-2xl p-4 ${highlight ? "bg-emerald-500/15 ring-1 ring-emerald-500/30" : "bg-white/5"}`}>
+                    <p className={`text-xs font-bold mb-2 ${highlight ? "text-emerald-400" : "text-white/40"}`}>{label}</p>
+                    <p className="text-2xl font-black text-white">{members * amount}€</p>
+                    <p className="text-[10px] text-white/40 mt-1">{members} × {amount}€</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-6 text-xs text-white/30">
+                {lang === "fr" ? "Tu verses 100€/mois → tu reçois 800€ d'un coup. Zéro intérêt. Zéro frais." : "You pay €100/month → you receive €800 at once. Zero interest. Zero fees."}
+              </p>
+              <Link href="/register" className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)] transition hover:bg-emerald-400">
+                {lang === "fr" ? "Créer mon cercle" : "Create my circle"} <ArrowRight size={14} />
+              </Link>
+            </div>
+          </section>
+
           {/* ── NIVEAUX GEMS ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "gemLabel")}</div>
-            <h2 className="mb-4 text-center text-3xl font-black text-white md:text-4xl">
-              {t("landing", "gemTitle")}
-            </h2>
+            <h2 className="mb-4 text-center text-3xl font-black text-white md:text-4xl">{t("landing", "gemTitle")}</h2>
             <p className="mb-12 text-center text-white/40">{t("landing", "gemSubtitle")}</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {GEM_TIERS.map((tier) => (
-                <div
-                  key={tier.name}
-                  className="rounded-2xl p-5 transition hover:scale-[1.02]"
-                  style={{ background: tier.bg, border: `1px solid ${tier.border}` }}
-                >
+                <div key={tier.name} className="rounded-2xl p-5 transition hover:scale-[1.02]" style={{ background: tier.bg, border: `1px solid ${tier.border}` }}>
                   <div className="mb-3 flex items-center gap-2">
                     <span className="text-2xl">{tier.emoji}</span>
                     <div>
@@ -285,31 +381,15 @@ export default async function LandingPage() {
             </div>
           </section>
 
-          {/* ── SOCIAL PROOF ── */}
-          <section className="border-t border-white/6 py-16">
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-              {STATS.map(({ value, label }) => (
-                <div key={label} className="rounded-3xl bg-white/3 p-5 text-center ring-1 ring-white/6">
-                  <p className="text-3xl font-black text-emerald-400">{value}</p>
-                  <p className="mt-1 text-xs text-white/40">{label}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* ── TÉMOIGNAGES ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "testiLabel")}</div>
-            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
-              {t("landing", "testiTitle")}
-            </h2>
+            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">{t("landing", "testiTitle")}</h2>
             <div className="grid gap-4 md:grid-cols-3">
               {TESTIMONIALS.map(({ name, city, quote, avatar }) => (
                 <div key={name} className="rounded-3xl bg-white/3 p-6 ring-1 ring-white/6">
                   <div className="mb-4 flex items-center gap-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-500/20 text-xs font-black text-emerald-400 ring-1 ring-emerald-500/20">
-                      {avatar}
-                    </div>
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-500/20 text-xs font-black text-emerald-400 ring-1 ring-emerald-500/20">{avatar}</div>
                     <div>
                       <p className="text-sm font-black text-white">{name}</p>
                       <p className="text-xs text-white/35">{city}</p>
@@ -317,7 +397,7 @@ export default async function LandingPage() {
                   </div>
                   <p className="text-sm leading-6 text-white/55">"{quote}"</p>
                   <div className="mt-3 flex gap-0.5">
-                    {[1,2,3,4,5].map(i => <span key={i} className="text-gold text-xs">★</span>)}
+                    {[1,2,3,4,5].map(i => <Star key={i} size={11} className="fill-yellow-400 text-yellow-400" />)}
                   </div>
                 </div>
               ))}
@@ -327,9 +407,7 @@ export default async function LandingPage() {
           {/* ── FAQ ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "faqLabel")}</div>
-            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">
-              {t("landing", "faqTitle")}
-            </h2>
+            <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">{t("landing", "faqTitle")}</h2>
             <div className="mx-auto max-w-2xl space-y-3">
               {FAQ.map(({ q, a }) => (
                 <details key={q} className="group rounded-3xl bg-white/3 ring-1 ring-white/6 open:ring-emerald-500/20">
@@ -343,22 +421,24 @@ export default async function LandingPage() {
             </div>
             <p className="mt-8 text-center text-sm text-white/30">
               {t("landing", "faqContact")}{" "}
-              <a href="mailto:hello@kotizy.app" className="text-emerald-400 hover:underline">
-                {t("landing", "faqContactLink")}
-              </a>
+              <a href="mailto:hello@kotizy.app" className="text-emerald-400 hover:underline">{t("landing", "faqContactLink")}</a>
             </p>
           </section>
 
           {/* ── CTA FINAL ── */}
           <section className="py-20 text-center">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400/60">{t("landing", "ctaLabel")}</p>
-            <h2 className="mb-3 text-4xl font-black tracking-tight text-white md:text-5xl">
-              {t("landing", "ctaTitle")}
-            </h2>
-            <p className="mb-8 text-white/40">{t("landing", "ctaSubtitle")}</p>
-            <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-[#080b07] shadow-[0_0_32px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400 hover:shadow-[0_0_48px_rgba(34,197,94,0.5)]">
-              {t("landing", "ctaButton")} <ArrowRight size={20} />
-            </Link>
+            <div className="relative mx-auto max-w-2xl rounded-[2rem] bg-gradient-to-b from-emerald-500/10 to-transparent p-12 ring-1 ring-emerald-500/20">
+              <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(ellipse_at_50%_0%,rgba(34,197,94,0.15),transparent_70%)]" />
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-emerald-400/60">{t("landing", "ctaLabel")}</p>
+              <h2 className="mb-3 text-4xl font-black tracking-tight text-white md:text-5xl">{t("landing", "ctaTitle")}</h2>
+              <p className="mb-8 text-white/40">{t("landing", "ctaSubtitle")}</p>
+              <Link href="/register" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-emerald-500 px-10 text-base font-black text-[#080b07] shadow-[0_0_32px_rgba(34,197,94,0.4)] transition hover:bg-emerald-400 hover:shadow-[0_0_56px_rgba(34,197,94,0.6)]">
+                {t("landing", "ctaButton")} <ArrowRight size={20} />
+              </Link>
+              <p className="mt-4 text-xs text-white/25">
+                {lang === "fr" ? "Gratuit · Sans carte bancaire · Prêt en 2 minutes" : "Free · No credit card · Ready in 2 minutes"}
+              </p>
+            </div>
           </section>
 
           {/* ── FOOTER ── */}
@@ -370,9 +450,7 @@ export default async function LandingPage() {
                 <Link href="/legal/cgu" className="transition hover:text-white">{t("landing", "footerCgu")}</Link>
                 <Link href="/legal/confidentialite" className="transition hover:text-white">{t("landing", "footerPrivacy")}</Link>
                 <Link href="/legal/cookies" className="transition hover:text-white">{t("landing", "footerCookies")}</Link>
-                <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">
-                  {t("landing", "footerBy")}
-                </a>
+                <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">{t("landing", "footerBy")}</a>
               </div>
             </div>
           </footer>
