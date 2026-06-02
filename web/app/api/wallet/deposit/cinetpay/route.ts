@@ -81,5 +81,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 502 });
   }
 
+  // Stocker le notify_token pour validation webhook ultérieure
+  if (result.notifyToken) {
+    await prisma.transaction.updateMany({
+      where: { reference: txRef },
+      data: { metadata: JSON.stringify({ provider: "cinetpay", ip: clientIp(request), notifyToken: result.notifyToken }) },
+    });
+  }
+
   return NextResponse.json({ ok: true, paymentUrl: result.paymentUrl, txRef, mustRedirect: result.mustRedirect });
 }

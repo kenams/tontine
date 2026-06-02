@@ -38,7 +38,7 @@ export type CinetpayInitParams = {
 };
 
 export type CinetpayInitResult =
-  | { ok: true; paymentUrl: string; txRef: string; mustRedirect: boolean }
+  | { ok: true; paymentUrl: string; txRef: string; mustRedirect: boolean; notifyToken?: string }
   | { ok: false; error: string };
 
 export async function initCinetpayPayment(params: CinetpayInitParams): Promise<CinetpayInitResult> {
@@ -80,7 +80,8 @@ export async function initCinetpayPayment(params: CinetpayInitParams): Promise<C
       code: number;
       status: string;
       payment_url?: string;
-      details?: { must_be_redirected?: boolean; message?: string };
+      notify_token?: string;
+      details?: { must_be_redirected?: boolean; message?: string; status?: string };
       message?: string;
     };
 
@@ -93,6 +94,7 @@ export async function initCinetpayPayment(params: CinetpayInitParams): Promise<C
       paymentUrl: data.payment_url,
       txRef,
       mustRedirect: data.details?.must_be_redirected ?? true,
+      notifyToken: data.notify_token,
     };
   } catch (err) {
     return { ok: false, error: String(err) };
