@@ -6,7 +6,13 @@ export function isCinetpayConfigured() {
   return Boolean(process.env.CINETPAY_API_KEY?.trim() && process.env.CINETPAY_API_PASSWORD?.trim());
 }
 
+// Cache token en mémoire — expire après 4min (token valide 5min côté CinetPay)
+let _tokenCache: { token: string; expiresAt: number } | null = null;
+
 async function getAccessToken(): Promise<string | null> {
+  if (_tokenCache && Date.now() < _tokenCache.expiresAt) {
+    return _tokenCache.token;
+  }
   try {
     const res = await fetch(`${CINETPAY_BASE}/v1/oauth/login`, {
       method: "POST",
@@ -17,7 +23,11 @@ async function getAccessToken(): Promise<string | null> {
       }),
     });
     const data = await res.json() as { code: number; access_token?: string };
-    return data.code === 200 && data.access_token ? data.access_token : null;
+    if (data.code === 200 && data.access_token) {
+      _tokenCache = { token: data.access_token, expiresAt: Date.now() + 4 * 60 * 1000 };
+      return data.access_token;
+    }
+    return null;
   } catch {
     return null;
   }
