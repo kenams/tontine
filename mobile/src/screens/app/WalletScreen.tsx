@@ -95,7 +95,7 @@ function DepositModal({
         onClose(); reset(); setTimeout(onSuccess, 2000);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      const msg = err instanceof Error ? err.message : t("common.unknownError");
       if (!msg.includes("réseau") && !msg.includes("network")) setError(msg);
     }
     setLoading(false);
@@ -109,8 +109,8 @@ function DepositModal({
         "post", "/api/wallet/deposit/cinetpay", { amountCents, phoneNumber: phone }
       );
       if (!res.ok || !res.paymentUrl) {
-        setError(res.error ?? "Mobile Money indisponible.");
-        if (res.setup) setError((res.error ?? "") + "\nPour activer : " + res.setup);
+        setError(res.error ?? t("common.unavailable"));
+        if (res.setup) setError((res.error ?? "") + "\n" + res.setup);
         setLoading(false);
         return;
       }
@@ -123,11 +123,11 @@ function DepositModal({
       if (result.type === "opened" || result.type === "dismiss") {
         Alert.alert(t("wallet.mobilePay.title"), t("wallet.mobilePay.success"), [
           { text: t("wallet.mobilePay.check"), onPress: () => { onClose(); reset(); onSuccess(); } },
-          { text: "Fermer", style: "cancel" },
+          { text: t("common.close"), style: "cancel" },
         ]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur Mobile Money");
+      setError(err instanceof Error ? err.message : t("common.unknownError"));
       setLoading(false);
     }
   }

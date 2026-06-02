@@ -87,7 +87,7 @@ export function CreateTontineScreen({ navigation }: CreateTontineScreenProps) {
       currency: "EUR",
       frequency: frequency.toUpperCase(),
       maxMembers: members,
-      rules: "Cotisation avant la date limite. Ponctualité obligatoire.",
+      rules: t("create.defaultRules"),
     });
 
     if (useTontineStore.getState().errorMessage) {

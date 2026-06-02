@@ -48,8 +48,10 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     );
   }
 
-  const progress = tontine.progression
-    ? (tontine.progression.paidMembers / Math.max(tontine.progression.totalMembers, 1)) * 100
+  const tontineDetail = tontine;
+
+  const progress = tontineDetail.progression
+    ? (tontineDetail.progression.paidMembers / Math.max(tontineDetail.progression.totalMembers, 1)) * 100
     : 0;
 
   async function handlePay() {
@@ -70,19 +72,19 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
     setPaying(false);
   }
 
-  const joinLink = `https://tontineapp-web.vercel.app/g/${tontine.joinCode}`;
+  const joinLink = `https://tontineapp-web.vercel.app/g/${tontineDetail.joinCode}`;
 
   async function handleShare() {
     await Share.share({
-      message: `🤝 Rejoins *${tontine.name}* sur Kotizy !\nCode : ${tontine.joinCode}\n${joinLink}`,
+      message: `🤝 Rejoins *${tontineDetail.name}* sur Kotizy !\nCode : ${tontineDetail.joinCode}\n${joinLink}`,
       url: joinLink,
-      title: `${t("detail.invite")} — ${tontine.name}`,
+      title: `${t("detail.invite")} — ${tontineDetail.name}`,
     });
   }
 
   async function handleWhatsApp() {
     const msg = encodeURIComponent(
-      `🤝 Rejoins *${tontine.name}* sur Kotizy, l'app de tontine pour la diaspora 🌍\n\nCode : *${tontine.joinCode}*\n→ ${joinLink}`
+      `🤝 Rejoins *${tontineDetail.name}* sur Kotizy, l'app de tontine pour la diaspora 🌍\n\nCode : *${tontineDetail.joinCode}*\n→ ${joinLink}`
     );
     const url = `whatsapp://send?text=${msg}`;
     const supported = await Linking.canOpenURL(url);
@@ -174,7 +176,7 @@ export function TontineDetailScreen({ navigation, route }: TontineDetailScreenPr
               <Ionicons name="flash" size={20} color={autoPayOn ? colors.primary : colors.textMuted} />
               <View>
                 <Text style={s.autoPayTitle}>{t("detail.autoPay")}</Text>
-                <Text style={s.autoPaySub}>{autoPayOn ? t("detail.autoPaySub") : "Paiement manuel requis"}</Text>
+                <Text style={s.autoPaySub}>{autoPayOn ? t("detail.autoPaySub") : t("detail.autoPayOff")}</Text>
               </View>
             </View>
             {autoPayLoading

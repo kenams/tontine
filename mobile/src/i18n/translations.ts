@@ -117,6 +117,7 @@ const STRINGS: Record<string, { fr: string; en: string }> = {
   "detail.paying":              { fr: "Traitement…",                    en: "Processing…" },
   "detail.autoPay":             { fr: "Paiement automatique",           en: "Auto-pay" },
   "detail.autoPaySub":          { fr: "Prélevé à l'échéance",           en: "Charged at due date" },
+  "detail.autoPayOff":          { fr: "Paiement manuel requis",          en: "Manual payment required" },
   "detail.invite":              { fr: "Inviter",                        en: "Invite" },
   "detail.whatsapp":            { fr: "WhatsApp",                       en: "WhatsApp" },
   "detail.share":               { fr: "Partager",                       en: "Share" },
@@ -217,6 +218,7 @@ const STRINGS: Record<string, { fr: string; en: string }> = {
   "create.previewBody":         { fr: "membres x",                     en: "members x" },
   "create.previewBodyEnd":      { fr: "versés à chaque tour.",         en: "paid each round." },
   "create.previewDescDefault":  { fr: "Ajoutez quelques lignes pour expliquer le cadre de participation et le ton du groupe.", en: "Add a few lines to explain the participation framework and tone of the group." },
+  "create.defaultRules":        { fr: "Cotisation avant la date limite. Ponctualité obligatoire.", en: "Contribution before due date. Punctuality required." },
   "create.btn":                 { fr: "Créer la tontine",              en: "Create tontine" },
   "create.successTitle":        { fr: "Tontine créée",                 en: "Tontine created" },
   "create.successMsg":          { fr: "Votre groupe est prêt à accueillir ses premiers membres.", en: "Your group is ready to welcome its first members." },
@@ -254,4 +256,7 @@ const STRINGS: Record<string, { fr: string; en: string }> = {
   "common.save":                { fr: "Enregistrer",                    en: "Save" },
   "common.confirm":             { fr: "Confirmer",                      en: "Confirm" },
   "common.stripe":              { fr: "Stripe",                         en: "Stripe" },
+  "common.unknownError":        { fr: "Erreur inconnue",                en: "Unknown error" },
+  "common.unavailable":         { fr: "Mobile Money indisponible.",     en: "Mobile Money unavailable." },
+  "common.close":               { fr: "Fermer",                         en: "Close" },
 };
