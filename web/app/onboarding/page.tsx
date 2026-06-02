@@ -35,7 +35,7 @@ const STEPS = [
     color: "bg-white/10 text-white",
     title: "Télécharge l'app",
     body: "Notifications push, paiements Mobile Money, suivi en temps réel. L'APK Android est disponible gratuitement.",
-    action: { label: "Télécharger l'APK", href: "https://expo.dev/accounts/kenams/projects/kotizy/builds/eb9d7920-0a78-4e89-8b09-c0eb7c0b9c2f", secondary: { label: "Ignorer", href: null } },
+    action: { label: "Télécharger l'APK", href: "https://expo.dev/artifacts/eas/azBB9bPR1cGaZ4j2zTnTry.apk", secondary: { label: "Ignorer", href: null } },
   },
 ];
 
