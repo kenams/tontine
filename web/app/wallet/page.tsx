@@ -49,12 +49,12 @@ export default async function WalletPage({
       active: true,
     },
     {
-      href: "/wallet/deposit?method=mobile",
+      href: null,
       icon: Smartphone,
       label: "Mobile Money",
       sub: "Orange Money · MTN · Wave · Moov",
-      badge: t("wallet", "instant"),
-      active: true,
+      badge: "Bientôt",
+      active: false,
     },
   ];
 
