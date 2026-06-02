@@ -225,17 +225,22 @@ function DepositModal({
 
 function TxActions({ tx, onRefresh }: { tx: Transaction; onRefresh: () => void }) {
   const [loading, setLoading] = useState<"cancel" | "retry" | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   if (tx.type !== "WALLET_DEPOSIT") return null;
   if (tx.status !== "PENDING" && tx.status !== "FAILED") return null;
 
   async function cancel() {
     setLoading("cancel");
+    setErr(null);
     try {
       await apiCall("post", `/api/transactions/${tx.id}/cancel`, {});
       onRefresh();
-    } catch {}
-    setLoading(null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erreur annulation.");
+    } finally {
+      setLoading(null);
+    }
   }
 
   async function retry() {
@@ -274,6 +279,7 @@ function TxActions({ tx, onRefresh }: { tx: Transaction; onRefresh: () => void }
           <Text style={[a.txt, { color: colors.danger }]}>Annuler</Text>
         </Pressable>
       )}
+      {err && <Text style={{ fontSize: 10, color: colors.danger, marginTop: 4 }}>{err}</Text>}
     </View>
   );
 }
