@@ -289,10 +289,10 @@ export async function GET(request: NextRequest) {
                 status: "PAID",
                 amountCents: netPayout,
                 currency: group.currency,
-                provider: "FLUTTERWAVE",
+                provider: "CINETPAY",
                 reference: txRef,
                 riskScore: 3,
-                metadata: JSON.stringify({ mode: "auto_mobile_money_cinetpay", transferId: result.transferId }),
+                metadata: JSON.stringify({ mode: "auto_mobile_money", provider: "CINETPAY", transferId: result.transferId }),
               },
             });
             await prisma.wallet.update({

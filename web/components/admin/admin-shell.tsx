@@ -90,7 +90,7 @@ export function AdminShell({
               <BarChart3 size={18} className="text-gold" />
               Mode test actif
             </div>
-            <p className="text-xs leading-5 text-[var(--muted)]">Stripe, Wave, Orange Money, MTN MoMo et Flutterwave disponibles.</p>
+            <p className="text-xs leading-5 text-[var(--muted)]">Stripe, CinetPay (Orange Money, MTN, Wave, Moov) disponibles.</p>
           </div>
         </div>
       </aside>

@@ -11,7 +11,7 @@ export default async function AdminSettingsPage() {
     ["Orange Money", "TEST_STUB", Smartphone],
     ["MTN MoMo", "TEST_STUB", Smartphone],
     ["Wave", "TEST_STUB", Smartphone],
-    ["Flutterwave", process.env.FLUTTERWAVE_SECRET_KEY ? "ACTIVE" : "TEST_STUB", Smartphone],
+    ["CinetPay", process.env.CINETPAY_API_KEY ? "ACTIVE" : "NOT_CONFIGURED", Smartphone],
     ["OpenAI Coach", process.env.OPENAI_API_KEY ? "ACTIVE" : "TEST_STUB", Server],
     ["RBAC sessions", "ACTIVE", LockKeyhole]
   ];
