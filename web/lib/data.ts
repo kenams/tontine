@@ -11,7 +11,6 @@ async function _getUserDashboard(userId: string) {
         ...safeUserSelect,
         wallet: true,
         trustScore: true,
-        badges: { include: { badge: true } }
       }
     }),
     prisma.membership.findMany({
@@ -20,13 +19,14 @@ async function _getUserDashboard(userId: string) {
         tontineGroup: {
           include: {
             emergencyFund: true,
-            memberships: true,
-            contributions: true,
+            memberships: { select: { id: true, userId: true, status: true, payoutOrder: true } },
+            contributions: { orderBy: { createdAt: "desc" }, take: 5 },
             messages: { include: { user: { select: safeUserSelect } }, orderBy: { createdAt: "desc" }, take: 2 }
           }
         }
       },
-      orderBy: { joinedAt: "desc" }
+      orderBy: { joinedAt: "desc" },
+      take: 20,
     }),
     prisma.transaction.findMany({
       where: { userId },

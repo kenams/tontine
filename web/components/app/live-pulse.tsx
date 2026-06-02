@@ -2,7 +2,6 @@
 
 import { Activity, Globe2, Radio, ShieldCheck, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 
 import { money } from "@/lib/format";
 
@@ -55,40 +54,19 @@ export function LivePulse({
   const [events, setEvents] = useState<LiveEvent[]>(initialEvents);
 
   useEffect(() => {
-    const socket = io({
-      path: "/ws",
-      transports: ["websocket", "polling"],
-      reconnection: true
-    });
-
-    socket.on("connect", () => {
-      setConnected(true);
-      socket.emit("join:user", { userId, name, currency });
-    });
-    socket.on("disconnect", () => setConnected(false));
-    socket.on("presence:update", (payload: Presence) => setPresence(payload));
-    socket.on("server:ready", (payload: { event?: LiveEvent; metrics?: Presence }) => {
-      if (payload.metrics) setPresence(payload.metrics);
-      if (payload.event) setEvents((current) => [payload.event!, ...current].slice(0, 4));
-    });
-    socket.on("activity:new", (event: LiveEvent) => {
-      setEvents((current) => [event, ...current].slice(0, 4));
-    });
-
-    const fallback = window.setInterval(async () => {
-      if (socket.connected) return;
+    async function poll() {
       const response = await fetch("/api/pulse").catch(() => null);
       if (!response?.ok) return;
       const payload = (await response.json()) as { event?: LiveEvent; metrics?: Presence };
       if (payload.metrics) setPresence(payload.metrics);
       if (payload.event) setEvents((current) => [payload.event!, ...current].slice(0, 4));
-    }, 5000);
+      setConnected(true);
+    }
 
-    return () => {
-      window.clearInterval(fallback);
-      socket.disconnect();
-    };
-  }, [currency, name, userId]);
+    void poll();
+    const interval = window.setInterval(() => void poll(), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
     <div className="mb-4 glass rounded-3xl p-4">
