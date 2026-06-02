@@ -12,3 +12,7 @@ backend/.env
 .env
 .DS_Store
 *.log
+*.apk
+web/.env.production
+web/.env.local
+web/test-cancel.spec.ts
