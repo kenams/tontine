@@ -127,6 +127,67 @@ export async function verifyFlutterwaveTransaction(transactionId: string): Promi
   }
 }
 
+// Transfert automatique vers Mobile Money (payout tontine)
+export async function sendFlutterwaveTransfer(params: {
+  txRef: string;
+  amountCents: number;
+  currency: string;
+  phoneNumber: string;
+  beneficiaryName: string;
+  reason: string;
+}): Promise<{ ok: boolean; transferId?: string; error?: string }> {
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) return { ok: false, error: "Flutterwave non configuré." };
+
+  const amount = params.amountCents / 100;
+  const currency = params.currency.toUpperCase();
+
+  // Déterminer le réseau Mobile Money selon la devise
+  const networkMap: Record<string, string> = {
+    XOF: "MOBILEMONEYFRANCOABOPHONE",
+    XAF: "MOBILEMONEYFRANCOABOPHONE",
+    GHS: "MOBILEMONEYGHANA",
+    KES: "MPESA",
+    UGX: "MOBILEMONEYUGANDA",
+    RWF: "MOBILEMONEYRWANDA",
+    TZS: "MOBILEMONEYTANZANIA",
+  };
+  const network = networkMap[currency];
+  if (!network) return { ok: false, error: `Devise ${currency} non supportée pour le transfert automatique.` };
+
+  try {
+    const res = await fetch(`${FLW_API}/transfers`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        account_bank: network,
+        account_number: params.phoneNumber,
+        amount,
+        currency,
+        narration: params.reason,
+        reference: params.txRef,
+        beneficiary_name: params.beneficiaryName,
+      }),
+    });
+    const data = await res.json() as {
+      status: string;
+      data?: { id: number; status: string };
+      message?: string;
+    };
+    if (data.status !== "success" || !data.data) {
+      return { ok: false, error: data.message ?? "Transfert impossible." };
+    }
+    return { ok: true, transferId: String(data.data.id) };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
+// Devises supportées pour le transfert automatique
+export function isAutoTransferSupported(currency: string): boolean {
+  return ["XOF", "XAF", "GHS", "KES", "UGX", "RWF", "TZS"].includes(currency.toUpperCase());
+}
+
 // Vérifier la signature webhook Flutterwave
 export function verifyFlwWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.FLUTTERWAVE_WEBHOOK_SECRET;

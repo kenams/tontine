@@ -9,6 +9,7 @@ import { checkBadgesAfterPayment } from "@/lib/badges";
 import { penalizeLate, rewardPayment } from "@/lib/trust";
 import { coverByEmergencyFund, excludeMember } from "@/lib/defaults";
 import { blacklistIfDebt, releaseCollateral, seizeCollateral } from "@/lib/antiFraud";
+import { sendFlutterwaveTransfer, isAutoTransferSupported } from "@/lib/flutterwave";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -259,6 +260,53 @@ export async function GET(request: NextRequest) {
         url: "/wallet",
       });
       report.payouts++;
+
+      // Transfert automatique vers Mobile Money si devise supportée et numéro enregistré
+      void (async () => {
+        try {
+          if (!isAutoTransferSupported(group.currency)) return;
+          const user = await prisma.user.findUnique({
+            where: { id: payoutMembership.userId },
+            select: { phone: true, fullName: true },
+          });
+          if (!user?.phone) return;
+
+          const txRef = `AUTOPAYOUT-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+          const result = await sendFlutterwaveTransfer({
+            txRef,
+            amountCents: netPayout,
+            currency: group.currency,
+            phoneNumber: user.phone,
+            beneficiaryName: user.fullName,
+            reason: `Pot tontine ${group.name} — Round ${group.currentRound}`,
+          });
+
+          if (result.ok) {
+            await prisma.transaction.create({
+              data: {
+                userId: payoutMembership.userId,
+                type: "WALLET_WITHDRAWAL",
+                status: "PAID",
+                amountCents: netPayout,
+                currency: group.currency,
+                provider: "FLUTTERWAVE",
+                reference: txRef,
+                riskScore: 3,
+                metadata: JSON.stringify({ mode: "auto_mobile_money", transferId: result.transferId }),
+              },
+            });
+            await prisma.wallet.update({
+              where: { userId: payoutMembership.userId },
+              data: { balanceCents: { decrement: netPayout } },
+            });
+            void sendPushToUser(payoutMembership.userId, {
+              title: "💸 Virement Mobile Money envoyé",
+              body: `${money(netPayout, group.currency)} envoyés vers ${user.phone}`,
+              url: "/wallet",
+            });
+          }
+        } catch {}
+      })();
 
       // B2B: Revenue sharing 0.25% pour l'organisation liée si existante
       void (async () => {
