@@ -32,23 +32,26 @@ function DepositContent() {
       id: "card" as Method,
       icon: CreditCard,
       label: t("deposit", "cardLabel"),
-      sub: t("deposit", "cardSub"),
+      sub: "Visa · Mastercard · Apple Pay · Google Pay",
       badge: t("deposit", "instantBadge"),
       badgeColor: "bg-emerald-500/15 text-emerald-400",
       available: true,
+      recommended: true,
     },
     {
       id: "mobile" as Method,
       icon: Smartphone,
-      label: t("deposit", "mobileLabel"),
-      sub: t("deposit", "mobileSub"),
-      badge: t("deposit", "instantBadge"),
-      badgeColor: "bg-emerald-500/15 text-emerald-400",
-      available: true,
+      label: "Mobile Money",
+      sub: "Orange Money · MTN · Wave · Moov",
+      badge: "Bientôt",
+      badgeColor: "bg-white/10 text-[var(--muted)]",
+      available: false,
+      recommended: false,
     },
   ];
 
   const [method, setMethod] = useState<Method>("card");
+  // Mobile Money désactivé jusqu'à validation CinetPay KYC
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,14 +113,19 @@ function DepositContent() {
                   disabled={!m.available}
                   onClick={() => { if (m.available) { setMethod(m.id); setError(null); } }}
                   className={`w-full flex items-center gap-3 rounded-2xl p-3 text-left transition ${
-                    active ? "ring-1 ring-emerald-400/40 bg-emerald-500/8" : m.available ? "bg-[var(--surface)] hover:bg-[var(--surface-strong)]" : "bg-[var(--surface)] opacity-50 cursor-not-allowed"
+                    active ? "ring-1 ring-emerald-400/40 bg-emerald-500/8" : m.available ? "bg-[var(--surface)] hover:bg-[var(--surface-strong)]" : "bg-[var(--surface)] opacity-40 cursor-not-allowed"
                   }`}
                 >
                   <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${active ? "bg-emerald-500/20" : "bg-white/10"}`}>
                     <Icon size={18} className={active ? "text-emerald-400" : "text-[var(--muted)]"} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold">{m.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold">{m.label}</p>
+                      {"recommended" in m && m.recommended && (
+                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-400 uppercase tracking-wide">Recommandé</span>
+                      )}
+                    </div>
                     <p className="text-xs text-[var(--muted)] truncate">{m.sub}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${m.badgeColor}`}>{m.badge}</span>
