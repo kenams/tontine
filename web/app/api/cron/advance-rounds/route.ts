@@ -9,7 +9,7 @@ import { checkBadgesAfterPayment } from "@/lib/badges";
 import { penalizeLate, rewardPayment } from "@/lib/trust";
 import { coverByEmergencyFund, excludeMember } from "@/lib/defaults";
 import { blacklistIfDebt, releaseCollateral, seizeCollateral } from "@/lib/antiFraud";
-import { sendFlutterwaveTransfer, isAutoTransferSupported } from "@/lib/flutterwave";
+import { sendCinetpayTransfer, isAutoTransferSupported } from "@/lib/cinetpay";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -272,7 +272,7 @@ export async function GET(request: NextRequest) {
           if (!user?.phone) return;
 
           const txRef = `AUTOPAYOUT-${Date.now()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-          const result = await sendFlutterwaveTransfer({
+          const result = await sendCinetpayTransfer({
             txRef,
             amountCents: netPayout,
             currency: group.currency,
@@ -292,7 +292,7 @@ export async function GET(request: NextRequest) {
                 provider: "FLUTTERWAVE",
                 reference: txRef,
                 riskScore: 3,
-                metadata: JSON.stringify({ mode: "auto_mobile_money", transferId: result.transferId }),
+                metadata: JSON.stringify({ mode: "auto_mobile_money_cinetpay", transferId: result.transferId }),
               },
             });
             await prisma.wallet.update({

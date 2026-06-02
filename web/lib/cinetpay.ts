@@ -111,6 +111,47 @@ export async function initCinetpayPayment(params: CinetpayInitParams): Promise<C
   }
 }
 
+export function isAutoTransferSupported(currency: string): boolean {
+  return ["XOF", "XAF", "CDF", "GNF"].includes(currency.toUpperCase());
+}
+
+export async function sendCinetpayTransfer(params: {
+  txRef: string;
+  amountCents: number;
+  currency: string;
+  phoneNumber: string;
+  beneficiaryName: string;
+  reason: string;
+}): Promise<{ ok: boolean; transferId?: string; error?: string }> {
+  if (!isCinetpayConfigured()) return { ok: false, error: "CinetPay non configuré." };
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: "Auth CinetPay échouée." };
+
+  const txRef = params.txRef.slice(0, 30);
+  try {
+    const res = await fetch(`${CINETPAY_BASE}/v1/transfer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        currency: params.currency.toUpperCase(),
+        merchant_transaction_id: txRef,
+        phone_number: params.phoneNumber,
+        amount: Math.round(params.amountCents / 100),
+        payment_method: "OM_CI",
+        reason: params.reason,
+        notify_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app"}/api/webhooks/cinetpay`,
+      }),
+    });
+    const data = await res.json() as { code: number; status?: string; data?: { transaction_id: string }; message?: string };
+    if (data.code !== 200 && data.code !== 100) {
+      return { ok: false, error: data.message ?? "Transfert CinetPay échoué." };
+    }
+    return { ok: true, transferId: data.data?.transaction_id };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function verifyCinetpayTransaction(txRef: string): Promise<{
   ok: boolean;
   status?: "SUCCESS" | "FAILED" | "PENDING" | "INITIATED";
