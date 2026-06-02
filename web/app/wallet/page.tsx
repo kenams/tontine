@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, Building2, CheckCircle2, CreditCard, Smartphone, WalletCards, Zap } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, CheckCircle2, CreditCard, Smartphone, WalletCards, Zap } from "lucide-react";
 import Link from "next/link";
 
 import { MobileShell } from "@/components/app/mobile-shell";
@@ -47,18 +47,10 @@ export default async function WalletPage({
       active: true,
     },
     {
-      href: "/wallet/deposit/sepa",
-      icon: Building2,
-      label: t("wallet", "sepa"),
-      sub: t("wallet", "sepaSub"),
-      badge: t("wallet", "days1to3"),
-      active: true,
-    },
-    {
-      href: "/wallet/deposit/mobile-money/initiate",
+      href: "/wallet/deposit?method=mobile",
       icon: Smartphone,
-      label: t("wallet", "mobileMoney"),
-      sub: t("wallet", "mobileMoneySub"),
+      label: "Mobile Money",
+      sub: "Orange Money · MTN · Wave · Moov",
       badge: t("wallet", "instant"),
       active: true,
     },

@@ -21,13 +21,13 @@ import { useStripeCompat as useStripe } from "../../hooks/useStripeCompat";
 import { colors } from "../../theme/colors";
 import { useLang } from "../../i18n/useLang";
 
-// Clé publishable Stripe live — à renseigner dans .env : EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const STRIPE_PK = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+const APP_URL = process.env.EXPO_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app";
 
 type WalletData = { balanceCents: number; currency: string };
 type Transaction = {
   id: string; type: string; status: string;
-  amountCents: number; currency: string; provider: string;
+  amountCents: number; currency: string; provider: string | null;
   createdAt: string; tontineGroup?: { name: string } | null;
 };
 type DashboardResponse = {
@@ -35,7 +35,7 @@ type DashboardResponse = {
   transactions: Transaction[];
 };
 
-const PRESETS = [
+const STRIPE_PRESETS = [
   { label: "10 €", cents: 1000 },
   { label: "25 €", cents: 2500 },
   { label: "50 €", cents: 5000 },
@@ -44,8 +44,21 @@ const PRESETS = [
   { label: "500 €", cents: 50000 },
 ];
 
+const MOBILE_PRESETS = [
+  { label: "1 000 XOF", cents: 100000 },
+  { label: "2 500 XOF", cents: 250000 },
+  { label: "5 000 XOF", cents: 500000 },
+  { label: "10 000 XOF", cents: 1000000 },
+  { label: "25 000 XOF", cents: 2500000 },
+  { label: "50 000 XOF", cents: 5000000 },
+];
+
 function fmt(cents: number, currency: string) {
-  return (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: currency || "EUR" });
+  try {
+    return (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: currency || "XOF" });
+  } catch {
+    return `${(cents / 100).toLocaleString("fr-FR")} ${currency}`;
+  }
 }
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
@@ -58,16 +71,17 @@ function DepositModal({
 }: { visible: boolean; onClose: () => void; onSuccess: () => void; walletCurrency: string }) {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const { t } = useLang();
-  const [method, setMethod] = useState<DepositMethod>("stripe");
+  const [method, setMethod] = useState<DepositMethod>("mobile_money");
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const presets = method === "stripe" ? STRIPE_PRESETS : MOBILE_PRESETS;
+  const minCents = method === "stripe" ? 100 : 30000;
   const amountCents = selected ?? (custom ? Math.round(parseFloat(custom.replace(",", ".")) * 100) : null);
 
-  function reset() { setSelected(null); setCustom(""); setPhone(""); setError(null); }
+  function reset() { setSelected(null); setCustom(""); setError(null); }
 
   async function handleStripeDeposit() {
     if (!amountCents || amountCents < 100) { setError(t("wallet.deposit.minError")); return; }
@@ -102,28 +116,29 @@ function DepositModal({
   }
 
   async function handleMobileMoneyDeposit() {
-    if (!amountCents || amountCents < 100) { setError(t("wallet.deposit.minError")); return; }
+    if (!amountCents || amountCents < minCents) {
+      setError("Montant minimum : 300 XOF");
+      return;
+    }
     setLoading(true); setError(null);
     try {
-      const res = await apiCall<{ ok: boolean; paymentUrl?: string; error?: string; setup?: string }>(
-        "post", "/api/wallet/deposit/cinetpay", { amountCents, phoneNumber: phone }
+      const res = await apiCall<{ ok: boolean; paymentUrl?: string; error?: string }>(
+        "post", "/api/wallet/deposit/cinetpay", { amountCents, currency: "XOF" }
       );
       if (!res.ok || !res.paymentUrl) {
         setError(res.error ?? t("common.unavailable"));
-        if (res.setup) setError((res.error ?? "") + "\n" + res.setup);
         setLoading(false);
         return;
       }
-      // Ouvrir CinetPay dans le navigateur in-app
       const result = await WebBrowser.openBrowserAsync(res.paymentUrl, {
         presentationStyle: WebBrowser.WebBrowserPresentationStyle.FORM_SHEET,
         toolbarColor: "#080b07",
       });
       setLoading(false);
       if (result.type === "opened" || result.type === "dismiss") {
-        Alert.alert(t("wallet.mobilePay.title"), t("wallet.mobilePay.success"), [
-          { text: t("wallet.mobilePay.check"), onPress: () => { onClose(); reset(); onSuccess(); } },
-          { text: t("common.close"), style: "cancel" },
+        Alert.alert("Mobile Money", "Paiement en cours de vérification.", [
+          { text: "Vérifier", onPress: () => { onClose(); reset(); onSuccess(); } },
+          { text: "Fermer", style: "cancel" },
         ]);
       }
     } catch (err) {
@@ -146,13 +161,13 @@ function DepositModal({
         {/* Sélecteur de méthode */}
         <View style={m.methodRow}>
           {([
+            { id: "mobile_money" as DepositMethod, label: "Mobile Money (Orange/MTN/Wave)", icon: "phone-portrait-outline" },
             { id: "stripe" as DepositMethod, label: t("wallet.deposit.stripe"), icon: "card-outline" },
-            { id: "mobile_money" as DepositMethod, label: t("wallet.deposit.mobileMoney"), icon: "phone-portrait-outline" },
           ] as { id: DepositMethod; label: string; icon: string }[]).map((opt) => (
             <Pressable
               key={opt.id}
               style={[m.methodBtn, method === opt.id && m.methodBtnActive]}
-              onPress={() => { setMethod(opt.id); setError(null); }}
+              onPress={() => { setMethod(opt.id); setSelected(null); setCustom(""); setError(null); }}
             >
               <Ionicons name={opt.icon as never} size={18} color={method === opt.id ? colors.dark : colors.primary} />
               <Text style={[m.methodBtnTxt, method === opt.id && m.methodBtnTxtActive]}>{opt.label}</Text>
@@ -163,29 +178,20 @@ function DepositModal({
         {/* Montant */}
         <Text style={m.label}>{t("wallet.deposit.amountLabel")}</Text>
         <View style={m.presets}>
-          {PRESETS.map((p) => (
+          {presets.map((p) => (
             <Pressable key={p.cents} style={[m.preset, selected === p.cents && !custom && m.presetActive]}
               onPress={() => { setSelected(p.cents); setCustom(""); setError(null); }}>
               <Text style={[m.presetTxt, selected === p.cents && !custom && m.presetTxtActive]}>{p.label}</Text>
             </Pressable>
           ))}
         </View>
-        <TextInput style={m.input} value={custom}
-          onChangeText={(v) => { setCustom(v); setSelected(null); setError(null); }}
-          placeholder={t("wallet.deposit.customPh")} placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" />
 
-        {/* Téléphone pour Mobile Money */}
-        {method === "mobile_money" && (
-          <TextInput style={m.input} value={phone}
-            onChangeText={setPhone}
-            placeholder={t("wallet.deposit.phonePh")}
-            placeholderTextColor={colors.textMuted} keyboardType="phone-pad" />
-        )}
-
-        {amountCents && amountCents >= 100 ? (
+        {amountCents && amountCents >= minCents ? (
           <View style={m.summary}>
             <Ionicons name="flash" size={14} color={colors.primary} />
-            <Text style={m.summaryTxt}>{fmt(amountCents, walletCurrency)} · {t("wallet.deposit.creditSub")}</Text>
+            <Text style={m.summaryTxt}>
+              {method === "stripe" ? fmt(amountCents, "EUR") : `${(amountCents / 100).toLocaleString("fr-FR")} XOF`} · Crédit immédiat
+            </Text>
           </View>
         ) : null}
 
@@ -197,23 +203,78 @@ function DepositModal({
         ) : null}
 
         <Pressable
-          style={[m.payBtn, (loading || !amountCents || amountCents < 100) && m.payBtnDisabled]}
+          style={[m.payBtn, (loading || !amountCents || amountCents < minCents) && m.payBtnDisabled]}
           onPress={() => void (method === "stripe" ? handleStripeDeposit() : handleMobileMoneyDeposit())}
-          disabled={loading || !amountCents || amountCents < 100}
+          disabled={loading || !amountCents || amountCents < minCents}
         >
           {loading
             ? <ActivityIndicator color={colors.dark} size="small" />
             : method === "stripe"
               ? <><Ionicons name="card" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>{t("wallet.deposit.payStripe")}</Text></>
-              : <><Ionicons name="phone-portrait" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>{t("wallet.deposit.payMobile")}</Text></>
+              : <><Ionicons name="phone-portrait" size={20} color={colors.dark} /><Text style={m.payBtnTxt}>Payer via Mobile Money</Text></>
           }
         </Pressable>
 
         <Text style={m.secureNote}>
-          {method === "stripe" ? t("wallet.deposit.secureStripe") : t("wallet.deposit.secureMobile")}
+          {method === "stripe" ? t("wallet.deposit.secureStripe") : "Orange Money · MTN · Wave · Moov — CI, SN, BF, ML et plus"}
         </Text>
       </View>
     </Modal>
+  );
+}
+
+function TxActions({ tx, onRefresh }: { tx: Transaction; onRefresh: () => void }) {
+  const [loading, setLoading] = useState<"cancel" | "retry" | null>(null);
+
+  if (tx.type !== "WALLET_DEPOSIT") return null;
+  if (tx.status !== "PENDING" && tx.status !== "FAILED") return null;
+
+  async function cancel() {
+    setLoading("cancel");
+    try {
+      await apiCall("post", `/api/transactions/${tx.id}/cancel`, {});
+      onRefresh();
+    } catch {}
+    setLoading(null);
+  }
+
+  async function retry() {
+    setLoading("retry");
+    const url = tx.provider === "CINETPAY"
+      ? `${APP_URL}/wallet/deposit/cinetpay?amount=${tx.amountCents}`
+      : `${APP_URL}/wallet/deposit`;
+    const result = await WebBrowser.openBrowserAsync(url, { toolbarColor: "#080b07" });
+    setLoading(null);
+    if (result.type === "opened" || result.type === "dismiss") onRefresh();
+  }
+
+  return (
+    <View style={a.row}>
+      {tx.status === "PENDING" && (
+        <Pressable style={[a.btn, a.btnGreen]} onPress={() => void retry()} disabled={loading !== null}>
+          {loading === "retry"
+            ? <ActivityIndicator size={10} color={colors.primary} />
+            : <Ionicons name="play" size={10} color={colors.primary} />}
+          <Text style={[a.txt, { color: colors.primary }]}>Continuer</Text>
+        </Pressable>
+      )}
+      {tx.status === "FAILED" && (
+        <Pressable style={[a.btn, a.btnGray]} onPress={() => void retry()} disabled={loading !== null}>
+          {loading === "retry"
+            ? <ActivityIndicator size={10} color={colors.textMuted} />
+            : <Ionicons name="refresh" size={10} color={colors.textMuted} />}
+          <Text style={[a.txt, { color: colors.textMuted }]}>Réessayer</Text>
+        </Pressable>
+      )}
+      {tx.status === "PENDING" && (
+        <Pressable style={[a.btn, a.btnRed]} onPress={() => void cancel()} disabled={loading !== null}>
+          {loading === "cancel"
+            ? <ActivityIndicator size={10} color={colors.danger} />
+            : <Ionicons name="close" size={10} color={colors.danger} />}
+          <Text style={[a.txt, { color: colors.danger }]}>Annuler</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
@@ -244,7 +305,7 @@ export function WalletScreen() {
 
   const wallet = data?.user?.wallet;
   const balance = wallet?.balanceCents ?? 0;
-  const currency = wallet?.currency ?? "EUR";
+  const currency = wallet?.currency ?? "XOF";
   const txs = data?.transactions ?? [];
   const deposited = txs.filter((tx) => tx.type === "WALLET_DEPOSIT" && tx.status === "PAID").reduce((s, tx) => s + tx.amountCents, 0);
   const paid = txs.filter((tx) => tx.type === "CONTRIBUTION" && tx.status === "PAID").reduce((s, tx) => s + tx.amountCents, 0);
@@ -259,7 +320,7 @@ export function WalletScreen() {
     );
   }
 
-  const content = (
+  return (
     <SafeAreaView style={s.safe}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -287,7 +348,7 @@ export function WalletScreen() {
           </View>
         </LinearGradient>
 
-        {/* Actions — Déposer est natif, Retirer ouvre web */}
+        {/* Actions */}
         <View style={s.actions}>
           <Pressable style={s.actionBtn} onPress={() => setDepositOpen(true)}>
             <View style={[s.actionIcon, { backgroundColor: `${colors.primary}22` }]}>
@@ -299,7 +360,7 @@ export function WalletScreen() {
 
           <Pressable
             style={s.actionBtn}
-            onPress={() => void WebBrowser.openBrowserAsync("https://tontineapp-web.vercel.app/wallet/withdraw", { toolbarColor: "#080b07" })}
+            onPress={() => void WebBrowser.openBrowserAsync(`${APP_URL}/wallet/withdraw`, { toolbarColor: "#080b07" })}
           >
             <View style={[s.actionIcon, { backgroundColor: `${colors.gold}22` }]}>
               <Ionicons name="arrow-up-circle" size={28} color={colors.gold} />
@@ -309,7 +370,6 @@ export function WalletScreen() {
           </Pressable>
         </View>
 
-        {/* Avertissement si clé Stripe manquante */}
         {!STRIPE_PK && (
           <View style={s.warnBox}>
             <Ionicons name="warning" size={16} color={colors.warning} />
@@ -331,22 +391,25 @@ export function WalletScreen() {
               const isPaid = tx.status === "PAID";
               const label = tx.tontineGroup?.name ?? TYPE_LABELS[tx.type] ?? tx.type;
               return (
-                <View key={tx.id} style={s.txRow}>
-                  <View style={[s.txIcon, { backgroundColor: isIn ? `${colors.primary}22` : `${colors.textMuted}22` }]}>
-                    <Ionicons name={isIn ? "arrow-down" : "arrow-up"} size={18} color={isIn ? colors.primary : colors.textMuted} />
+                <View key={tx.id} style={s.txBlock}>
+                  <View style={s.txRow}>
+                    <View style={[s.txIcon, { backgroundColor: isIn ? `${colors.primary}22` : `${colors.textMuted}22` }]}>
+                      <Ionicons name={isIn ? "arrow-down" : "arrow-up"} size={18} color={isIn ? colors.primary : colors.textMuted} />
+                    </View>
+                    <View style={s.txInfo}>
+                      <Text style={s.txLabel}>{label}</Text>
+                      <Text style={s.txDate}>{fmtDate(tx.createdAt)} · {tx.provider ?? "—"}</Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text style={[s.txAmt, { color: isIn && isPaid ? colors.primary : colors.text }]}>
+                        {isIn ? "+" : "−"}{fmt(tx.amountCents, tx.currency)}
+                      </Text>
+                      <Text style={[s.txStatus, { color: isPaid ? colors.primary : tx.status === "FAILED" ? colors.danger : colors.warning }]}>
+                        {tx.status}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={s.txInfo}>
-                    <Text style={s.txLabel}>{label}</Text>
-                    <Text style={s.txDate}>{fmtDate(tx.createdAt)} · {tx.provider}</Text>
-                  </View>
-                  <View style={{ alignItems: "flex-end" }}>
-                    <Text style={[s.txAmt, { color: isIn && isPaid ? colors.primary : colors.text }]}>
-                      {isIn ? "+" : "−"}{fmt(tx.amountCents, tx.currency)}
-                    </Text>
-                    <Text style={[s.txStatus, { color: isPaid ? colors.primary : tx.status === "FAILED" ? colors.danger : colors.warning }]}>
-                      {tx.status}
-                    </Text>
-                  </View>
+                  <TxActions tx={tx} onRefresh={() => void load()} />
                 </View>
               );
             })
@@ -363,11 +426,17 @@ export function WalletScreen() {
       />
     </SafeAreaView>
   );
-
-  return content;
 }
 
-// Styles modal dépôt
+const a = StyleSheet.create({
+  row: { flexDirection: "row", gap: 6, paddingLeft: 54, marginTop: 4, marginBottom: 6 },
+  btn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  btnGreen: { backgroundColor: `${colors.primary}18` },
+  btnGray: { backgroundColor: `${colors.textMuted}18` },
+  btnRed: { backgroundColor: `${colors.danger}18` },
+  txt: { fontSize: 10, fontWeight: "700" },
+});
+
 const m = StyleSheet.create({
   modal: { flex: 1, backgroundColor: colors.dark, paddingHorizontal: 20, paddingTop: 12 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: "center", marginBottom: 16 },
@@ -381,9 +450,9 @@ const m = StyleSheet.create({
   methodBtnTxtActive: { color: colors.dark },
   label: { fontSize: 12, color: colors.textMuted, fontWeight: "700", marginBottom: 8 },
   presets: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
-  preset: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  preset: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   presetActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  presetTxt: { color: colors.textMuted, fontWeight: "700", fontSize: 14 },
+  presetTxt: { color: colors.textMuted, fontWeight: "700", fontSize: 13 },
   presetTxtActive: { color: colors.dark },
   input: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 14, color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: 12 },
   summary: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: `${colors.primary}15`, borderRadius: 12, padding: 12, marginBottom: 12 },
@@ -423,7 +492,8 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: 16, color: colors.text, fontWeight: "900", marginBottom: 12 },
   empty: { alignItems: "center", paddingVertical: 32, gap: 8 },
   emptyTxt: { color: colors.textMuted, fontSize: 14 },
-  txRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  txBlock: { marginBottom: 14 },
+  txRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   txIcon: { width: 42, height: 42, borderRadius: 13, justifyContent: "center", alignItems: "center" },
   txInfo: { flex: 1 },
   txLabel: { fontSize: 14, color: colors.text, fontWeight: "700" },
