@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Corps invalide." }, { status: 400 });
   }
 
-  if (!Number.isInteger(amountCents) || amountCents < 10000 || amountCents > 500_000_00) {
-    return NextResponse.json({ error: "Montant invalide (min 100 XOF, max 5 000 000 XOF)." }, { status: 400 });
+  if (!Number.isInteger(amountCents) || amountCents < 30000 || amountCents > 200_000_000) {
+    return NextResponse.json({ error: "Montant invalide (min 300 XOF, max 2 000 000 XOF)." }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({
