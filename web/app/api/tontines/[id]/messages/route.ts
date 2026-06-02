@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { safeJson } from "@/lib/request";
 import { messageSchema } from "@/lib/validators";
+import { publicUserSelect } from "@/lib/select";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -24,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       orderBy: { createdAt: "asc" },
       skip,
       take: limit,
-      include: { user: { select: { id: true, fullName: true, email: true, avatarUrl: true } } },
+      include: { user: { select: publicUserSelect } },
     }),
     prisma.message.count({ where: { tontineGroupId: id } }),
   ]);

@@ -2,7 +2,6 @@
 
 import { Activity, AlertTriangle, Gauge, RadioTower, ShieldCheck, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 
 import { money } from "@/lib/format";
 
@@ -58,39 +57,18 @@ export function RealtimeMonitor({
   const [events, setEvents] = useState<LiveEvent[]>([fallbackEvent]);
 
   useEffect(() => {
-    const socket = io({
-      path: "/api/realtime",
-      transports: ["websocket", "polling"],
-      reconnection: true
-    });
-
-    socket.on("connect", () => {
-      setConnected(true);
-      socket.emit("join:admin");
-    });
-    socket.on("disconnect", () => setConnected(false));
-    socket.on("metrics:update", (payload: Metrics) => setMetrics((current) => ({ ...current, ...payload })));
-    socket.on("server:ready", (payload: { event?: LiveEvent; metrics?: Metrics }) => {
-      if (payload.metrics) setMetrics((current) => ({ ...current, ...payload.metrics }));
-      if (payload.event) setEvents((current) => [payload.event!, ...current].slice(0, compact ? 4 : 8));
-    });
-    socket.on("activity:new", (event: LiveEvent) => {
-      setEvents((current) => [event, ...current].slice(0, compact ? 4 : 8));
-    });
-
-    const fallback = window.setInterval(async () => {
-      if (socket.connected) return;
+    async function poll() {
       const response = await fetch("/api/realtime/pulse").catch(() => null);
       if (!response?.ok) return;
       const payload = (await response.json()) as { event?: LiveEvent; metrics?: Metrics };
       if (payload.metrics) setMetrics((current) => ({ ...current, ...payload.metrics }));
       if (payload.event) setEvents((current) => [payload.event!, ...current].slice(0, compact ? 4 : 8));
-    }, 5000);
+      setConnected(true);
+    }
 
-    return () => {
-      window.clearInterval(fallback);
-      socket.disconnect();
-    };
+    void poll();
+    const interval = window.setInterval(() => void poll(), 30_000);
+    return () => window.clearInterval(interval);
   }, [compact]);
 
   const metricCards = [
