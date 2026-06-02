@@ -398,7 +398,7 @@ const m = StyleSheet.create({
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.dark },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
+  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
   title: { fontSize: 28, color: colors.text, fontWeight: "900" },
   subtitle: { fontSize: 13, color: colors.textMuted },
   card: { marginHorizontal: 20, marginVertical: 16, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border },

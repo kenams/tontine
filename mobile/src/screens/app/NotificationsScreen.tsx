@@ -117,7 +117,7 @@ export function NotificationsScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.dark },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14 },
   title: { fontSize: 28, color: colors.text, fontWeight: "900" },
   subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   markBtn: { backgroundColor: `${colors.primary}22`, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },

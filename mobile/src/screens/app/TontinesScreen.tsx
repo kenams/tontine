@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTontineStore } from "../../store/tontineStore";
 import { colors } from "../../theme/colors";
@@ -108,30 +109,30 @@ export function TontinesScreen({ navigation }: TontinesScreenProps) {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.dark },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  title: { fontSize: 28, color: colors.text, fontWeight: "900" },
-  sub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14 },
+  title: { fontSize: 28, color: colors.text, fontWeight: "900", letterSpacing: -0.5 },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 3, fontWeight: "500" },
   headerBtns: { flexDirection: "row", gap: 10 },
-  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.border },
   primaryBtn: { backgroundColor: colors.primary, borderColor: colors.primary },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
-  card: { backgroundColor: colors.surface, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border, gap: 10 },
-  cardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
-  avatar: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${colors.primary}22`, justifyContent: "center", alignItems: "center" },
+  list: { paddingHorizontal: 20, paddingBottom: 100, gap: 14 },
+  card: { backgroundColor: colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: colors.border, gap: 12 },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 14 },
+  avatar: { width: 46, height: 46, borderRadius: 15, backgroundColor: `${colors.primary}20`, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: `${colors.primary}30` },
   avatarTxt: { color: colors.primary, fontWeight: "900", fontSize: 18 },
   info: { flex: 1 },
-  name: { color: colors.text, fontWeight: "900", fontSize: 15 },
-  meta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  name: { color: colors.text, fontWeight: "900", fontSize: 15, letterSpacing: -0.2 },
+  meta: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
+  badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   badgeTxt: { fontSize: 11, fontWeight: "700" },
-  progressTrack: { height: 4, backgroundColor: colors.surfaceCard, borderRadius: 2, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 2 },
+  progressTrack: { height: 5, backgroundColor: `${colors.primary}20`, borderRadius: 5, overflow: "hidden" },
+  progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 5 },
   cardBottom: { flexDirection: "row", justifyContent: "space-between" },
   cardSub: { fontSize: 11, color: colors.textMuted },
-  empty: { alignItems: "center", paddingTop: 80, gap: 12 },
-  emptyTitle: { fontSize: 20, color: colors.text, fontWeight: "900" },
-  emptyText: { fontSize: 14, color: colors.textMuted, textAlign: "center" },
-  emptyBtn: { backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
-  emptyBtnTxt: { color: colors.dark, fontWeight: "900", fontSize: 14 },
+  empty: { alignItems: "center", paddingTop: 80, gap: 14 },
+  emptyTitle: { fontSize: 22, color: colors.text, fontWeight: "900", letterSpacing: -0.3 },
+  emptyText: { fontSize: 14, color: colors.textMuted, textAlign: "center", lineHeight: 22 },
+  emptyBtn: { backgroundColor: colors.primary, borderRadius: 18, paddingHorizontal: 28, paddingVertical: 14, marginTop: 8 },
+  emptyBtnTxt: { color: colors.dark, fontWeight: "900", fontSize: 15 },
 });

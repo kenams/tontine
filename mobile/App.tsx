@@ -46,7 +46,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 function AppProviders() {
   return (
     <NavigationContainer theme={appNavigationTheme} linking={linking}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" backgroundColor="transparent" translucent />
       <OfflineBanner />
       <AppNavigator />
     </NavigationContainer>

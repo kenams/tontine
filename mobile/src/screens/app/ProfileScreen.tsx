@@ -337,7 +337,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.dark },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
   title: { fontSize: 28, color: colors.text, fontWeight: "900" },
 
   avatarCard: { alignItems: "center", padding: 24, gap: 8 },
