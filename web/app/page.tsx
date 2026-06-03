@@ -1,6 +1,6 @@
 import {
   ArrowRight, BadgeCheck, ChevronDown, Download,
-  Globe, MessageCircle, Shield, Smartphone,
+  Globe, MessageCircle, Share2, Shield, Smartphone,
   Sparkles, Star, TrendingUp, Users, Zap,
 } from "lucide-react";
 import { GEM_TIERS } from "@/lib/tiers";
@@ -441,6 +441,26 @@ export default async function LandingPage() {
               <p className="mt-4 text-xs text-white/25">
                 {lang === "fr" ? "Gratuit · Sans carte bancaire · Prêt en 2 minutes" : "Free · No credit card · Ready in 2 minutes"}
               </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(lang === "fr" ? "Tu connais Kotizy ? C'est une app pour gérer les tontines en ligne avec ta famille ou tes amis, sans frais cachés. Essaie gratuitement → https://tontineapp-web.vercel.app" : "Have you heard of Kotizy? It's an app to manage tontines online with family or friends, no hidden fees. Try for free → https://tontineapp-web.vercel.app")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#25D366]/15 px-5 py-2.5 text-sm font-bold text-[#25D366] ring-1 ring-[#25D366]/30 transition hover:bg-[#25D366]/25"
+                >
+                  <Share2 size={15} />
+                  {lang === "fr" ? "Partager sur WhatsApp" : "Share on WhatsApp"}
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=https://tontineapp-web.vercel.app&text=${encodeURIComponent(lang === "fr" ? "Kotizy — Tontines digitales pour la diaspora. Gratuit, sécurisé, mobile." : "Kotizy — Digital tontines for the diaspora. Free, secure, mobile.")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#229ED9]/15 px-5 py-2.5 text-sm font-bold text-[#229ED9] ring-1 ring-[#229ED9]/30 transition hover:bg-[#229ED9]/25"
+                >
+                  <Share2 size={15} />
+                  Telegram
+                </a>
+              </div>
             </div>
           </section>
 
