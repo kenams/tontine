@@ -10,6 +10,7 @@ import { penalizeLate, rewardPayment } from "@/lib/trust";
 import { coverByEmergencyFund, excludeMember } from "@/lib/defaults";
 import { blacklistIfDebt, releaseCollateral, seizeCollateral } from "@/lib/antiFraud";
 import { sendCinetpayTransfer, isAutoTransferSupported } from "@/lib/cinetpay";
+import { rewardReferrer } from "@/lib/referral";
 
 const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
 
@@ -109,6 +110,7 @@ export async function GET(request: NextRequest) {
       ]);
       void rewardPayment(m.userId);
       void checkBadgesAfterPayment(m.userId);
+      void rewardReferrer(m.userId); // récompense le parrain si c'est la 1ère cotisation du filleul
       void sendAutoPayConfirmEmail(m.user.email, m.user.fullName, group.name, money(group.contributionCents, group.currency));
       void sendPushToUser(m.userId, {
         title: "✅ Auto-paiement effectué",

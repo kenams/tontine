@@ -1,4 +1,4 @@
-import { CalendarClock, ShieldCheck, TrendingUp, WalletCards } from "lucide-react";
+import { CalendarClock, Gift, ShieldCheck, TrendingUp, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -154,6 +154,18 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Widget Parrainage */}
+      <Link href="/referral" className="mt-4 glass flex items-center gap-4 rounded-3xl p-4 ring-1 ring-emerald-500/20 transition hover:ring-emerald-500/40">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-500/15">
+          <Gift size={20} className="text-emerald-400" />
+        </div>
+        <div className="flex-1">
+          <p className="font-black text-[var(--text)]">{lang === "en" ? "Earn €5 per friend" : "Gagnez 5€ par ami parrainé"}</p>
+          <p className="text-xs text-[var(--muted)]">{lang === "en" ? "Share your code · Credit added automatically" : "Partagez votre code · Crédit ajouté automatiquement"}</p>
+        </div>
+        <span className="text-sm font-black text-emerald-400">→</span>
+      </Link>
     </MobileShell>
   );
 }
