@@ -6,6 +6,7 @@ import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { PremiumUpsellModal } from "@/components/app/premium-upsell-modal";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { useLanguage } from "@/lib/i18n/context";
 
@@ -17,6 +18,7 @@ export function CreateTontineForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,14 +51,17 @@ export function CreateTontineForm() {
         autoExcludeDays: Number(fd.get("autoExcludeDays") ?? 30),
       }),
     });
-    const data = (await response.json()) as { error?: string; group?: { id: string } };
+    const data = (await response.json()) as { error?: string; premiumRequired?: boolean; group?: { id: string } };
     setLoading(false);
+    if (data.premiumRequired) { setShowPremium(true); return; }
     if (!response.ok || !data.group) { setError(data.error ?? t("createTontine", "errCreation")); return; }
     router.push(`/tontines/${data.group.id}`);
     router.refresh();
   }
 
   return (
+    <>
+    {showPremium && <PremiumUpsellModal onClose={() => setShowPremium(false)} />}
     <form onSubmit={onSubmit} noValidate className="space-y-3">
       <Input name="name" placeholder={t("createTontine", "nameLabel")} required />
       <Textarea name="description" placeholder={t("createTontine", "descLabel")} required />
@@ -136,5 +141,6 @@ export function CreateTontineForm() {
         <ArrowRight size={18} />
       </Button>
     </form>
+    </>
   );
 }

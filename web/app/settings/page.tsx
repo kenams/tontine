@@ -1,6 +1,7 @@
-import { LockKeyhole, Star, Users, Gift } from "lucide-react";
+import { LockKeyhole, Star, Users, Gift, Zap, BarChart3, Shield } from "lucide-react";
 import Link from "next/link";
 import { DeleteAccountButton } from "@/components/app/delete-account-button";
+import { PremiumCheckoutButton, PremiumPortalButton } from "@/components/app/premium-checkout-button";
 
 import { MobileShell } from "@/components/app/mobile-shell";
 import { PageHeading } from "@/components/app/page-heading";
@@ -18,10 +19,10 @@ export default async function SettingsPage() {
   const isPremium = userPlan?.plan === "PREMIUM";
 
   const PREMIUM_FEATS = [
-    t("settings", "premiumFeat1"),
-    t("settings", "premiumFeat2"),
-    t("settings", "premiumFeat3"),
-    t("settings", "premiumFeat4"),
+    { icon: Zap, label: t("settings", "premiumFeat1") },
+    { icon: Users, label: t("settings", "premiumFeat2") },
+    { icon: BarChart3, label: t("settings", "premiumFeat3") },
+    { icon: Shield, label: t("settings", "premiumFeat4") },
   ];
 
   const LEGAL_LINKS = [
@@ -46,33 +47,30 @@ export default async function SettingsPage() {
               <p className="font-black text-amber-400">{t("settings", "premiumActive")}</p>
               <p className="text-sm text-smoke">{t("settings", "premiumSub")}</p>
             </div>
-            <form action="/api/subscription" method="POST">
-              <input type="hidden" name="action" value="portal" />
-              <button className="rounded-xl border border-amber-500/40 px-3 py-1.5 text-xs font-bold text-amber-400 transition hover:bg-amber-500/20">
-                {t("settings", "premiumManage")}
-              </button>
-            </form>
+            <PremiumPortalButton />
           </div>
         </div>
       ) : (
-        <div className="glass mb-3 rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/20">
-              <Star size={18} className="text-emerald-400" />
+        <div className="glass mb-3 rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-500/20 ring-1 ring-amber-500/30">
+              <Star size={20} className="text-amber-400" fill="currentColor" />
             </div>
             <div>
-              <p className="font-black">{t("settings", "premiumCta")}</p>
-              <p className="text-sm text-smoke">{t("settings", "premiumPrice")}</p>
+              <p className="font-black text-[var(--text)]">{t("settings", "premiumCta")}</p>
+              <p className="text-sm text-[var(--muted)]">{t("settings", "premiumPrice")}</p>
             </div>
           </div>
-          <div className="mb-3 space-y-1.5 text-sm text-[var(--muted)]">
-            {PREMIUM_FEATS.map(f => (
-              <div key={f} className="flex items-center gap-2"><span className="text-emerald-400">✓</span>{f}</div>
+          <div className="mb-4 space-y-2">
+            {PREMIUM_FEATS.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-sm">
+                <Icon size={14} className="shrink-0 text-emerald-400" />
+                <span>{label}</span>
+              </div>
             ))}
           </div>
-          <Link href="/api/subscription" className="block w-full rounded-xl bg-emerald-500 py-2.5 text-center text-sm font-black text-ink transition hover:bg-emerald-400">
-            {t("settings", "premiumBtn")}
-          </Link>
+          <PremiumCheckoutButton />
+          <p className="mt-2 text-center text-[10px] text-[var(--muted)]">{t("settings", "premiumCancel")}</p>
         </div>
       )}
 
