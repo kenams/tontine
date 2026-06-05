@@ -7,9 +7,9 @@ import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { safeJson } from "@/lib/request";
 
 const withdrawSchema = z.object({
-  amountCents: z.number().int().min(1_000).max(200_000),
-  iban: z.string().min(15).max(34).regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN invalide"),
-  beneficiary: z.string().min(2).max(80),
+  amountCents: z.number({ invalid_type_error: "Montant invalide." }).int().min(1_000, "Montant minimum : 10 €.").max(200_000, "Montant maximum : 2 000 €."),
+  iban: z.string().min(15, "IBAN invalide.").max(34, "IBAN invalide.").regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "Format IBAN incorrect."),
+  beneficiary: z.string().min(2, "Nom du bénéficiaire requis.").max(80, "Nom trop long."),
 });
 
 export async function POST(request: NextRequest) {
