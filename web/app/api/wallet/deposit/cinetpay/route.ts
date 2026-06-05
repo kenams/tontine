@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { initCinetpayPayment, isCinetpayConfigured } from "@/lib/cinetpay";
 import { rateLimit, clientIp } from "@/lib/security";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app").trim();
 
 export async function POST(request: NextRequest) {
   const session = await requireUser();

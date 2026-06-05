@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       },
     },
     metadata: { userId: session.userId },
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app"}/profile?kyc=done`,
+    return_url: `${(process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app").trim()}/profile?kyc=done`,
   });
 
   await prisma.user.update({
