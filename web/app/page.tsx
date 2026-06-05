@@ -1,7 +1,7 @@
 import {
   ArrowRight, BadgeCheck, ChevronDown, Download,
-  Globe, MessageCircle, Share2, Shield, Smartphone,
-  Sparkles, Star, TrendingUp, Users, Zap,
+  Globe, Lock, MessageCircle, Share2, Shield, ShieldCheck,
+  Smartphone, Sparkles, Star, TrendingUp, Users, Zap,
 } from "lucide-react";
 import { GEM_TIERS } from "@/lib/tiers";
 import Link from "next/link";
@@ -68,6 +68,8 @@ export default async function LandingPage() {
     { q: t("landing", "faq4Q"), a: t("landing", "faq4A") },
     { q: t("landing", "faq5Q"), a: t("landing", "faq5A") },
     { q: t("landing", "faq6Q"), a: t("landing", "faq6A") },
+    { q: t("landing", "faq7Q"), a: t("landing", "faq7A"), highlight: true },
+    { q: t("landing", "faq8Q"), a: t("landing", "faq8A") },
   ];
 
   const displayUsers = Math.max(userCount, 120);
@@ -384,6 +386,133 @@ export default async function LandingPage() {
             </div>
           </section>
 
+          {/* ── PROTECTION & CONFIANCE ── */}
+          <section className="border-t border-white/6 py-20">
+            <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">
+              {lang === "fr" ? "Sécurité & Confiance" : "Security & Trust"}
+            </div>
+            <h2 className="mb-4 text-center text-3xl font-black text-white md:text-4xl">
+              {lang === "fr" ? "Votre argent est protégé." : "Your money is protected."}
+            </h2>
+            <p className="mb-4 mx-auto max-w-xl text-center text-sm leading-6 text-white/40">
+              {lang === "fr"
+                ? "La tontine repose sur la confiance. Kotizy a construit 6 couches de protection pour que personne ne puisse partir avec l'argent des autres."
+                : "Tontines are built on trust. Kotizy has built 6 layers of protection so no one can walk away with others' money."}
+            </p>
+
+            {/* Bannière principale sécurité */}
+            <div className="mb-10 mx-auto max-w-3xl rounded-[2rem] bg-gradient-to-br from-emerald-500/10 to-emerald-900/20 p-8 ring-1 ring-emerald-500/20">
+              <div className="flex flex-col items-center gap-4 text-center md:flex-row md:text-left md:gap-6">
+                <div className="shrink-0 grid h-16 w-16 place-items-center rounded-2xl bg-emerald-500 shadow-[0_0_32px_rgba(34,197,94,0.4)]">
+                  <ShieldCheck size={32} className="text-[#080b07]" />
+                </div>
+                <div>
+                  <p className="text-lg font-black text-white mb-1">
+                    {lang === "fr" ? "Et si quelqu'un part après avoir reçu le pot ?" : "What if someone leaves after receiving the pot?"}
+                  </p>
+                  <p className="text-sm leading-6 text-white/55">
+                    {lang === "fr"
+                      ? "Avant de recevoir le pot, chaque membre est vérifié (pièce d'identité + selfie via Stripe). Une collatérale est bloquée pour les cercles premium. En cas de fuite, la dette est automatiquement déduite des futurs paiements et le compte est blacklisté à vie. Les personnes suivantes dans l'ordre reçoivent leur pot normalement — le fonds de solidarité couvre les cotisations manquantes."
+                      : "Before receiving the pot, every member is identity-verified (ID + selfie via Stripe). Collateral is locked for premium circles. In case of default, the debt is automatically deducted from future payments and the account is permanently blacklisted. The next people in line still receive their pot — the solidarity fund covers any missing contributions."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 6 couches de protection */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  icon: BadgeCheck,
+                  color: "bg-emerald-500 text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.4)]",
+                  ring: "ring-emerald-500/20",
+                  title: lang === "fr" ? "Vérification d'identité (KYC)" : "Identity Verification (KYC)",
+                  desc: lang === "fr"
+                    ? "Stripe Identity scanne votre pièce d'identité ou passeport + selfie en direct avant tout versement. Impossible d'encaisser anonymement."
+                    : "Stripe Identity scans your ID or passport + live selfie before any payout. Impossible to cash out anonymously.",
+                  badge: lang === "fr" ? "Obligatoire dès Émeraude (150€+)" : "Required from Emerald tier (€150+)",
+                },
+                {
+                  icon: Lock,
+                  color: "bg-gold/20 text-gold",
+                  ring: "ring-gold/15",
+                  title: lang === "fr" ? "Collatéral bloqué" : "Locked Collateral",
+                  desc: lang === "fr"
+                    ? "Pour les cercles Saphir (500€+) et Rubis (1500€+), 1 à 2 mois de cotisation sont bloqués sur votre wallet dès l'inscription. Si vous partez avec le pot sans cotiser, l'argent est saisi automatiquement."
+                    : "For Sapphire (€500+) and Ruby (€1500+) circles, 1–2 months of contributions are locked in your wallet at signup. If you default, the funds are automatically seized.",
+                  badge: lang === "fr" ? "Automatique Saphir & Rubis" : "Automatic for Sapphire & Ruby",
+                },
+                {
+                  icon: Shield,
+                  color: "bg-white/10 text-white",
+                  ring: "ring-white/8",
+                  title: lang === "fr" ? "Score de confiance" : "Trust Score",
+                  desc: lang === "fr"
+                    ? "Chaque paiement à l'heure augmente votre score (0→100). Les cercles premium exigent un score minimum. Un historique propre = accès aux groupes à fort enjeu."
+                    : "Every on-time payment increases your score (0→100). Premium circles require a minimum score. A clean record = access to high-stakes groups.",
+                  badge: lang === "fr" ? "Débutant → Bronze → Gold → Élite" : "Beginner → Bronze → Gold → Elite",
+                },
+                {
+                  icon: Users,
+                  color: "bg-white/10 text-emerald-400",
+                  ring: "ring-white/8",
+                  title: lang === "fr" ? "Fonds de solidarité" : "Solidarity Fund",
+                  desc: lang === "fr"
+                    ? "5% de chaque cotisation alimente un fonds commun. Si un membre est en retard, le fonds avance sa mise pour que le groupe ne soit pas pénalisé. Remboursement sous 30 jours ou exclusion."
+                    : "5% of each contribution feeds a common fund. If a member is late, the fund advances their share so the group isn't penalized. Repay within 30 days or face exclusion.",
+                  badge: lang === "fr" ? "Actif sur tous les cercles" : "Active on all circles",
+                },
+                {
+                  icon: TrendingUp,
+                  color: "bg-white/10 text-white",
+                  ring: "ring-white/8",
+                  title: lang === "fr" ? "Exclusion & Blacklist automatiques" : "Automatic Exclusion & Blacklist",
+                  desc: lang === "fr"
+                    ? "J+7 : alerte. J+14 : dernier avertissement. J+30 : exclusion automatique + compte blacklisté. Un compte blacklisté ne peut plus rejoindre aucune tontine Kotizy — jamais."
+                    : "Day 7: alert. Day 14: final warning. Day 30: automatic exclusion + account blacklisted. A blacklisted account can never join any Kotizy tontine — ever.",
+                  badge: lang === "fr" ? "Boucle automatique, 7h chaque matin" : "Automated daily at 7am",
+                },
+                {
+                  icon: Zap,
+                  color: "bg-white/10 text-white",
+                  ring: "ring-white/8",
+                  title: lang === "fr" ? "Déduction de dette inter-tontines" : "Cross-tontine Debt Deduction",
+                  desc: lang === "fr"
+                    ? "Si vous avez une dette dans une tontine A et que vous recevez le pot dans une tontine B, la dette est automatiquement déduite de votre versement. Pas d'échappatoire."
+                    : "If you have a debt in tontine A and receive a payout in tontine B, the debt is automatically deducted from your payout. No escape.",
+                  badge: lang === "fr" ? "Nouveau — actif sur tous les groupes" : "New — active across all groups",
+                },
+              ].map(({ icon: Icon, color, ring, title, desc, badge }) => (
+                <div key={title} className={`rounded-3xl bg-white/3 p-6 ring-1 transition hover:bg-white/5 ${ring}`}>
+                  <div className={`mb-4 grid h-11 w-11 place-items-center rounded-2xl ${color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <p className="mb-2 font-black text-white">{title}</p>
+                  <p className="mb-4 text-sm leading-6 text-white/45">{desc}</p>
+                  <div className="inline-block rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/20">
+                    {badge}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bande certifications */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/30">
+              {[
+                { label: "Stripe Identity", sub: lang === "fr" ? "Vérification KYC" : "KYC Verification" },
+                { label: "Stripe Payments", sub: "PCI-DSS Level 1" },
+                { label: "Supabase RLS", sub: lang === "fr" ? "Données chiffrées" : "Encrypted data" },
+                { label: "BCRYPT + HMAC", sub: lang === "fr" ? "Sessions signées" : "Signed sessions" },
+                { label: "RGPD / GDPR", sub: lang === "fr" ? "Art. 17 & 20" : "Articles 17 & 20" },
+              ].map(({ label, sub }) => (
+                <div key={label} className="text-center">
+                  <p className="font-bold text-white/50">{label}</p>
+                  <p>{sub}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* ── TÉMOIGNAGES ── */}
           <section className="border-t border-white/6 py-20">
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "testiLabel")}</div>
@@ -412,10 +541,13 @@ export default async function LandingPage() {
             <div className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-white/30">{t("landing", "faqLabel")}</div>
             <h2 className="mb-12 text-center text-3xl font-black text-white md:text-4xl">{t("landing", "faqTitle")}</h2>
             <div className="mx-auto max-w-2xl space-y-3">
-              {FAQ.map(({ q, a }) => (
-                <details key={q} className="group rounded-3xl bg-white/3 ring-1 ring-white/6 open:ring-emerald-500/20">
+              {FAQ.map(({ q, a, highlight }: { q: string; a: string; highlight?: boolean }) => (
+                <details key={q} className={`group rounded-3xl ring-1 open:ring-emerald-500/20 ${highlight ? "bg-emerald-500/6 ring-emerald-500/15" : "bg-white/3 ring-white/6"}`}>
                   <summary className="flex cursor-pointer items-center justify-between gap-4 px-6 py-4 text-sm font-bold text-white list-none">
-                    {q}
+                    <span className="flex items-center gap-2">
+                      {highlight && <ShieldCheck size={15} className="shrink-0 text-emerald-400" />}
+                      {q}
+                    </span>
                     <ChevronDown size={16} className="shrink-0 text-white/30 transition-transform group-open:rotate-180" />
                   </summary>
                   <p className="px-6 pb-5 text-sm leading-6 text-white/50">{a}</p>
