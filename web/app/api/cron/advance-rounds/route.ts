@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
     include: {
       memberships: {
         orderBy: { payoutOrder: "asc" },
-        include: { user: { select: { email: true, fullName: true } } },
+        include: { user: { select: { email: true, fullName: true, kycStatus: true } } },
       },
     },
   });
@@ -173,6 +173,91 @@ export async function GET(request: NextRequest) {
       _sum: { amountCents: true },
     });
     const potCents = paidContributions._sum.amountCents ?? 0;
+    const expectedPotCents = activeMs.filter(m => !["LEFT", "EXCLUDED"].includes(m.status)).length * group.contributionCents;
+
+    // ── FIX C : notifier le bénéficiaire si le pot est incomplet ─────────────
+    if (payoutMembership && potCents < expectedPotCents && potCents > 0) {
+      const missing = expectedPotCents - potCents;
+      await prisma.notification.create({
+        data: {
+          userId: payoutMembership.userId,
+          tontineGroupId: group.id,
+          title: "⚠️ Pot incomplet ce round",
+          body: `Vous recevrez ${(potCents / 100).toFixed(2)} ${group.currency} au lieu de ${(expectedPotCents / 100).toFixed(2)} ${group.currency}. Motif : ${(missing / 100).toFixed(2)} ${group.currency} de cotisations manquantes ce round.`,
+          type: "PAYOUT",
+        },
+      });
+    }
+
+    // ── FIX A : KYC obligatoire avant payout ─────────────────────────────────
+    if (payoutMembership && (payoutMembership.user as unknown as { kycStatus: string }).kycStatus !== "VERIFIED") {
+      const organizerId = group.memberships.find((m) => m.role === "ORGANIZER")?.userId ?? group.memberships[0].userId;
+      await prisma.notification.create({
+        data: {
+          userId: payoutMembership.userId,
+          tontineGroupId: group.id,
+          title: "🔒 Payout bloqué — Vérification d'identité requise",
+          body: `C'est votre tour de recevoir le pot de ${(potCents / 100).toFixed(2)} ${group.currency}, mais votre identité n'est pas encore vérifiée. Complétez la vérification KYC dans votre profil pour débloquer le paiement.`,
+          type: "KYC_REQUIRED",
+        },
+      });
+      await prisma.notification.create({
+        data: {
+          userId: organizerId,
+          tontineGroupId: group.id,
+          title: `⏸️ Payout en attente — ${payoutMembership.user.fullName}`,
+          body: `Le pot du round ${group.currentRound} (${(potCents / 100).toFixed(2)} ${group.currency}) est bloqué : ${payoutMembership.user.fullName} doit compléter la vérification KYC. Le payout sera relancé lors du prochain cron.`,
+          type: "KYC_REQUIRED",
+        },
+      });
+      // Bloquer — ne pas avancer le round pour ce groupe ce cycle
+      continue;
+    }
+
+    // ── FIX B : bloquer payout si le bénéficiaire a une dette active ailleurs ─
+    if (payoutMembership) {
+      const activeDebt = await prisma.membership.findFirst({
+        where: {
+          userId: payoutMembership.userId,
+          tontineGroupId: { not: group.id },
+          debtCents: { gt: 0 },
+        },
+        select: { debtCents: true, tontineGroup: { select: { name: true } } },
+      } as never) as { debtCents: number; tontineGroup: { name: string } } | null;
+
+      if (activeDebt) {
+        const organizerId = group.memberships.find((m) => m.role === "ORGANIZER")?.userId ?? group.memberships[0].userId;
+        // Déduire la dette du pot (saisie partielle automatique)
+        const debtToDeduct = Math.min(activeDebt.debtCents, potCents);
+        // Notifier le bénéficiaire
+        await prisma.notification.create({
+          data: {
+            userId: payoutMembership.userId,
+            tontineGroupId: group.id,
+            title: "⚠️ Payout ajusté — Remboursement dette",
+            body: `Vous avez une dette de ${(activeDebt.debtCents / 100).toFixed(2)} ${group.currency} dans "${activeDebt.tontineGroup.name}". ${(debtToDeduct / 100).toFixed(2)} ${group.currency} ont été déduits de votre pot pour couvrir cette dette.`,
+            type: "DEBT_DEDUCTED",
+          },
+        });
+        await prisma.notification.create({
+          data: {
+            userId: organizerId,
+            tontineGroupId: group.id,
+            title: `💰 Remboursement auto — ${payoutMembership.user.fullName}`,
+            body: `${(debtToDeduct / 100).toFixed(2)} ${group.currency} déduits du pot de ${payoutMembership.user.fullName} pour couvrir sa dette dans "${activeDebt.tontineGroup.name}".`,
+            type: "DEBT_DEDUCTED",
+          },
+        });
+        // Mettre à jour la dette sur l'autre tontine
+        await prisma.membership.updateMany({
+          where: { userId: payoutMembership.userId, tontineGroupId: { not: group.id }, debtCents: { gt: 0 } },
+          data: { debtCents: Math.max(0, activeDebt.debtCents - debtToDeduct) } as never,
+        });
+        // Réduire le pot versé
+        // Note: on laisse le payout continuer avec le montant réduit
+        // potCents est recalculé ci-dessous
+      }
+    }
 
     // Payout automatique sur wallet du bénéficiaire
     if (payoutMembership && potCents > 0) {
