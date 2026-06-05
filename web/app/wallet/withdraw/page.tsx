@@ -80,7 +80,7 @@ export default function WalletWithdrawPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div className="glass rounded-[1.75rem] p-5">
             <p className="mb-4 text-sm font-black">{t("withdraw", "formTitle")}</p>
 
