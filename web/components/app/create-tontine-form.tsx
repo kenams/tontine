@@ -21,6 +21,16 @@ export function CreateTontineForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
+    const name = String(fd.get("name") ?? "").trim();
+    const description = String(fd.get("description") ?? "").trim();
+    const rules = String(fd.get("rules") ?? "").trim();
+    const contribution = Number(fd.get("contribution"));
+    const maxMembers = Number(fd.get("maxMembers") ?? 8);
+    if (!name) { setError(t("createTontine", "errName") || "Le nom du groupe est requis."); return; }
+    if (!description) { setError(t("createTontine", "errDesc") || "L'objectif du groupe est requis."); return; }
+    if (!rules) { setError(t("createTontine", "errRules") || "Les règles du groupe sont requises."); return; }
+    if (!contribution || contribution < 1) { setError(t("createTontine", "errContrib") || "La cotisation doit être supérieure à 0."); return; }
+    if (maxMembers < 3 || maxMembers > 30) { setError(t("createTontine", "errMembers") || "Nombre de membres entre 3 et 30."); return; }
     setLoading(true);
     setError(null);
     const response = await fetch("/api/tontines", {
@@ -47,7 +57,7 @@ export function CreateTontineForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} noValidate className="space-y-3">
       <Input name="name" placeholder={t("createTontine", "nameLabel")} required />
       <Textarea name="description" placeholder={t("createTontine", "descLabel")} required />
 
