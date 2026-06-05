@@ -11,6 +11,7 @@ async function _getUserDashboard(userId: string) {
         ...safeUserSelect,
         wallet: true,
         trustScore: true,
+        badges: { include: { badge: true } },
       }
     }),
     prisma.membership.findMany({
