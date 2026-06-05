@@ -32,11 +32,22 @@ export async function POST(request: NextRequest) {
 
   const group = await prisma.tontineGroup.findUnique({
     where: { joinCode: parsed.data.joinCode },
-    select: { id: true, maxMembers: true, name: true, status: true, minTrustScore: true, collateralRounds: true, contributionCents: true, currency: true },
-  } as never) as { id: string; maxMembers: number; name: string; status: string; minTrustScore: number; collateralRounds: number; contributionCents: number; currency: string } | null;
+    select: { id: true, maxMembers: true, name: true, status: true, minTrustScore: true, collateralRounds: true, contributionCents: true, currency: true, kycRequiredToJoin: true },
+  } as never) as { id: string; maxMembers: number; name: string; status: string; minTrustScore: number; collateralRounds: number; contributionCents: number; currency: string; kycRequiredToJoin: boolean } | null;
 
   if (!group || !["ACTIVE", "OPEN"].includes(group.status)) {
     return NextResponse.json({ error: "Code invalide ou groupe non disponible." }, { status: 404 });
+  }
+
+  // ── FIX D : KYC obligatoire pour rejoindre les tontines Émeraude+ ────────────
+  if (group.kycRequiredToJoin) {
+    const kycStatus = await prisma.user.findUnique({ where: { id: session.userId }, select: { kycStatus: true } });
+    if (kycStatus?.kycStatus !== "VERIFIED") {
+      return NextResponse.json({
+        error: "Ce groupe requiert une vérification d'identité (KYC). Complétez la vérification dans votre profil puis réessayez.",
+        kycRequired: true,
+      }, { status: 403 });
+    }
   }
 
   // Anti-fraude : blacklist + trust score

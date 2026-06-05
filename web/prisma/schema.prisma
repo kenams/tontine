@@ -89,6 +89,7 @@ model TontineGroup {
   latePenaltyCents   Int             @default(1000)
   minTrustScore      Int             @default(0)
   collateralRounds   Int             @default(0)
+  kycRequiredToJoin  Boolean         @default(false)
   requireFullPayment Boolean         @default(false)
   autoExcludeDays    Int             @default(30)
   emergencyFundBps   Int             @default(500)

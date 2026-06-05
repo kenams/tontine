@@ -44,13 +44,26 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const contributionCents = amountToMinorUnits(parsed.data.contributionAmount, parsed.data.currency);
+
+  // ── FIX D : collatéral automatique pour Saphir+ (≥ 500€/mois) ───────────────
+  // Saphir = 500-1499€ → 1 round de collatéral obligatoire
+  // Rubis+ = 1500€+    → 2 rounds de collatéral obligatoires
+  const autoCollateralRounds =
+    contributionCents >= 150_000 ? 2 :  // 1 500€+
+    contributionCents >= 50_000  ? 1 :  // 500€+
+    0;
+
+  // KYC obligatoire pour rejoindre les tontines à fort enjeu (≥ 150€/mois = Émeraude+)
+  const kycRequiredToJoin = contributionCents >= 15_000;
+
   const baseSlug = slugify(parsed.data.name);
   const group = await prisma.tontineGroup.create({
     data: {
       name: parsed.data.name,
       slug: `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`,
       description: parsed.data.description,
-      contributionCents: amountToMinorUnits(parsed.data.contributionAmount, parsed.data.currency),
+      contributionCents,
       currency: parsed.data.currency,
       frequency: parsed.data.frequency,
       maxMembers: parsed.data.maxMembers,
@@ -61,6 +74,8 @@ export async function POST(request: NextRequest) {
       minTrustScore: parsed.data.minTrustScore,
       requireFullPayment: parsed.data.requireFullPayment,
       autoExcludeDays: parsed.data.autoExcludeDays,
+      collateralRounds: autoCollateralRounds,
+      kycRequiredToJoin,
       memberships: {
         create: { userId: session.userId, role: "ORGANIZER", payoutOrder: 1, paidThisRound: false },
       },
