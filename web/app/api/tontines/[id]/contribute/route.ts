@@ -36,7 +36,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const amount = group.contributionCents;
   const stripeProvider = isStripeCheckoutProvider(parsed.data.provider);
   const walletCanPay = wallet && wallet.currency === group.currency && wallet.balanceCents >= amount;
-  const status = stripeProvider ? "PENDING" : walletCanPay || parsed.data.provider !== "WALLET" ? "PAID" : "PENDING";
+  // Bloc explicite : WALLET sélectionné mais solde insuffisant → erreur immédiate
+  if (parsed.data.provider === "WALLET" && !walletCanPay) {
+    return NextResponse.json({ error: "Solde insuffisant. Rechargez votre wallet pour cotiser.", insufficientFunds: true }, { status: 400 });
+  }
+  const status = stripeProvider ? "PENDING" : "PAID";
 
   const created = await prisma.$transaction(async (tx) => {
     if (wallet && walletCanPay) {

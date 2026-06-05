@@ -48,10 +48,14 @@ export async function processMemberLeave(
 ): Promise<LeaveResult> {
   const membership = await prisma.membership.findUnique({
     where: { userId_tontineGroupId: { userId, tontineGroupId: groupId } },
-    include: { tontineGroup: { select: { name: true, currency: true, contributionCents: true, status: true } } },
+    include: { tontineGroup: { select: { name: true, currency: true, contributionCents: true, status: true, createdById: true } } },
   });
   if (!membership) return { ok: false, debtCents: 0, blocked: "Vous n'êtes pas membre de ce groupe." };
   if (membership.status === "LEFT") return { ok: false, debtCents: 0, blocked: "Vous avez déjà quitté ce groupe." };
+  // Le créateur ne peut pas quitter sans transférer l'ownership
+  if ((membership.tontineGroup as unknown as { createdById: string }).createdById === userId) {
+    return { ok: false, debtCents: 0, blocked: "Vous êtes le créateur du groupe. Transférez l'ownership avant de quitter." };
+  }
 
   const debtCents = await calcMemberDebt(userId, groupId);
 
