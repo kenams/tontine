@@ -6,8 +6,10 @@ import { prisma } from "@/lib/db";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { safeJson } from "@/lib/request";
 
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, "").trim();
+
 const profileSchema = z.object({
-  fullName: z.string().min(2).max(80).optional(),
+  fullName: z.string().min(2).max(80).transform(stripHtml).refine((s) => s.length >= 2, "Nom invalide.").optional(),
   phone: z.string().min(6).max(24).optional().or(z.literal("")),
 });
 
