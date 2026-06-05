@@ -81,10 +81,10 @@ export function GroupSettingsPanel({ groupId, current, currency }: Props) {
             </label>
             <select className={SELECT_CLS} value={vals.latePenaltyCents} onChange={(e) => setVals({ ...vals, latePenaltyCents: Number(e.target.value) })} style={{ colorScheme: "dark" }}>
               <option value={0}>{t("groupSettings", "noPenalty")}</option>
-              <option value={500}>5 {currency === "XOF" ? "500 XOF" : "€5"}</option>
-              <option value={1000}>1 000 cts (10€)</option>
-              <option value={2000}>2 000 cts (20€)</option>
-              <option value={5000}>5 000 cts (50€)</option>
+              <option value={500}>{currency === "XOF" ? "500 XOF" : "5 €"}</option>
+              <option value={1000}>{currency === "XOF" ? "1 000 XOF" : "10 €"}</option>
+              <option value={2000}>{currency === "XOF" ? "2 000 XOF" : "20 €"}</option>
+              <option value={5000}>{currency === "XOF" ? "5 000 XOF" : "50 €"}</option>
             </select>
           </div>
 
