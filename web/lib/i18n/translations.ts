@@ -321,6 +321,7 @@ export const translations = {
     premiumFeat3:  { fr: "Badge ✓ vérifié sur ton profil",     en: "✓ verified badge on your profile" },
     premiumFeat4:  { fr: "Statistiques avancées",              en: "Advanced statistics" },
     premiumBtn:    { fr: "Activer Premium →",                  en: "Activate Premium →" },
+    premiumCancel: { fr: "Résiliable à tout moment · Stripe sécurisé", en: "Cancel anytime · Secure Stripe payment" },
     referral:      { fr: "Parrainage",                         en: "Referral" },
     referralSub:   { fr: "Invite tes amis · Gagne 5€ par filleul", en: "Invite friends · Earn €5 per referral" },
     marketplace:   { fr: "Marketplace",                        en: "Marketplace" },

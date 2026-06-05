@@ -221,6 +221,10 @@ export default async function ProfilePage() {
         <Link href="/forgot-password" className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] text-sm font-bold text-[var(--text)] transition hover:bg-[var(--surface-strong)]">
           {t("profile", "changePassword")}
         </Link>
+        <Link href="/settings" className="flex min-h-11 items-center justify-between gap-2 rounded-2xl bg-[var(--surface)] px-4 text-sm font-bold text-[var(--text)] transition hover:bg-[var(--surface-strong)]">
+          <span className="flex items-center gap-2">⭐ {lang === "en" ? "Plan & Subscription" : "Plan & Abonnement"}</span>
+          <span className="text-xs text-[var(--muted)]">→</span>
+        </Link>
       </div>
 
       <div className="glass rounded-3xl p-2">
