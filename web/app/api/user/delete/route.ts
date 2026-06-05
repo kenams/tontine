@@ -2,30 +2,47 @@ import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { clearSessionCookie, getSession } from "@/lib/auth";
+import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/db";
+import { safeJson } from "@/lib/request";
 
 // RGPD Article 17 — droit à l'effacement
 export async function DELETE(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  // Vérifier qu'il n'y a pas de solde wallet non nul
-  const wallet = await prisma.wallet.findUnique({ where: { userId: session.userId } });
-  if (wallet && wallet.balanceCents > 0) {
-    return NextResponse.json({
-      error: "Votre wallet contient un solde. Veuillez le retirer avant de supprimer votre compte.",
-      balanceCents: wallet.balanceCents,
-    }, { status: 400 });
+  try {
+    const body = await safeJson(request) as { password?: string } | null;
+    if (!body?.password) {
+      return NextResponse.json({ error: "Confirmation du mot de passe requise." }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { passwordHash: true } });
+    if (!user) return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+
+    const valid = await verifyPassword(body.password, user.passwordHash);
+    if (!valid) return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 401 });
+
+    // Vérifier qu'il n'y a pas de solde wallet non nul
+    const wallet = await prisma.wallet.findUnique({ where: { userId: session.userId } });
+    if (wallet && wallet.balanceCents > 0) {
+      return NextResponse.json({
+        error: "Votre wallet contient un solde. Veuillez le retirer avant de supprimer votre compte.",
+        balanceCents: wallet.balanceCents,
+      }, { status: 400 });
+    }
+
+    // Cascade delete — Prisma gère via onDelete: Cascade sur les relations
+    await prisma.user.delete({ where: { id: session.userId } });
+
+    revalidateTag(`user-${session.userId}`);
+
+    const response = NextResponse.json({ ok: true, message: "Compte et données supprimés conformément au RGPD." });
+    clearSessionCookie(response);
+    return response;
+  } catch {
+    return NextResponse.json({ error: "Erreur lors de la suppression du compte. Réessayez." }, { status: 500 });
   }
-
-  // Cascade delete — Prisma gère via onDelete: Cascade sur les relations
-  await prisma.user.delete({ where: { id: session.userId } });
-
-  revalidateTag(`user-${session.userId}`);
-
-  const response = NextResponse.json({ ok: true, message: "Compte et données supprimés conformément au RGPD." });
-  clearSessionCookie(response);
-  return response;
 }
 
 // RGPD Article 20 — portabilité des données
