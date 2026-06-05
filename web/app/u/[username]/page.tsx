@@ -170,18 +170,14 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           </div>
         )}
 
-        {/* Groupes actifs */}
+        {/* Groupes actifs — noms privés, seul le nombre est public */}
         {user.memberships.length > 0 && (
           <div className="glass mb-4 rounded-3xl p-4">
-            <p className="mb-3 text-sm font-black">{t("publicProfile", "groups")}</p>
-            <div className="space-y-2">
-              {user.memberships.map((m) => (
-                <div key={m.id} className="flex items-center justify-between text-sm">
-                  <span className="font-bold">{m.tontineGroup.name}</span>
-                  <StatusBadge value={m.status} />
-                </div>
-              ))}
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-black">{t("publicProfile", "groups")}</span>
+              <span className="text-lg font-black text-emerald-400">{user.memberships.length}</span>
             </div>
+            <p className="mt-1 text-xs text-[var(--muted)]">{lang === "en" ? "Active tontine groups" : "Groupes de tontine actifs"}</p>
           </div>
         )}
 

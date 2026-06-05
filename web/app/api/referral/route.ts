@@ -20,7 +20,7 @@ export async function GET() {
 
   return NextResponse.json({
     code,
-    shareUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app"}/register?ref=${code}`,
+    shareUrl: `${(process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app").trim()}/register?ref=${code}`,
     stats: { rewarded, pending, totalEarned },
     referrals,
   });

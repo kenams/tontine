@@ -44,8 +44,10 @@ export const inviteSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase())
 });
 
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, "").trim();
+
 export const messageSchema = z.object({
-  content: z.string().min(1).max(1000)
+  content: z.string().min(1).max(1000).transform(stripHtml).refine((s) => s.length > 0, "Message vide après nettoyage.")
 });
 
 export const contributionSchema = z.object({
