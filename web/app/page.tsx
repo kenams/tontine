@@ -86,6 +86,16 @@ export default async function LandingPage() {
         {/* Glow fond */}
         <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-[120px]" />
 
+        {/* ── ANNONCE APP DISPO ── */}
+        <div className="relative z-50 w-full bg-emerald-500 py-2 text-center text-xs font-black text-[#080b07]">
+          <Link href="/download" className="flex items-center justify-center gap-2 hover:opacity-80 transition">
+            <Smartphone size={13} />
+            {lang === "fr"
+              ? "📱 App Kotizy disponible — Android APK + iPhone PWA → Télécharger gratuitement"
+              : "📱 Kotizy App available — Android APK + iPhone PWA → Download free"}
+          </Link>
+        </div>
+
         <main className="relative mx-auto max-w-6xl px-5 py-5">
 
           {/* ── NAV ── */}
@@ -139,8 +149,9 @@ export default async function LandingPage() {
                   {session ? t("landing", "dashboard") : t("landing", "cta")}
                   <ArrowRight size={16} />
                 </Link>
-                <Link href="/download" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
-                  <Download size={15} /> Télécharger l&apos;app
+                <Link href="/download" className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-6 text-sm font-black text-emerald-400 ring-1 ring-emerald-500/20 transition hover:bg-emerald-500/20 hover:border-emerald-500/60">
+                  <Download size={15} /> {lang === "fr" ? "Télécharger l'app" : "Download App"}
+                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-black text-emerald-300">v2.2</span>
                 </Link>
               </div>
 
