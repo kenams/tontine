@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import Link from "next/link";
 
 import { JoinTontineForm } from "@/components/app/join-tontine-form";
@@ -33,6 +33,15 @@ export default async function TontinesPage() {
       </div>
 
       <JoinTontineForm />
+
+      <Link
+        href="/marketplace"
+        className="mt-3 flex items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] px-4 py-3 text-sm transition hover:border-emerald-500/50"
+      >
+        <Store size={16} className="shrink-0 text-emerald-400" />
+        <span className="flex-1 font-bold">{t("groups", "marketplace") ?? "Rejoindre une tontine publique"}</span>
+        <span className="text-[var(--muted)]">→</span>
+      </Link>
 
       {memberships.length === 0 ? (
         <div className="glass mt-4 rounded-3xl p-8 text-center">

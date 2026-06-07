@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Njangi en ligne Cameroun — Tontine digitale camerounaise | Kotizy",
+  title: "Njangi en ligne Cameroun — Tontine digitale camerounaise",
   description: "Gérez votre Njangi en ligne. La tontine camerounaise digitalisée pour la diaspora. Paiements depuis Paris, Bruxelles, Genève vers Douala et Yaoundé.",
   keywords: ["njangi en ligne", "tontine camerounaise", "njangi digital", "tontine cameroun diaspora", "njangi application"],
 };

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
-const APK_URL = "https://expo.dev/accounts/kenams/projects/kotizy/builds/fd88f951-1db2-46b5-a6a4-830598f583bf";
+const APK_URL = "https://github.com/kenams/tontine/releases/download/v2.2.0/kotizy-v2.2.0.apk";
 const WEB_URL = "https://tontineapp-web.vercel.app";
 
 export default function DownloadPage() {

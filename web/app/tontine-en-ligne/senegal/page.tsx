@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Tontine Sénégal en ligne — Tontine sénégalaise digitale | Kotizy",
+  title: "Tontine Sénégal en ligne — Tontine sénégalaise digitale",
   description: "Gérez votre tontine sénégalaise en ligne. Wave Money et Orange Money intégrés. La diaspora sénégalaise en France gère ses tontines avec Kotizy.",
   keywords: ["tontine senegal", "tontine sénégalaise en ligne", "tontine dakar diaspora", "wave senegal tontine", "epargne collective senegal"],
 };
