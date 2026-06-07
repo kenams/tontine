@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Download, Shield, Users, Zap } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Tontine en ligne — Gérez votre tontine digitale | Kotizy",
+  title: "Tontine en ligne — Gérez votre tontine digitale",
   description: "Créez et gérez votre tontine en ligne gratuitement. Paiements sécurisés, notifications push, Mobile Money. La tontine digitale pour la diaspora africaine.",
   keywords: ["tontine en ligne", "tontine digitale", "tontine application", "tontine mobile", "epargne collective africaine"],
   openGraph: {

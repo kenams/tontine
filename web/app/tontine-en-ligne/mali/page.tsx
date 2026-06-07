@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Tontine Mali en ligne — Tontine malienne digitale | Kotizy",
+  title: "Tontine Mali en ligne — Tontine malienne digitale",
   description: "Gérez votre tontine malienne en ligne depuis la France. Orange Money Mali intégré. La diaspora malienne à Paris gère ses tontines avec Kotizy.",
   keywords: ["tontine mali", "tontine malienne en ligne", "tontine bamako diaspora", "orange money mali tontine", "epargne diaspora malienne"],
 };

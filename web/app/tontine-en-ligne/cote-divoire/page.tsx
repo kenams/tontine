@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Download } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Tontine Côte d'Ivoire en ligne — Tontine ivoirienne digitale | Kotizy",
+  title: "Tontine Côte d'Ivoire en ligne — Tontine ivoirienne digitale",
   description: "Gérez votre tontine ivoirienne en ligne. Paiements Wave et Orange Money. La diaspora ivoirienne en France utilise Kotizy pour ses tontines digitales.",
   keywords: ["tontine cote d'ivoire", "tontine ivoirienne en ligne", "tontine abidjan diaspora", "wave tontine", "orange money tontine"],
 };
