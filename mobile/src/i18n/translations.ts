@@ -251,7 +251,6 @@ const STRINGS: Record<string, { fr: string; en: string }> = {
   "common.loading":             { fr: "Chargement…",                    en: "Loading…" },
   "common.error":               { fr: "Erreur",                         en: "Error" },
   "common.cancel":              { fr: "Annuler",                        en: "Cancel" },
-  "common.close":               { fr: "Fermer",                         en: "Close" },
   "common.back":                { fr: "Retour",                         en: "Back" },
   "common.save":                { fr: "Enregistrer",                    en: "Save" },
   "common.confirm":             { fr: "Confirmer",                      en: "Confirm" },
