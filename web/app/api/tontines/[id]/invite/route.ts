@@ -6,7 +6,7 @@ import { safeJson } from "@/lib/request";
 import { auditLog, clientIp, rateLimit } from "@/lib/security";
 import { inviteSchema } from "@/lib/validators";
 
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3021").trim();
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app").trim();
 
 async function sendInviteEmail(to: string, groupName: string, inviterName: string, joinCode: string) {
   const url = `${APP_URL}/g/${joinCode}`;

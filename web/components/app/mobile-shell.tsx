@@ -14,10 +14,12 @@ import { initials } from "@/lib/format";
 type Props = {
   children: ReactNode;
   title?: string;
-  user: { fullName: string; email: string; avatarUrl?: string | null };
+  user?: { fullName: string; email: string; avatarUrl?: string | null };
 };
 
 export function MobileShell({ children, user, title }: Props) {
+  const defaultUser = { fullName: "Utilisateur", email: "", avatarUrl: null };
+  const resolvedUser = user ?? defaultUser;
   const pathname = usePathname();
   const { t } = useLanguage();
 
@@ -36,13 +38,13 @@ export function MobileShell({ children, user, title }: Props) {
         <div className="flex items-center justify-between gap-3">
           <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
             <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500 text-sm font-black text-ink shadow-glow overflow-hidden">
-              {user.avatarUrl
-                ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                : initials(user.fullName)}
+              {resolvedUser.avatarUrl
+                ? <img src={resolvedUser.avatarUrl} alt="" className="h-full w-full object-cover" />
+                : initials(resolvedUser.fullName)}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-black text-[var(--text)]">{title ?? "Kotizy"}</p>
-              <p className="truncate text-[10px] text-[var(--muted)]">{user.email}</p>
+              <p className="truncate text-[10px] text-[var(--muted)]">{resolvedUser.email}</p>
             </div>
           </Link>
           <div className="flex items-center gap-1">

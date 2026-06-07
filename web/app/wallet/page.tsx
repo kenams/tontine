@@ -117,7 +117,7 @@ export default async function WalletPage({
             return (
               <Wrapper
                 key={m.label}
-                href={m.href ?? undefined}
+                {...(m.href ? { href: m.href } : {})}
                 className={`flex items-center gap-3 rounded-2xl p-3 transition ${
                   m.active
                     ? "bg-emerald-500/8 ring-1 ring-emerald-400/20 hover:bg-emerald-500/12 cursor-pointer"

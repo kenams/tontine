@@ -3,6 +3,7 @@ import type { CompositeScreenProps, NavigatorScreenParams } from "@react-navigat
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 export type AuthStackParamList = {
+  Onboarding: undefined;
   Splash: undefined;
   Login: undefined;
   Register: undefined;
