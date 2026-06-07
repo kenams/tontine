@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 30;
 
 const getPulseData = unstable_cache(async () => {
