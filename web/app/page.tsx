@@ -139,11 +139,8 @@ export default async function LandingPage() {
                   {session ? t("landing", "dashboard") : t("landing", "cta")}
                   <ArrowRight size={16} />
                 </Link>
-                <a href="https://github.com/kenams/tontine/releases/download/v2.2.0/kotizy-v2.2.0.apk" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
-                  <Download size={15} /> APK Android
-                </a>
-                <Link href="/install-ios" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
-                  <Smartphone size={15} /> iPhone / iOS
+                <Link href="/download" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white/6 px-6 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-white/10">
+                  <Download size={15} /> Télécharger l&apos;app
                 </Link>
               </div>
 
@@ -257,15 +254,13 @@ export default async function LandingPage() {
                       : "Push notifications, Mobile Money payments, real-time tracking. Native Android experience."}
                   </p>
                   <div className="mt-6 flex flex-wrap gap-3">
-                    <a
-                      href="https://github.com/kenams/tontine/releases/download/v2.2.0/kotizy-v2.2.0.apk"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href="/download"
                       className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-[#080b07] shadow-[0_0_20px_rgba(34,197,94,0.35)] transition hover:bg-emerald-400"
                     >
                       <Download size={16} />
-                      {lang === "fr" ? "Télécharger l'APK" : "Download APK"}
-                    </a>
+                      {lang === "fr" ? "Télécharger l'app" : "Download App"}
+                    </Link>
                     <div className="inline-flex items-center gap-2 rounded-2xl bg-white/5 px-5 py-3 text-sm font-bold text-white/40 ring-1 ring-white/10 cursor-not-allowed">
                       <Smartphone size={16} />
                       Google Play {lang === "fr" ? "(bientôt)" : "(soon)"}
