@@ -284,13 +284,15 @@ export async function POST(request: NextRequest) {
     const userId = session.metadata?.userId;
     const stripeSubId = typeof session.subscription === "string" ? session.subscription : undefined;
     if (userId && stripeSubId) {
-      const stripeSub = await (await import("@/lib/stripe")).getStripe()?.subscriptions.retrieve(stripeSubId);
+      const stripeClient = (await import("@/lib/stripe")).getStripe();
+      const stripeSub = stripeClient ? await stripeClient.subscriptions.retrieve(stripeSubId) : null;
+      const periodEnd = stripeSub ? new Date(((stripeSub as unknown as { current_period_end: number }).current_period_end) * 1000) : null;
       await prisma.$transaction([
         prisma.user.update({ where: { id: userId }, data: { plan: "PREMIUM" } as never }),
         (prisma.subscription as never).upsert({
           where: { userId },
-          create: { id: `sub-${Date.now()}`, userId, plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, currentPeriodEnd: stripeSub ? new Date((stripeSub as { current_period_end: number }).current_period_end * 1000) : null },
-          update: { plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, cancelAtPeriodEnd: false, currentPeriodEnd: stripeSub ? new Date((stripeSub as { current_period_end: number }).current_period_end * 1000) : null },
+          create: { id: `sub-${Date.now()}`, userId, plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, currentPeriodEnd: periodEnd },
+          update: { plan: "PREMIUM", status: "ACTIVE", stripeSubscriptionId: stripeSubId, cancelAtPeriodEnd: false, currentPeriodEnd: periodEnd },
         }),
         prisma.notification.create({ data: { userId, title: "⭐ Kotizy Premium activé !", body: "Tontines illimitées, stats avancées et badge vérifié. Bienvenue dans le club !", type: "PREMIUM" } }),
       ]);

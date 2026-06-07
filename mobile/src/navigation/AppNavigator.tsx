@@ -3,7 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "../store/authStore";
+import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { SplashScreen } from "../screens/SplashScreen";
 import { LoginScreen } from "../screens/auth/LoginScreen";
 import { RegisterScreen } from "../screens/auth/RegisterScreen";
@@ -36,9 +39,22 @@ const TontinesStack = createNativeStackNavigator<TontinesStackParamList>();
 const WalletStack = createNativeStackNavigator<WalletStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+function OnboardingWrapper({ navigation }: { navigation: { replace: (s: string) => void } }) {
+  return <OnboardingScreen onDone={() => navigation.replace("Splash")} />;
+}
+
 function AuthStackNavigator() {
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem("onboarding_done").then((v) => setOnboardingDone(v === "1"));
+  }, []);
+
+  if (onboardingDone === null) return null;
+
   return (
-    <AuthStack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false, animation: "fade" }}>
+    <AuthStack.Navigator initialRouteName={onboardingDone ? "Splash" : "Onboarding"} screenOptions={{ headerShown: false, animation: "fade" }}>
+      <AuthStack.Screen name="Onboarding" component={OnboardingWrapper as never} />
       <AuthStack.Screen name="Splash" component={SplashScreen} />
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
