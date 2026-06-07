@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
-const APK_URL = "https://expo.dev/accounts/kenams/projects/kotizy/builds/77db9e6c-3ef3-49a8-8fe2-5f6028820fdd";
+const APK_URL = "https://expo.dev/accounts/kenams/projects/kotizy/builds/fd88f951-1db2-46b5-a6a4-830598f583bf";
 const WEB_URL = "https://tontineapp-web.vercel.app";
 
 export default function DownloadPage() {
