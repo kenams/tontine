@@ -56,12 +56,32 @@ export const viewport: Viewport = {
   themeColor: "#050706",
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Kotizy",
+  url: APP_URL,
+  description: "Tontines digitales pour la diaspora africaine — épargne collective en euros, wallet multi-devise, Wave, Orange Money, MTN MoMo.",
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Web, iOS, Android",
+  inLanguage: ["fr", "en"],
+  author: { "@type": "Organization", name: "KAH Digital", url: "https://kah-digital.ch" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+};
+
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const store = await cookies();
   const initialLang: Lang = store.get("kl")?.value === "en" ? "en" : "fr";
 
   return (
     <html lang={initialLang} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ThemeProvider>
           <LanguageProvider initialLang={initialLang}>
