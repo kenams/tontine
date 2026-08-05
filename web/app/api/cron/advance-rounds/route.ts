@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
@@ -17,7 +18,12 @@ const dueDays: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 }
 export async function GET(request: NextRequest) {
   try {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  const provided = request.headers.get("authorization") ?? "";
+  const expected = `Bearer ${secret ?? ""}`;
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expected);
+  const authorized = !!secret && providedBuf.length === expectedBuf.length && timingSafeEqual(providedBuf, expectedBuf);
+  if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

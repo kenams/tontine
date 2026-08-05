@@ -36,17 +36,26 @@ export async function POST(request: NextRequest) {
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.userId } });
   if (!wallet) return NextResponse.json({ error: "Wallet introuvable." }, { status: 404 });
-  if (wallet.balanceCents < amountCents) {
-    return NextResponse.json({ error: `Solde insuffisant. Disponible : ${(wallet.balanceCents / 100).toFixed(2)} ${wallet.currency}.` }, { status: 400 });
-  }
 
   const reference = `WIT-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
+  // Decrement atomique en une seule requete SQL, conditionne au solde
+  // ET au collateral verrouille (WalletLock LOCKED) au moment exact du retrait.
+  // Empeche a la fois la course concurrente (deux retraits simultanes) et le
+  // contournement du collateral (retirer un solde deja gage sur une tontine).
+  const affected = await prisma.$executeRaw`
+    UPDATE "Wallet" SET "balanceCents" = "balanceCents" - ${amountCents}
+    WHERE id = ${wallet.id}
+      AND "balanceCents" - ${amountCents} >= COALESCE(
+        (SELECT SUM("amountCents") FROM "WalletLock" WHERE "userId" = ${session.userId} AND status = 'LOCKED'),
+        0
+      )
+  `;
+  if (affected === 0) {
+    return NextResponse.json({ error: `Solde disponible insuffisant (collatéral verrouillé inclus).` }, { status: 400 });
+  }
+
   await prisma.$transaction(async (tx) => {
-    await tx.wallet.update({
-      where: { id: wallet.id },
-      data: { balanceCents: { decrement: amountCents } },
-    });
     await tx.transaction.create({
       data: {
         userId: session.userId,

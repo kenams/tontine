@@ -82,9 +82,19 @@ async function creditWallet(session: Stripe.Checkout.Session, eventType: string)
   const userId = session.metadata?.userId;
   if (!walletId || !transactionId || !userId) return { updated: false, reason: "missing_metadata" };
 
-  await prisma.$transaction(async (tx) => {
-    const txRecord = await tx.transaction.findUnique({ where: { id: transactionId }, select: { amountCents: true } });
+  const result = await prisma.$transaction(async (tx) => {
+    const txRecord = await tx.transaction.findUnique({ where: { id: transactionId }, select: { amountCents: true, status: true } });
     if (!txRecord) throw new Error("transaction_not_found");
+    if (txRecord.status === "PAID") return { alreadyPaid: true };
+
+    // Claim atomique : n'incremente le wallet que si cette transaction n'est
+    // pas deja marquee PAID. Stripe peut rejouer le meme webhook (retry sur
+    // timeout/5xx) -- sans ce guard, chaque replay re-crediterait le wallet.
+    const claim = await tx.transaction.updateMany({
+      where: { id: transactionId, status: { not: "PAID" } },
+      data: { status: "PAID" },
+    });
+    if (claim.count === 0) return { alreadyPaid: true };
 
     await tx.wallet.update({
       where: { id: walletId },
@@ -122,7 +132,10 @@ async function creditWallet(session: Stripe.Checkout.Session, eventType: string)
         metadata: JSON.stringify({ eventType, sessionId: session.id }),
       },
     });
+    return { alreadyPaid: false };
   });
+
+  if (result.alreadyPaid) return { updated: false, reason: "already_paid" };
 
   // Invalider le cache dashboard de cet utilisateur
   revalidateTag(`user-${userId}`);

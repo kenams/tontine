@@ -43,12 +43,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   const status = stripeProvider ? "PENDING" : "PAID";
 
-  const created = await prisma.$transaction(async (tx) => {
+  let created;
+  try {
+  created = await prisma.$transaction(async (tx) => {
     if (wallet && walletCanPay) {
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: { balanceCents: { decrement: amount } }
-      });
+      // Decrement atomique conditionne au solde ET au collateral verrouille :
+      // empeche une course entre deux paiements simultanes et empeche de
+      // cotiser avec un solde deja gage en collateral sur une autre tontine.
+      const affected: number = await tx.$executeRaw`
+        UPDATE "Wallet" SET "balanceCents" = "balanceCents" - ${amount}
+        WHERE id = ${wallet.id}
+          AND "balanceCents" - ${amount} >= COALESCE(
+            (SELECT SUM("amountCents") FROM "WalletLock" WHERE "userId" = ${session.userId} AND status = 'LOCKED'),
+            0
+          )
+      `;
+      if (affected === 0) {
+        throw new Error("INSUFFICIENT_AVAILABLE_BALANCE");
+      }
     }
     const contribution = await tx.contribution.create({
       data: {
@@ -93,6 +105,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
     return { contribution, transaction };
   });
+  } catch (err) {
+    if (err instanceof Error && err.message === "INSUFFICIENT_AVAILABLE_BALANCE") {
+      return NextResponse.json({ error: "Solde disponible insuffisant (collatéral verrouillé inclus).", insufficientFunds: true }, { status: 400 });
+    }
+    throw err;
+  }
 
   if (stripeProvider) {
     if (!isStripeConfigured()) {
