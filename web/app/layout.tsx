@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
+import Script from "next/script";
 
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -9,6 +10,7 @@ import type { Lang } from "@/lib/i18n/translations";
 import "./globals.css";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://tontineapp-web.vercel.app";
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 
 export const metadata: Metadata = {
   title: {
@@ -81,6 +83,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {GA_MEASUREMENT_ID ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`}
+            </Script>
+          </>
+        ) : null}
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider>
