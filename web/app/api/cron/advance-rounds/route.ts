@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
             metadata: JSON.stringify({ round: group.currentRound, mode: "auto_payout", grossPot: potCents, feeCents }),
           },
         });
-        // Enregistrement des frais KAH Digital (1.25% du pot)
+        // Enregistrement des frais KAH Digital Studio (1.25% du pot)
         if (feeCents > 0) {
           await tx.transaction.create({
             data: {

@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <div className="space-y-6 text-[var(--text)]">
         <section>
           <h2 className="mb-3 text-xl font-bold">1. Responsable du traitement</h2>
-          <p className="leading-7 text-[var(--muted)]">KAH Digital — kahdigital42@gmail.com. Données hébergées sur Supabase (UE) et Vercel (UE).</p>
+          <p className="leading-7 text-[var(--muted)]">KAH Digital Studio — kahdigital42@gmail.com. Données hébergées sur Supabase (UE) et Vercel (UE).</p>
         </section>
 
         <section>

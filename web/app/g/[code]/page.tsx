@@ -114,7 +114,7 @@ export default async function PublicGroupPage({ params }: Props) {
 
         <p className="mt-6 text-center text-xs text-[var(--muted)]">
           Propulsé par{" "}
-          <a href="https://kah-digital.ch" className="font-bold text-emerald-400">KAH Digital</a>
+          <a href="https://kah-digital.ch" className="font-bold text-emerald-400">KAH Digital Studio</a>
         </p>
       </main>
     </MotionPage>

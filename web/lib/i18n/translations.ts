@@ -104,7 +104,7 @@ export const translations = {
     footerCgu:        { fr: "CGU",                                        en: "Terms" },
     footerPrivacy:    { fr: "Confidentialité",                            en: "Privacy" },
     footerCookies:    { fr: "Cookies",                                    en: "Cookies" },
-    footerBy:         { fr: "Un produit KAH Digital",                     en: "A KAH Digital product" },
+    footerBy:         { fr: "Un produit KAH Digital Studio",                     en: "A KAH Digital Studio product" },
 
     // Wallet card preview (static)
     previewLabel:     { fr: "Cotisation validée",                         en: "Contribution validated" },

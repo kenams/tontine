@@ -71,7 +71,7 @@ export async function GET() {
           position: "absolute", bottom: "28px",
           fontSize: "16px", color: "rgba(255,255,255,0.25)",
         }}>
-          Un produit KAH Digital · kah-digital.ch
+          Un produit KAH Digital Studio · kah-digital.ch
         </div>
       </div>
     ),

@@ -11,7 +11,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="mb-2 text-lg font-bold text-[var(--text)]">Éditeur du site</h2>
           <p>
-            <strong className="text-[var(--text)]">KAH Digital</strong><br />
+            <strong className="text-[var(--text)]">KAH Digital Studio</strong><br />
             Micro-entreprise — entreprise en cours d&apos;immatriculation<br />
             Site web : <a href="https://kah-digital.ch/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">kah-digital.ch</a><br />
             Email : <a href="mailto:kahdigital42@gmail.com" className="text-emerald-400 hover:underline">kahdigital42@gmail.com</a>
@@ -19,7 +19,7 @@ export default function MentionsLegalesPage() {
         </section>
         <section>
           <h2 className="mb-2 text-lg font-bold text-[var(--text)]">Directeur de la publication</h2>
-          <p>KAH Digital — kahdigital42@gmail.com</p>
+          <p>KAH Digital Studio — kahdigital42@gmail.com</p>
         </section>
         <section>
           <h2 className="mb-2 text-lg font-bold text-[var(--text)]">Hébergement</h2>
@@ -37,7 +37,7 @@ export default function MentionsLegalesPage() {
         </section>
         <section>
           <h2 className="mb-2 text-lg font-bold text-[var(--text)]">Propriété intellectuelle</h2>
-          <p>L&apos;ensemble du contenu du site Kotizy (textes, images, code, marque) est la propriété exclusive de KAH Digital. Toute reproduction sans autorisation écrite préalable est interdite.</p>
+          <p>L&apos;ensemble du contenu du site Kotizy (textes, images, code, marque) est la propriété exclusive de KAH Digital Studio. Toute reproduction sans autorisation écrite préalable est interdite.</p>
         </section>
         <section>
           <h2 className="mb-2 text-lg font-bold text-[var(--text)]">Contact</h2>

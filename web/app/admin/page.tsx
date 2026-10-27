@@ -53,7 +53,7 @@ export default async function AdminDashboardPage() {
           <p className="mb-4 text-sm font-black">Operations critiques</p>
           <div className="space-y-3">
             <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
-              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Revenus KAH Digital (1.25%)</p>
+              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Revenus KAH Digital Studio (1.25%)</p>
               <p className="text-2xl font-black text-emerald-400">{money(stats.platformRevenue, stats.totalVolumeCurrency)}</p>
               <p className="text-xs text-smoke mt-1">Ce mois : {money(stats.platformRevenueThisMonth ?? 0, stats.totalVolumeCurrency)}</p>
             </div>

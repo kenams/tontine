@@ -15,12 +15,12 @@ export default function CGUPage() {
       <div className="prose prose-invert max-w-none space-y-6 text-[var(--text)]">
         <section>
           <h2 className="text-xl font-bold">1. Objet</h2>
-          <p className="text-[var(--muted)] leading-7">Kotizy est une plateforme de tontines digitales éditée par KAH Digital. Les présentes CGU régissent l'utilisation de la plateforme accessible à l'adresse tontineapp-web.vercel.app ainsi que de l'application mobile Kotizy.</p>
+          <p className="text-[var(--muted)] leading-7">Kotizy est une plateforme de tontines digitales éditée par KAH Digital Studio. Les présentes CGU régissent l'utilisation de la plateforme accessible à l'adresse tontineapp-web.vercel.app ainsi que de l'application mobile Kotizy.</p>
         </section>
 
         <section>
           <h2 className="text-xl font-bold">2. Inscription et compte</h2>
-          <p className="text-[var(--muted)] leading-7">L'inscription est réservée aux personnes majeures (+18 ans). L'utilisateur s'engage à fournir des informations exactes et à maintenir la confidentialité de ses identifiants. KAH Digital se réserve le droit de suspendre tout compte en cas d'activité frauduleuse ou de violation des présentes CGU.</p>
+          <p className="text-[var(--muted)] leading-7">L'inscription est réservée aux personnes majeures (+18 ans). L'utilisateur s'engage à fournir des informations exactes et à maintenir la confidentialité de ses identifiants. KAH Digital Studio se réserve le droit de suspendre tout compte en cas d'activité frauduleuse ou de violation des présentes CGU.</p>
         </section>
 
         <section>
@@ -31,7 +31,7 @@ export default function CGUPage() {
 
         <section>
           <h2 className="text-xl font-bold">3bis. Conformité réglementaire</h2>
-          <p className="text-[var(--muted)] leading-7">KAH Digital agit en qualité d'agent de services de paiement de Stripe Payments Europe Ltd. Les services de collecte et de redistribution de fonds dans le cadre des tontines sont opérés via l'infrastructure réglementée de Stripe. En cas de dépassement des seuils légaux de monnaie électronique, KAH Digital s'engage à procéder aux déclarations requises auprès de l'ACPR (Autorité de Contrôle Prudentiel et de Résolution).</p>
+          <p className="text-[var(--muted)] leading-7">KAH Digital Studio agit en qualité d'agent de services de paiement de Stripe Payments Europe Ltd. Les services de collecte et de redistribution de fonds dans le cadre des tontines sont opérés via l'infrastructure réglementée de Stripe. En cas de dépassement des seuils légaux de monnaie électronique, KAH Digital Studio s'engage à procéder aux déclarations requises auprès de l'ACPR (Autorité de Contrôle Prudentiel et de Résolution).</p>
         </section>
 
         <section>
@@ -46,17 +46,17 @@ export default function CGUPage() {
 
         <section>
           <h2 className="text-xl font-bold">6. Responsabilités</h2>
-          <p className="text-[var(--muted)] leading-7">Kotizy est un outil de coordination. KAH Digital ne garantit pas le paiement des membres d'une tontine et ne peut être tenu responsable des pertes financières résultant de défaillances de paiement au sein d'un groupe. L'utilisateur utilise la plateforme sous sa propre responsabilité.</p>
+          <p className="text-[var(--muted)] leading-7">Kotizy est un outil de coordination. KAH Digital Studio ne garantit pas le paiement des membres d'une tontine et ne peut être tenu responsable des pertes financières résultant de défaillances de paiement au sein d'un groupe. L'utilisateur utilise la plateforme sous sa propre responsabilité.</p>
         </section>
 
         <section>
           <h2 className="text-xl font-bold">7. Propriété intellectuelle</h2>
-          <p className="text-[var(--muted)] leading-7">La marque Kotizy, le logo et l'ensemble du contenu sont la propriété exclusive de KAH Digital. Toute reproduction sans autorisation est interdite.</p>
+          <p className="text-[var(--muted)] leading-7">La marque Kotizy, le logo et l'ensemble du contenu sont la propriété exclusive de KAH Digital Studio. Toute reproduction sans autorisation est interdite.</p>
         </section>
 
         <section>
           <h2 className="text-xl font-bold">8. Droit applicable</h2>
-          <p className="text-[var(--muted)] leading-7">Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant toute action judiciaire. Le tribunal compétent sera celui du ressort de KAH Digital.</p>
+          <p className="text-[var(--muted)] leading-7">Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant toute action judiciaire. Le tribunal compétent sera celui du ressort de KAH Digital Studio.</p>
         </section>
 
         <section>

@@ -46,7 +46,7 @@ async function main() {
       notifications: {
         create: {
           title: "Bienvenue sur Kotizy Admin",
-          body: "Votre compte administrateur KAH Digital est prêt. Toutes les transactions, utilisateurs et alertes sont visibles ici.",
+          body: "Votre compte administrateur KAH Digital Studio est prêt. Toutes les transactions, utilisateurs et alertes sont visibles ici.",
           type: "WELCOME"
         }
       }

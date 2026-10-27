@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   },
   description: "Épargnez ensemble en euros. Tontines digitales pour la diaspora africaine — wallet multi-devise, Wave, Orange Money, MTN MoMo. Gratuit, sécurisé, transparent.",
   keywords: ["tontine", "diaspora africaine", "épargne collective", "tontine digitale", "XOF", "EUR", "Wave", "Orange Money", "Mobile Money", "Kotizy"],
-  authors: [{ name: "KAH Digital", url: "https://kah-digital.ch" }],
-  creator: "KAH Digital",
+  authors: [{ name: "KAH Digital Studio", url: "https://kah-digital.ch" }],
+  creator: "KAH Digital Studio",
   metadataBase: new URL(APP_URL),
   manifest: "/manifest.webmanifest",
   openGraph: {
@@ -67,7 +67,7 @@ const jsonLd = {
   applicationCategory: "FinanceApplication",
   operatingSystem: "Web, iOS, Android",
   inLanguage: ["fr", "en"],
-  author: { "@type": "Organization", name: "KAH Digital", url: "https://kah-digital.ch" },
+  author: { "@type": "Organization", name: "KAH Digital Studio", url: "https://kah-digital.ch" },
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
 };
 
